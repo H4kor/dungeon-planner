@@ -1,12 +1,18 @@
 mod common;
+mod room;
 mod view;
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-use gtk::DrawingArea;
-use gtk::{gdk, prelude::*};
+use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
+use gtk::gdk::ButtonEvent;
+use gtk::gdk::EventType::ButtonPress;
+use gtk::glib::Propagation;
+use gtk::{gdk, prelude::*, EventController, EventControllerLegacy};
 use gtk::{glib, Application, ApplicationWindow, Box, Button};
+use gtk::{DrawingArea, EventControllerMotion};
+use room::Room;
 
 use crate::common::Vec2;
 
@@ -48,10 +54,15 @@ fn build_ui(app: &Application) {
 
     let view = Rc::new(Cell::new(view::View::new()));
     let grid = Rc::new(Cell::new(view::grid::Grid::new()));
+    // debug for one room
+    let room = Rc::new(RefCell::new(Room::new()));
+    let cursor_pos = Rc::new(Cell::new(Vec2::<f64> { x: 0.0, y: 0.0 }));
 
     {
         let view = view.clone();
         let grid = grid.clone();
+        let room = room.clone();
+        let curser_pos = cursor_pos.clone();
         canvas.set_draw_func(move |_area, ctx, w, h| {
             // fill with background color
             ctx.set_source_rgb(0.8, 0.95, 0.8);
@@ -68,12 +79,60 @@ fn build_ui(app: &Application) {
                 prim.draw(ctx)
             }
 
+            // draw room
+            let cp = curser_pos.get();
+            let next_vert = grid.get().snap(Vec2::<i32> {
+                x: cp.x as i32,
+                y: cp.y as i32,
+            });
+
+            let prims = room.borrow().draw(Some(next_vert));
+            for prim in prims {
+                prim.draw(ctx)
+            }
+
             // debug circle
-            ctx.set_source_rgb(1.0, 0.0, 0.0);
-            ctx.arc(200.0, 200.0, 20.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
-            ctx.fill().unwrap()
+            // ctx.set_source_rgb(1.0, 0.0, 0.0);
+            // ctx.arc(200.0, 200.0, 20.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
+            // ctx.fill().unwrap()
         });
     }
+
+    let mouse_controller = EventControllerMotion::new();
+    {
+        let cursor_pos = cursor_pos.clone();
+        let canvas = canvas.clone();
+        mouse_controller.connect_motion(move |con, x, y| {
+            cursor_pos.set(Vec2 { x: x, y: y });
+            canvas.queue_draw();
+            // println!("{} {} {}", con, x, y);
+        });
+    }
+    let event_controller = EventControllerLegacy::new();
+
+    {
+        let room = room.clone();
+        let cursor_pos = cursor_pos.clone();
+        let canvas = canvas.clone();
+        let grid = grid.clone();
+
+        event_controller.connect_event(move |controller, event| {
+            if event.event_type() == ButtonPress {
+                let button_event = event.clone().downcast::<ButtonEvent>().unwrap();
+                if button_event.button() == GDK_BUTTON_PRIMARY as u32 {
+                    println!("got mouse button: {}", button_event.button());
+                    room.borrow_mut().append(grid.get().snap(Vec2 {
+                        x: cursor_pos.get().x as i32,
+                        y: cursor_pos.get().y as i32,
+                    }));
+                    canvas.queue_draw();
+                }
+            }
+            Propagation::Proceed
+        });
+    }
+    canvas.add_controller(mouse_controller);
+    canvas.add_controller(event_controller);
 
     // Create a window
     let window = ApplicationWindow::builder()
@@ -82,12 +141,12 @@ fn build_ui(app: &Application) {
         .child(&main_box)
         .build();
 
-    let event_controller = gtk::EventControllerKey::new();
+    let control_key = gtk::EventControllerKey::new();
 
     {
         let view = view.clone();
         let canvas = canvas.clone();
-        event_controller.connect_key_pressed(move |_, key, _, _| {
+        control_key.connect_key_pressed(move |_, key, _, _| {
             let mut view_obj = view.get();
             const SPEED: i32 = 10;
             match key {
@@ -102,7 +161,8 @@ fn build_ui(app: &Application) {
             glib::Propagation::Proceed
         });
     }
+
     // Present window
-    window.add_controller(event_controller);
+    window.add_controller(control_key);
     window.present();
 }

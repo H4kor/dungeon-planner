@@ -21,6 +21,13 @@ impl Grid {
         }
     }
 
+    pub fn snap(self, p: Vec2<i32>) -> Vec2<i32> {
+        Vec2 {
+            x: (p.x as f32 / self.size.x as f32).round() as i32 * self.size.x,
+            y: (p.y as f32 / self.size.y as f32).round() as i32 * self.size.y,
+        }
+    }
+
     pub fn draw(self, min: Vec2<i32>, max: Vec2<i32>) -> Vec<Box<dyn Primitive>> {
         let start_index = min / self.size + Vec2 { x: -1, y: -1 };
         let end_index = (max / self.size) + Vec2 { x: 1, y: 1 };

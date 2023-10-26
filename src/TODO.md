@@ -1,0 +1,1 @@
+- replace mouse button click with gesture https://stackoverflow.com/questions/70778989/how-do-i-use-mouse-button-events-with-gtk4-rs
