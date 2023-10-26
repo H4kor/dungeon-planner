@@ -1,10 +1,9 @@
 mod common;
 mod view;
 
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::rc::Rc;
 
-use gtk::cairo::ffi::{cairo_fill, cairo_rectangle, cairo_set_source_rgb};
 use gtk::DrawingArea;
 use gtk::{gdk, prelude::*};
 use gtk::{glib, Application, ApplicationWindow, Box, Button};
@@ -53,7 +52,7 @@ fn build_ui(app: &Application) {
     {
         let view = view.clone();
         let grid = grid.clone();
-        canvas.set_draw_func(move |area, ctx, w, h| {
+        canvas.set_draw_func(move |_area, ctx, w, h| {
             // fill with background color
             ctx.set_source_rgb(0.8, 0.95, 0.8);
             ctx.paint().unwrap();
@@ -87,6 +86,7 @@ fn build_ui(app: &Application) {
 
     {
         let view = view.clone();
+        let canvas = canvas.clone();
         event_controller.connect_key_pressed(move |_, key, _, _| {
             let mut view_obj = view.get();
             const SPEED: i32 = 10;
