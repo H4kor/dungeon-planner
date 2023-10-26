@@ -22,8 +22,8 @@ impl Grid {
     }
 
     pub fn draw(self, min: Vec2<i32>, max: Vec2<i32>) -> Vec<Box<dyn Primitive>> {
-        let start_index = min / self.size;
-        let end_index = max / self.size;
+        let start_index = min / self.size + Vec2 { x: -1, y: -1 };
+        let end_index = (max / self.size) + Vec2 { x: 1, y: 1 };
         let mut lines = Vec::<Box<dyn Primitive>>::new();
         for x_idx in start_index.x..end_index.x {
             let line: Box<dyn Primitive> = Box::new(Line {

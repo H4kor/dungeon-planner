@@ -5,8 +5,8 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use gtk::cairo::ffi::{cairo_fill, cairo_rectangle, cairo_set_source_rgb};
-use gtk::prelude::*;
 use gtk::DrawingArea;
+use gtk::{gdk, prelude::*};
 use gtk::{glib, Application, ApplicationWindow, Box, Button};
 
 use crate::common::Vec2;
@@ -54,36 +54,28 @@ fn build_ui(app: &Application) {
         let view = view.clone();
         let grid = grid.clone();
         canvas.set_draw_func(move |area, ctx, w, h| {
-            println!("{} {} {} {}", area, ctx, w, h);
-            ctx.set_source_rgb(1.0, 0.8, 1.0);
+            // fill with background color
+            ctx.set_source_rgb(0.8, 0.95, 0.8);
             ctx.paint().unwrap();
 
+            // apply "camera"
             let world_min = view.get().world_min();
-            let prims = grid.get().draw(world_min, world_min + Vec2 { x: w, y: h });
+            println!("view {} {}", world_min.x, world_min.y);
+            ctx.translate(-world_min.x as f64, -world_min.y as f64);
 
+            // draw grid
+            let prims = grid.get().draw(world_min, world_min + Vec2 { x: w, y: h });
             for prim in prims {
                 prim.draw(ctx)
             }
 
-            // println!("Drawing rect");
-            // ctx.set_line_width(19.0);
-            // ctx.set_source_rgb(1.0, 0.0, 0.0);
-            // ctx.rectangle(0.25, 0.25, 0.5, 0.5);
-            // ctx.rectangle(
-            //     0.1 * w as f64,
-            //     0.5 * h as f64,
-            //     0.5 * w as f64,
-            //     0.5 * h as f64,
-            // );
-            // match ctx.stroke() {
-            //     Err(x) => {
-            //         println!("Error");
-            //     }
-            //     _ => {}
-            // }
-            // println!("Drawing rect");
+            // debug circle
+            ctx.set_source_rgb(1.0, 0.0, 0.0);
+            ctx.arc(200.0, 200.0, 20.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
+            ctx.fill().unwrap()
         });
     }
+
     // Create a window
     let window = ApplicationWindow::builder()
         .application(app)
@@ -91,6 +83,26 @@ fn build_ui(app: &Application) {
         .child(&main_box)
         .build();
 
+    let event_controller = gtk::EventControllerKey::new();
+
+    {
+        let view = view.clone();
+        event_controller.connect_key_pressed(move |_, key, _, _| {
+            let mut view_obj = view.get();
+            const SPEED: i32 = 10;
+            match key {
+                gdk::Key::Right => view_obj.move_view(Vec2 { x: SPEED, y: 0 }),
+                gdk::Key::Left => view_obj.move_view(Vec2 { x: -SPEED, y: 0 }),
+                gdk::Key::Up => view_obj.move_view(Vec2 { x: 0, y: -SPEED }),
+                gdk::Key::Down => view_obj.move_view(Vec2 { x: 0, y: SPEED }),
+                _ => (),
+            }
+            view.set(view_obj);
+            canvas.queue_draw();
+            glib::Propagation::Proceed
+        });
+    }
     // Present window
+    window.add_controller(event_controller);
     window.present();
 }
