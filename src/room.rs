@@ -4,7 +4,7 @@ use crate::{
 };
 pub struct Room {
     verts: Vec<Vec2<i32>>,
-    notes: String,
+    _notes: String,
     wall_width: f64,
 }
 
@@ -12,7 +12,7 @@ impl Room {
     pub fn new() -> Self {
         Self {
             verts: vec![],
-            notes: String::new(),
+            _notes: String::new(),
             wall_width: 10.0,
         }
     }

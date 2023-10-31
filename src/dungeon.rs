@@ -1,7 +1,4 @@
-use crate::{
-    room::Room,
-    view::{grid::Grid, View},
-};
+use crate::room::Room;
 
 pub struct Dungeon {
     pub rooms: Vec<Room>,
