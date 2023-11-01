@@ -2,7 +2,7 @@ use crate::{
     common::{Rgb, Vec2},
     view::primitives::{Line, Primitive},
 };
-pub type RoomId = usize;
+pub type RoomId = u32;
 
 #[derive(Clone)]
 pub struct Room {
@@ -10,6 +10,7 @@ pub struct Room {
     verts: Vec<Vec2<i32>>,
     pub name: String,
     pub notes: String,
+    wall_color: Rgb,
     wall_width: f64,
 }
 
@@ -20,7 +21,12 @@ impl Room {
             verts: vec![],
             name: "New Room".to_owned(),
             notes: String::new(),
-            wall_width: 10.0,
+            wall_color: Rgb {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+            },
+            wall_width: 7.0,
         }
     }
 
@@ -41,11 +47,7 @@ impl Room {
                     x: verts[i].x as f64,
                     y: verts[i].y as f64,
                 },
-                color: Rgb {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                },
+                color: self.wall_color,
                 width: self.wall_width,
             });
             lines.push(line);
@@ -60,11 +62,7 @@ impl Room {
                     x: verts[0].x as f64,
                     y: verts[0].y as f64,
                 },
-                color: Rgb {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                },
+                color: self.wall_color,
                 width: self.wall_width,
             });
             lines.push(line);

@@ -1,7 +1,9 @@
+use crate::room::{self, RoomId};
 use crate::state::{
     commands::menu::SelectRoomCommand, events::StateEvent, State, StateCommand, StateController,
     StateSubscriber,
 };
+use crate::view::room_list_entry::RoomListEntry;
 use gtk::prelude::*;
 use gtk::{Label, ListBox, PolicyType, ScrolledWindow};
 use std::{cell::RefCell, rc::Rc};
@@ -9,12 +11,14 @@ use std::{cell::RefCell, rc::Rc};
 pub struct RoomList {
     pub list_box: ListBox,
     pub scrolled_window: ScrolledWindow,
-    pub rows: Vec<Label>,
+    pub rows: Vec<RoomListEntry>,
 }
 
 impl RoomList {
     pub fn new(state: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        let list_box = ListBox::new();
+        let list_box = ListBox::builder()
+            .selection_mode(gtk::SelectionMode::Single)
+            .build();
         let room_list = Rc::new(RefCell::new(RoomList {
             list_box: list_box.clone(),
             scrolled_window: ScrolledWindow::builder()
@@ -30,17 +34,17 @@ impl RoomList {
         {
             let state = state.clone();
             list_box.connect_row_selected(move |_, row| match row {
-                Some(row) => unsafe {
-                    let room_id = *row
-                        .child()
+                Some(row) => {
+                    println!("ROW SELECTED");
+                    let room_id = row
+                        .clone()
+                        .dynamic_cast::<RoomListEntry>()
                         .unwrap()
-                        .data::<usize>("room_id")
-                        .unwrap()
-                        .as_ptr();
+                        .room_id();
                     state
                         .borrow_mut()
                         .apply(Box::new(SelectRoomCommand { room_id: room_id }));
-                },
+                }
                 None => {
                     println!("nothing")
                 }
@@ -58,25 +62,24 @@ impl StateSubscriber for RoomList {
     fn on_state_event(
         &mut self,
         state: &mut State,
-        _event: StateEvent,
+        event: StateEvent,
     ) -> Vec<Box<dyn StateCommand>> {
-        // remove all
-        for row in self.rows.iter() {
-            self.list_box.remove(&row.parent().unwrap());
-        }
-        self.rows.clear();
-
-        for room in state.dungeon.rooms.iter() {
-            let room_label = Label::new(Some(
-                format!("{} {}", &room.name, room.id.unwrap()).as_str(),
-            ));
-            unsafe {
-                room_label.set_data("room_id", room.id.unwrap());
+        match event {
+            StateEvent::RoomAdded(room_id) => {
+                let room = state.dungeon.room(room_id).unwrap();
+                let room_label = RoomListEntry::new(room);
+                self.rows.push(room_label);
+                self.list_box.append(self.rows.last().unwrap());
             }
-            self.rows.push(room_label);
-            self.list_box.append(self.rows.last().unwrap());
+            StateEvent::RoomModified(room_id) => {
+                let room = state.dungeon.room(room_id).unwrap();
+                self.rows
+                    .iter_mut()
+                    .filter(|r| r.room_id() == room_id)
+                    .for_each(|w| w.update(room));
+            }
+            _ => (),
         }
-
         vec![]
     }
 }

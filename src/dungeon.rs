@@ -1,4 +1,4 @@
-use crate::room::Room;
+use crate::room::{Room, RoomId};
 
 pub struct Dungeon {
     pub rooms: Vec<Room>,
@@ -9,7 +9,7 @@ impl Dungeon {
         Dungeon { rooms: vec![] }
     }
 
-    pub(crate) fn add_room(&mut self, mut room: Room) -> usize {
+    pub(crate) fn add_room(&mut self, mut room: Room) -> RoomId {
         let room_id = match room.id {
             None => {
                 let room_id = self.next_id();
@@ -22,7 +22,7 @@ impl Dungeon {
         room_id
     }
 
-    fn next_id(&self) -> usize {
+    fn next_id(&self) -> RoomId {
         let max_id = self.rooms.iter().map(|r| r.id.unwrap_or(0)).max();
         match max_id {
             None => 1,
@@ -30,7 +30,7 @@ impl Dungeon {
         }
     }
 
-    pub(crate) fn room(&mut self, room_id: usize) -> Option<&mut Room> {
+    pub(crate) fn room(&mut self, room_id: RoomId) -> Option<&mut Room> {
         self.rooms.iter_mut().find(|r| r.id == Some(room_id))
     }
 }

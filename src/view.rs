@@ -3,6 +3,7 @@ pub mod grid;
 pub mod primitives;
 pub mod room_edit;
 pub mod room_list;
+pub mod room_list_entry;
 
 use crate::common::Vec2;
 

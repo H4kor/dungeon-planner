@@ -53,7 +53,7 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
         canvas.set_draw_func(move |_area, ctx, w, h| {
             let control = control.borrow();
             // fill with background color
-            ctx.set_source_rgb(0.8, 0.95, 0.8);
+            ctx.set_source_rgb(128.0 / 255.0, 223.0 / 255.0, 255.0 / 255.0);
             ctx.paint().unwrap();
 
             // apply "camera"
@@ -153,6 +153,7 @@ fn build_ui(app: &Application) {
 
     let main_box = gtk::Box::builder().build();
     let menu_box = gtk::Box::builder()
+        .width_request(300)
         .orientation(gtk::Orientation::Vertical)
         .build();
 
@@ -164,7 +165,7 @@ fn build_ui(app: &Application) {
 
     menu_box.append(&add_room_button.widget);
     menu_box.append(&room_list.borrow().scrolled_window);
-    menu_box.append(&room_edit.widget);
+    menu_box.append(&room_edit.borrow().widget);
 
     main_box.append(&menu_box);
     main_box.append(&canvas);

@@ -13,11 +13,11 @@ impl Grid {
         Grid {
             size: Vec2 { x: 50, y: 50 },
             color: Rgb {
-                r: 0.0,
-                b: 0.0,
-                g: 0.0,
+                r: 1.0,
+                b: 1.0,
+                g: 1.0,
             },
-            width: 1.0,
+            width: 0.7,
         }
     }
 

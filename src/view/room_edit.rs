@@ -5,7 +5,7 @@ use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
 use crate::state::commands::{ChangeRoomName, ChangeRoomNotes};
-use crate::state::StateController;
+use crate::state::{StateController, StateSubscriber};
 
 pub struct RoomEdit {
     pub widget: Box,
@@ -14,7 +14,7 @@ pub struct RoomEdit {
 }
 
 impl RoomEdit {
-    pub fn new(control: Rc<RefCell<StateController>>) -> Self {
+    pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
         let name_i = Entry::builder().build();
         let notes_i = TextView::builder().build();
         {
@@ -56,10 +56,33 @@ impl RoomEdit {
         b.append(&Label::new(Some("Notes")));
         b.append(&notes_i);
 
-        RoomEdit {
+        b.set_visible(false);
+
+        let re = Rc::new(RefCell::new(RoomEdit {
             widget: b,
             name_input: name_i,
             notes_input: notes_i,
+        }));
+
+        control.borrow_mut().subscribe(
+            crate::state::events::StateEvent::ActiveRoomChanged,
+            re.clone(),
+        );
+
+        re
+    }
+}
+
+impl StateSubscriber for RoomEdit {
+    fn on_state_event(
+        &mut self,
+        state: &mut crate::state::State,
+        event: crate::state::events::StateEvent,
+    ) -> Vec<std::boxed::Box<dyn crate::state::StateCommand>> {
+        match event {
+            crate::state::events::StateEvent::ActiveRoomChanged => self.widget.set_visible(true),
+            _ => (),
         }
+        vec![]
     }
 }
