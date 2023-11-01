@@ -18,6 +18,7 @@ use gtk::{DrawingArea, EventControllerMotion};
 use state::StateController;
 use view::add_room_button::AddRoomButton;
 use view::grid::Grid;
+use view::room_edit::RoomEdit;
 use view::room_list::RoomList;
 use view::View;
 
@@ -157,11 +158,13 @@ fn build_ui(app: &Application) {
 
     let canvas = build_canvas(control.clone());
 
-    let room_list = RoomList::new(control.clone());
     let add_room_button = AddRoomButton::new(control.clone());
+    let room_list = RoomList::new(control.clone());
+    let room_edit = RoomEdit::new();
 
     menu_box.append(&add_room_button.widget);
     menu_box.append(&room_list.borrow().scrolled_window);
+    menu_box.append(&room_edit.widget);
 
     main_box.append(&menu_box);
     main_box.append(&canvas);

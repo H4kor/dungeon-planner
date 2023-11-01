@@ -1,18 +1,16 @@
-use std::{cell::RefCell, rc::Rc};
-
-use gtk::{Label, ListBox, PolicyType, ScrolledWindow};
-
 use crate::state::{
     commands::menu::SelectRoomCommand, events::StateEvent, State, StateCommand, StateController,
     StateSubscriber,
 };
+use gtk::prelude::*;
+use gtk::{Label, ListBox, PolicyType, ScrolledWindow};
+use std::{cell::RefCell, rc::Rc};
 
 pub struct RoomList {
     pub list_box: ListBox,
     pub scrolled_window: ScrolledWindow,
     pub rows: Vec<Label>,
 }
-use gtk::prelude::*;
 
 impl RoomList {
     pub fn new(state: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
