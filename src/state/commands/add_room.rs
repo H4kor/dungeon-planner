@@ -1,6 +1,7 @@
-use crate::room::Room;
-
-use super::{events::StateEvent, StateCommand};
+use crate::{
+    room::Room,
+    state::{events::StateEvent, State, StateCommand},
+};
 
 pub struct AddRoomCommand {
     room: Room,
@@ -13,7 +14,7 @@ impl AddRoomCommand {
 }
 
 impl StateCommand for AddRoomCommand {
-    fn execute(&self, state: &mut super::State) -> Vec<StateEvent> {
+    fn execute(&self, state: &mut State) -> Vec<StateEvent> {
         let room_id = state.dungeon.add_room(self.room.clone());
         vec![StateEvent::RoomAdded(room_id)]
     }

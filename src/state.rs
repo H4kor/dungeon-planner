@@ -72,11 +72,15 @@ impl StateController {
     }
 
     pub fn notify(&mut self, event: StateEvent) {
-        let listeners = self.subscribers.get(&event).unwrap();
-        for listener in listeners {
-            listener
-                .borrow_mut()
-                .on_state_event(&mut self.state, event.clone());
+        match self.subscribers.get(&event) {
+            None => (),
+            Some(listeners) => {
+                for listener in listeners {
+                    listener
+                        .borrow_mut()
+                        .on_state_event(&mut self.state, event.clone());
+                }
+            }
         }
     }
 }

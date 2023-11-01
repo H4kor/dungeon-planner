@@ -29,4 +29,8 @@ impl Dungeon {
             Some(x) => x + 1,
         }
     }
+
+    pub(crate) fn room(&mut self, room_id: usize) -> Option<&mut Room> {
+        self.rooms.iter_mut().find(|r| r.id == Some(room_id))
+    }
 }

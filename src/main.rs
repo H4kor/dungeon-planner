@@ -22,7 +22,7 @@ use view::room_list::RoomList;
 use view::View;
 
 use crate::common::Vec2;
-use crate::state::commands::AddRoomCommand;
+use crate::state::commands::{AddRoomCommand, AddVertexToRoomCommand};
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -113,14 +113,16 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
 
                     if control.dungeon().rooms.len() == 0 {
                         control.apply(std::boxed::Box::new(AddRoomCommand::new(Room::new(None))));
-                        // control.add_room(Room::new(None))
                     }
 
-                    // let room = &mut state.dungeon().rooms[0];
-                    // room.append(state.grid.snap(Vec2 {
-                    //     x: state.cursor_state.pos.x as i32,
-                    //     y: state.cursor_state.pos.y as i32,
-                    // }));
+                    let room_id = control.state.dungeon.rooms[0].id.unwrap();
+                    control.apply(std::boxed::Box::new(AddVertexToRoomCommand::new(
+                        room_id,
+                        control.state.grid.snap(Vec2 {
+                            x: control.state.cursor.pos.x as i32,
+                            y: control.state.cursor.pos.y as i32,
+                        }),
+                    )));
                     canvas.queue_draw();
                 }
             }
