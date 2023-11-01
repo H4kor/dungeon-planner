@@ -15,14 +15,14 @@ use gtk::glib::Propagation;
 use gtk::{gdk, prelude::*, EventControllerLegacy};
 use gtk::{glib, Application, ApplicationWindow};
 use gtk::{DrawingArea, EventControllerMotion};
-use room::Room;
 use state::StateController;
+use view::add_room_button::AddRoomButton;
 use view::grid::Grid;
 use view::room_list::RoomList;
 use view::View;
 
 use crate::common::Vec2;
-use crate::state::commands::{AddRoomCommand, AddVertexToRoomCommand};
+use crate::state::commands::AddVertexToRoomCommand;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -76,7 +76,11 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
             });
 
             for room in control.dungeon().rooms.iter() {
-                let prims = room.draw(Some(next_vert));
+                let mut vert_opt = None;
+                if control.state.active_room_id == room.id {
+                    vert_opt = Some(next_vert)
+                }
+                let prims = room.draw(vert_opt);
                 for prim in prims {
                     prim.draw(ctx)
                 }
@@ -111,18 +115,22 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
                 if button_event.button() == GDK_BUTTON_PRIMARY as u32 {
                     println!("got mouse button: {}", button_event.button());
 
-                    if control.dungeon().rooms.len() == 0 {
-                        control.apply(std::boxed::Box::new(AddRoomCommand::new(Room::new(None))));
+                    match control.state.active_room_id {
+                        None => (),
+                        Some(active_room_id) => match control.state.dungeon.room(active_room_id) {
+                            None => (),
+                            Some(room) => {
+                                let room_id = room.id.unwrap();
+                                control.apply(std::boxed::Box::new(AddVertexToRoomCommand {
+                                    room_id: room_id,
+                                    pos: control.state.grid.snap(Vec2 {
+                                        x: control.state.cursor.pos.x as i32,
+                                        y: control.state.cursor.pos.y as i32,
+                                    }),
+                                }));
+                            }
+                        },
                     }
-
-                    let room_id = control.state.dungeon.rooms[0].id.unwrap();
-                    control.apply(std::boxed::Box::new(AddVertexToRoomCommand::new(
-                        room_id,
-                        control.state.grid.snap(Vec2 {
-                            x: control.state.cursor.pos.x as i32,
-                            y: control.state.cursor.pos.y as i32,
-                        }),
-                    )));
                     canvas.queue_draw();
                 }
             }
@@ -143,11 +151,19 @@ fn build_ui(app: &Application) {
     )));
 
     let main_box = gtk::Box::builder().build();
+    let menu_box = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
 
     let canvas = build_canvas(control.clone());
-    let room_list = RoomList::new(control.clone());
 
-    main_box.append(&room_list.borrow().scrolled_window);
+    let room_list = RoomList::new(control.clone());
+    let add_room_button = AddRoomButton::new(control.clone());
+
+    menu_box.append(&add_room_button.widget);
+    menu_box.append(&room_list.borrow().scrolled_window);
+
+    main_box.append(&menu_box);
     main_box.append(&canvas);
 
     // Create a window

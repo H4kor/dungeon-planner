@@ -4,7 +4,7 @@ pub mod events;
 use crate::{
     common::Vec2,
     dungeon::Dungeon,
-    room::{Room, RoomId},
+    room::RoomId,
     view::{grid::Grid, View},
 };
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
@@ -20,11 +20,11 @@ pub struct State {
     pub grid: Grid,
     pub view: View,
     pub cursor: CursorState,
+    pub active_room_id: Option<RoomId>,
 }
 pub struct StateController {
     pub state: State,
     subscribers: HashMap<StateEvent, Vec<Rc<RefCell<dyn StateSubscriber>>>>,
-    commands: Vec<Box<dyn StateCommand>>,
 }
 
 pub trait StateCommand {
@@ -43,8 +43,8 @@ impl StateController {
     pub fn new(dungeon: Dungeon, grid: Grid, view: View) -> Self {
         StateController {
             subscribers: HashMap::new(),
-            commands: vec![],
             state: State {
+                active_room_id: None,
                 dungeon: dungeon,
                 grid: grid,
                 view: view,

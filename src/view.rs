@@ -1,3 +1,4 @@
+pub mod add_room_button;
 pub mod grid;
 pub mod primitives;
 pub mod room_list;

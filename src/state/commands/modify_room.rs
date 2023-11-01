@@ -5,17 +5,8 @@ use crate::{
 };
 
 pub struct AddVertexToRoomCommand {
-    room_id: RoomId,
-    pos: Vec2<i32>,
-}
-
-impl AddVertexToRoomCommand {
-    pub fn new(room_id: RoomId, pos: Vec2<i32>) -> Self {
-        AddVertexToRoomCommand {
-            room_id: room_id,
-            pos: pos,
-        }
-    }
+    pub room_id: RoomId,
+    pub pos: Vec2<i32>,
 }
 
 impl StateCommand for AddVertexToRoomCommand {

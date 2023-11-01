@@ -2,9 +2,9 @@
 
 ## Feature List
 
-- [ ] Grid
-- [ ] Drawing rooms using straight edges
-    - [ ] Grid Snapping
+- [x] Grid
+- [x] Drawing rooms using straight edges
+    - [x] Grid Snapping
 - [ ] Placing object markers (stairs, chests)
 - [ ] Assign doors/properties to edges
     - [ ] hidden doors
