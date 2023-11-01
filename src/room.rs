@@ -2,16 +2,22 @@ use crate::{
     common::{Rgb, Vec2},
     view::primitives::{Line, Primitive},
 };
+pub type RoomId = usize;
+
 pub struct Room {
+    pub id: Option<RoomId>,
     verts: Vec<Vec2<i32>>,
+    pub name: String,
     _notes: String,
     wall_width: f64,
 }
 
 impl Room {
-    pub fn new() -> Self {
+    pub fn new(id: Option<RoomId>) -> Self {
         Self {
+            id: id,
             verts: vec![],
+            name: "New Room".to_owned(),
             _notes: String::new(),
             wall_width: 10.0,
         }

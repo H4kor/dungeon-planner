@@ -1,5 +1,6 @@
 pub mod grid;
 pub mod primitives;
+pub mod room_list;
 
 use crate::common::Vec2;
 
