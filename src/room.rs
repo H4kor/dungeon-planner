@@ -9,7 +9,7 @@ pub struct Room {
     pub id: Option<RoomId>,
     verts: Vec<Vec2<i32>>,
     pub name: String,
-    _notes: String,
+    pub notes: String,
     wall_width: f64,
 }
 
@@ -19,7 +19,7 @@ impl Room {
             id: id,
             verts: vec![],
             name: "New Room".to_owned(),
-            _notes: String::new(),
+            notes: String::new(),
             wall_width: 10.0,
         }
     }

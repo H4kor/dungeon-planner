@@ -20,7 +20,7 @@ impl RoomList {
             scrolled_window: ScrolledWindow::builder()
                 .hscrollbar_policy(PolicyType::Never) // Disable horizontal scrolling
                 .min_content_width(360)
-                .height_request(600)
+                .height_request(300)
                 .width_request(180)
                 .child(&list_box)
                 .build(),
@@ -47,9 +47,9 @@ impl RoomList {
             });
         }
 
-        state
-            .borrow_mut()
-            .subscribe(StateEvent::RoomAdded(0), room_list.clone());
+        let mut state = state.borrow_mut();
+        state.subscribe(StateEvent::RoomAdded(0), room_list.clone());
+        state.subscribe(StateEvent::RoomModified(0), room_list.clone());
         room_list
     }
 }

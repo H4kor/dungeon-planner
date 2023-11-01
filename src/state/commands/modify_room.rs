@@ -15,3 +15,29 @@ impl StateCommand for AddVertexToRoomCommand {
         vec![StateEvent::RoomModified(self.room_id)]
     }
 }
+
+pub struct ChangeRoomName {
+    pub room_id: RoomId,
+    pub name: String,
+}
+
+impl StateCommand for ChangeRoomName {
+    fn execute(&self, state: &mut crate::state::State) -> Vec<StateEvent> {
+        println!("Updating Room Name");
+        state.dungeon.room(self.room_id).unwrap().name = self.name.clone();
+        vec![StateEvent::RoomModified(self.room_id)]
+    }
+}
+
+pub struct ChangeRoomNotes {
+    pub room_id: RoomId,
+    pub notes: String,
+}
+
+impl StateCommand for ChangeRoomNotes {
+    fn execute(&self, state: &mut crate::state::State) -> Vec<StateEvent> {
+        println!("Updating Room Notes");
+        state.dungeon.room(self.room_id).unwrap().notes = self.notes.clone();
+        vec![StateEvent::RoomModified(self.room_id)]
+    }
+}

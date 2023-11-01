@@ -160,7 +160,7 @@ fn build_ui(app: &Application) {
 
     let add_room_button = AddRoomButton::new(control.clone());
     let room_list = RoomList::new(control.clone());
-    let room_edit = RoomEdit::new();
+    let room_edit = RoomEdit::new(control.clone());
 
     menu_box.append(&add_room_button.widget);
     menu_box.append(&room_list.borrow().scrolled_window);
