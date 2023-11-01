@@ -13,7 +13,7 @@ use gtk::gdk::ButtonEvent;
 use gtk::gdk::EventType::ButtonPress;
 use gtk::glib::Propagation;
 use gtk::{gdk, prelude::*, EventControllerLegacy};
-use gtk::{glib, Application, ApplicationWindow, Box};
+use gtk::{glib, Application, ApplicationWindow};
 use gtk::{DrawingArea, EventControllerMotion};
 use room::Room;
 use state::StateController;
@@ -22,6 +22,7 @@ use view::room_list::RoomList;
 use view::View;
 
 use crate::common::Vec2;
+use crate::state::commands::AddRoomCommand;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -111,7 +112,8 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
                     println!("got mouse button: {}", button_event.button());
 
                     if control.dungeon().rooms.len() == 0 {
-                        control.add_room(Room::new(None))
+                        control.apply(std::boxed::Box::new(AddRoomCommand::new(Room::new(None))));
+                        // control.add_room(Room::new(None))
                     }
 
                     // let room = &mut state.dungeon().rooms[0];
@@ -138,7 +140,7 @@ fn build_ui(app: &Application) {
         View::new(),
     )));
 
-    let main_box = Box::builder().build();
+    let main_box = gtk::Box::builder().build();
 
     let canvas = build_canvas(control.clone());
     let room_list = RoomList::new(control.clone());

@@ -1,3 +1,4 @@
+pub mod commands;
 pub mod events;
 
 use crate::{
@@ -27,7 +28,7 @@ pub struct StateController {
 }
 
 pub trait StateCommand {
-    fn execute(&self, state: &mut State);
+    fn execute(&self, state: &mut State) -> Vec<StateEvent>;
 }
 
 pub trait StateSubscriber {
@@ -58,9 +59,11 @@ impl StateController {
         &self.state.dungeon
     }
 
-    pub fn add_room(&mut self, room: Room) {
-        let room_id = self.state.dungeon.add_room(room);
-        self.notify(StateEvent::RoomAdded(room_id))
+    pub fn apply(&mut self, command: Box<dyn StateCommand>) {
+        let events = command.execute(&mut self.state);
+        for e in events.iter() {
+            self.notify(e.clone());
+        }
     }
 
     pub fn subscribe(&mut self, event: StateEvent, subscriber: Rc<RefCell<dyn StateSubscriber>>) {

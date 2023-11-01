@@ -4,6 +4,7 @@ use crate::{
 };
 pub type RoomId = usize;
 
+#[derive(Clone)]
 pub struct Room {
     pub id: Option<RoomId>,
     verts: Vec<Vec2<i32>>,
