@@ -15,7 +15,7 @@ use observers::{DebugObserver, StorageObserver};
 use state::StateController;
 use std::cell::RefCell;
 use std::rc::Rc;
-use view::add_room_button::AddRoomButton;
+use view::buttons::AddRoomButton;
 use view::canvas::Canvas;
 use view::grid::Grid;
 use view::room_edit::RoomEdit;
@@ -42,10 +42,25 @@ fn build_ui(app: &Application) {
         View::new(),
     )));
 
+    /*
+     * |--------|-----------------------|
+     * |  Tools |                       |
+     * |--------|                       |
+     * |  Room  |          Canvas       |
+     * |  List  |                       |
+     * |--------|                       |
+     * |Context |                       |
+     * |--------|-----------------------|
+     */
+
     let main_box = gtk::Box::builder().build();
-    let menu_box = gtk::Box::builder()
+    let side_box = gtk::Box::builder()
         .width_request(300)
         .orientation(gtk::Orientation::Vertical)
+        .build();
+
+    let tool_box = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
         .build();
 
     let canvas = Canvas::new(control.clone());
@@ -53,11 +68,20 @@ fn build_ui(app: &Application) {
     let room_list = RoomList::new(control.clone());
     let room_edit = RoomEdit::new(control.clone());
 
-    menu_box.append(&add_room_button.widget);
-    menu_box.append(&room_list.borrow().scrolled_window);
-    menu_box.append(&room_edit.borrow().widget);
+    // new room
+    tool_box.append(&add_room_button.widget);
+    // selection button
+    tool_box.append(&gtk::Button::builder().icon_name("edit-find").build());
+    // edit button
+    tool_box.append(&gtk::Button::builder().icon_name("document-edit").build());
+    // delete button
+    tool_box.append(&gtk::Button::builder().icon_name("edit-delete").build());
 
-    main_box.append(&menu_box);
+    side_box.append(&tool_box);
+    side_box.append(&room_list.borrow().scrolled_window);
+    side_box.append(&room_edit.borrow().widget);
+
+    main_box.append(&side_box);
     main_box.append(&canvas.borrow().widget);
 
     // Create a window

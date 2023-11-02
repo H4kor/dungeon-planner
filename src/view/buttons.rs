@@ -11,7 +11,7 @@ pub struct AddRoomButton {
 
 impl AddRoomButton {
     pub fn new(control: Rc<RefCell<StateController>>) -> Self {
-        let button = Button::builder().label("New Room").build();
+        let button = Button::builder().icon_name("document-new").build();
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();

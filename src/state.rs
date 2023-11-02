@@ -11,6 +11,11 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use self::events::StateEvent;
 
+pub enum EditMode {
+    Select,
+    AppendRoom,
+}
+
 pub struct CursorState {
     pub pos: Vec2<f64>,
 }
@@ -20,6 +25,7 @@ pub struct State {
     pub grid: Grid,
     pub view: View,
     pub cursor: CursorState,
+    pub mode: EditMode,
     pub active_room_id: Option<RoomId>,
 }
 pub struct StateController {
@@ -63,6 +69,7 @@ impl StateController {
                 dungeon: dungeon,
                 grid: grid,
                 view: view,
+                mode: EditMode::Select,
                 cursor: CursorState {
                     pos: Vec2 { x: 0.0, y: 0.0 },
                 },

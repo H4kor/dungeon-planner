@@ -16,7 +16,7 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        let canvas = DrawingArea::builder()
+        let drawing_area = DrawingArea::builder()
             .width_request(800)
             .height_request(600)
             .hexpand(true)
@@ -25,9 +25,13 @@ impl Canvas {
             .halign(gtk::Align::Fill)
             .build();
 
+        let canvas = Rc::new(RefCell::new(Canvas {
+            widget: drawing_area.clone(),
+        }));
+
         {
             let control = control.clone();
-            canvas.set_draw_func(move |_area, ctx, w, h| {
+            drawing_area.set_draw_func(move |_area, ctx, w, h| {
                 let control = control.borrow();
                 // fill with background color
                 ctx.set_source_rgb(0.1411764705882353, 0.28627450980392155, 0.49411764705882355);
@@ -73,12 +77,12 @@ impl Canvas {
 
         let mouse_controller = EventControllerMotion::new();
         {
-            let canvas = canvas.clone();
             let control = control.clone();
+            let canvas = canvas.clone();
             mouse_controller.connect_motion(move |_con, x, y| {
                 let control = &mut *control.borrow_mut();
                 control.state.cursor.set_pos(Vec2 { x: x, y: y });
-                canvas.queue_draw();
+                canvas.borrow().update();
             });
         }
         let event_controller = EventControllerLegacy::new();
@@ -111,19 +115,19 @@ impl Canvas {
                                 }
                             }
                         }
-                        canvas.queue_draw();
+                        canvas.borrow().update();
                     }
                 }
                 Propagation::Proceed
             });
         }
-        canvas.add_controller(mouse_controller);
-        canvas.add_controller(event_controller);
-
-        Rc::new(RefCell::new(Canvas { widget: canvas }))
+        drawing_area.add_controller(mouse_controller);
+        drawing_area.add_controller(event_controller);
+        canvas
     }
 
     pub fn update(&self) {
+        println!("update called");
         self.widget.queue_draw()
     }
 }

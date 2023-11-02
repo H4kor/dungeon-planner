@@ -1,4 +1,4 @@
-pub mod add_room_button;
+pub mod buttons;
 pub mod canvas;
 pub mod grid;
 pub mod primitives;

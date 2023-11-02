@@ -1,6 +1,6 @@
 use crate::{
     common::{Rgb, Vec2},
-    view::primitives::{Line, Primitive},
+    view::primitives::{Line, Polygon, Primitive},
 };
 pub type RoomId = u32;
 
@@ -11,6 +11,7 @@ pub struct Room {
     pub name: String,
     pub notes: String,
     wall_color: Rgb,
+    room_color: Rgb,
     wall_width: f64,
 }
 
@@ -26,6 +27,11 @@ impl Room {
                 g: 1.0,
                 b: 1.0,
             },
+            room_color: Rgb {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+            },
             wall_width: 7.0,
         }
     }
@@ -37,36 +43,21 @@ impl Room {
             None => (),
         }
         let mut lines = Vec::<Box<dyn Primitive>>::new();
-        for i in 1..verts.len() {
-            let line: Box<dyn Primitive> = Box::new(Line {
-                from: Vec2 {
-                    x: verts[i - 1].x as f64,
-                    y: verts[i - 1].y as f64,
-                },
-                to: Vec2 {
-                    x: verts[i].x as f64,
-                    y: verts[i].y as f64,
-                },
-                color: self.wall_color,
-                width: self.wall_width,
-            });
-            lines.push(line);
-        }
-        if verts.len() > 1 {
-            let line: Box<dyn Primitive> = Box::new(Line {
-                from: Vec2 {
-                    x: verts[verts.len() - 1].x as f64,
-                    y: verts[verts.len() - 1].y as f64,
-                },
-                to: Vec2 {
-                    x: verts[0].x as f64,
-                    y: verts[0].y as f64,
-                },
-                color: self.wall_color,
-                width: self.wall_width,
-            });
-            lines.push(line);
-        }
+
+        lines.push(Box::new(Polygon {
+            points: verts
+                .iter()
+                .map(|p| Vec2::<f64> {
+                    x: p.x as f64,
+                    y: p.y as f64,
+                })
+                .collect(),
+            fill_color: self.room_color,
+            fill_opacity: 0.3,
+            stroke_color: self.wall_color,
+            stroke_width: self.wall_width,
+        }));
+
         lines
     }
 
