@@ -33,20 +33,17 @@ impl RoomList {
 
         {
             let state = state.clone();
-            list_box.connect_row_selected(move |_, row| match row {
-                Some(row) => {
-                    let room_id = row
-                        .clone()
-                        .dynamic_cast::<RoomListEntry>()
-                        .unwrap()
-                        .room_id();
-                    state
-                        .borrow_mut()
-                        .apply(RefCell::new(Box::new(SelectRoomCommand {
-                            room_id: Some(room_id),
-                        })));
-                }
-                None => (),
+            list_box.connect_row_activated(move |_, row| {
+                let room_id = row
+                    .clone()
+                    .dynamic_cast::<RoomListEntry>()
+                    .unwrap()
+                    .room_id();
+                state
+                    .borrow_mut()
+                    .apply(RefCell::new(Box::new(SelectRoomCommand {
+                        room_id: Some(room_id),
+                    })));
             });
         }
 
@@ -64,6 +61,7 @@ impl StateSubscriber for RoomList {
         state: &mut State,
         event: StateEvent,
     ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
+        println!("RoomList {:?}", event);
         match event {
             StateEvent::RoomAdded(room_id) => {
                 let room = state.dungeon.room(room_id).unwrap();

@@ -3,6 +3,7 @@ mod dungeon;
 pub mod observers;
 mod room;
 mod state;
+mod storage;
 mod view;
 
 use std::cell::RefCell;
@@ -12,8 +13,8 @@ use dungeon::Dungeon;
 use gtk::gdk::ffi::GDK_BUTTON_PRIMARY;
 use gtk::gdk::ButtonEvent;
 use gtk::gdk::EventType::ButtonPress;
-use gtk::glib::Propagation;
-use gtk::{gdk, prelude::*, EventControllerLegacy};
+use gtk::glib::{MainContext, Propagation};
+use gtk::{gdk, gio, prelude::*, EventControllerLegacy};
 use gtk::{glib, Application, ApplicationWindow};
 use gtk::{DrawingArea, EventControllerMotion};
 use observers::{DebugObserver, StorageObserver};
@@ -154,9 +155,6 @@ fn build_ui(app: &Application) {
         View::new(),
     )));
 
-    DebugObserver::new(control.clone());
-    StorageObserver::new(control.clone());
-
     let main_box = gtk::Box::builder().build();
     let menu_box = gtk::Box::builder()
         .width_request(300)
@@ -208,7 +206,12 @@ fn build_ui(app: &Application) {
         });
     }
 
+    DebugObserver::new(control.clone());
+    storage::load_dungeon(control.clone());
+    StorageObserver::new(control.clone());
+
     // Present window
     window.add_controller(control_key);
+
     window.present();
 }
