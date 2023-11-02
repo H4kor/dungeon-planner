@@ -16,7 +16,7 @@ impl AddRoomButton {
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();
-            control.apply(Box::new(AddRoomCommand::new(Room::new(None))));
+            control.apply(RefCell::new(Box::new(AddRoomCommand::new(Room::new(None)))));
         });
 
         AddRoomButton { widget: button }

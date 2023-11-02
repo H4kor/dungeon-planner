@@ -6,7 +6,7 @@ use gtk::{Box, Entry};
 
 use crate::state::commands::{ChangeRoomName, ChangeRoomNotes};
 use crate::state::events::StateEvent;
-use crate::state::{StateController, StateSubscriber};
+use crate::state::{StateCommand, StateController, StateSubscriber};
 
 pub struct RoomEdit {
     pub widget: Box,
@@ -25,10 +25,12 @@ impl RoomEdit {
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),
-                    Some(room_id) => control.apply(std::boxed::Box::new(ChangeRoomName {
-                        room_id: room_id,
-                        name: name,
-                    })),
+                    Some(room_id) => {
+                        control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomName {
+                            room_id: room_id,
+                            name: name,
+                        })))
+                    }
                 }
             });
         }
@@ -40,10 +42,12 @@ impl RoomEdit {
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),
-                    Some(room_id) => control.apply(std::boxed::Box::new(ChangeRoomNotes {
-                        room_id: room_id,
-                        notes: notes,
-                    })),
+                    Some(room_id) => {
+                        control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomNotes {
+                            room_id: room_id,
+                            notes: notes,
+                        })))
+                    }
                 }
             });
         }
@@ -78,7 +82,7 @@ impl StateSubscriber for RoomEdit {
         &mut self,
         state: &mut crate::state::State,
         event: StateEvent,
-    ) -> Vec<std::boxed::Box<dyn crate::state::StateCommand>> {
+    ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
         match event {
             StateEvent::ActiveRoomChanged(None) => self.widget.set_visible(false),
             StateEvent::ActiveRoomChanged(Some(_)) => self.widget.set_visible(true),

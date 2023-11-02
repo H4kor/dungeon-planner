@@ -1,7 +1,7 @@
 use crate::room::RoomId;
 use std::hash::Hash;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum StateEvent {
     RoomAdded(RoomId),
     RoomModified(RoomId),

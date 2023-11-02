@@ -1,5 +1,6 @@
 mod common;
 mod dungeon;
+pub mod observers;
 mod room;
 mod state;
 mod view;
@@ -15,6 +16,7 @@ use gtk::glib::Propagation;
 use gtk::{gdk, prelude::*, EventControllerLegacy};
 use gtk::{glib, Application, ApplicationWindow};
 use gtk::{DrawingArea, EventControllerMotion};
+use observers::{DebugObserver, StorageObserver};
 use state::StateController;
 use view::add_room_button::AddRoomButton;
 use view::grid::Grid;
@@ -115,21 +117,21 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
             if event.event_type() == ButtonPress {
                 let button_event = event.clone().downcast::<ButtonEvent>().unwrap();
                 if button_event.button() == GDK_BUTTON_PRIMARY as u32 {
-                    println!("got mouse button: {}", button_event.button());
-
                     match control.state.active_room_id {
                         None => (),
                         Some(active_room_id) => match control.state.dungeon.room(active_room_id) {
                             None => (),
                             Some(room) => {
                                 let room_id = room.id.unwrap();
-                                control.apply(std::boxed::Box::new(AddVertexToRoomCommand {
-                                    room_id: room_id,
-                                    pos: control.state.grid.snap(Vec2 {
-                                        x: control.state.cursor.pos.x as i32,
-                                        y: control.state.cursor.pos.y as i32,
-                                    }),
-                                }));
+                                control.apply(RefCell::new(std::boxed::Box::new(
+                                    AddVertexToRoomCommand {
+                                        room_id: room_id,
+                                        pos: control.state.grid.snap(Vec2 {
+                                            x: control.state.cursor.pos.x as i32,
+                                            y: control.state.cursor.pos.y as i32,
+                                        }),
+                                    },
+                                )));
                             }
                         },
                     }
@@ -151,6 +153,9 @@ fn build_ui(app: &Application) {
         Grid::new(),
         View::new(),
     )));
+
+    DebugObserver::new(control.clone());
+    StorageObserver::new(control.clone());
 
     let main_box = gtk::Box::builder().build();
     let menu_box = gtk::Box::builder()
@@ -192,7 +197,9 @@ fn build_ui(app: &Application) {
                 gdk::Key::Left => view_obj.move_view(Vec2 { x: -SPEED, y: 0 }),
                 gdk::Key::Up => view_obj.move_view(Vec2 { x: 0, y: -SPEED }),
                 gdk::Key::Down => view_obj.move_view(Vec2 { x: 0, y: SPEED }),
-                gdk::Key::Escape => control.apply(Box::new(SelectRoomCommand { room_id: None })),
+                gdk::Key::Escape => {
+                    control.apply(RefCell::new(Box::new(SelectRoomCommand { room_id: None })))
+                }
                 _ => (),
             }
             control.state.view = view_obj;

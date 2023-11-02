@@ -7,7 +7,7 @@ use crate::{
     room::RoomId,
     view::{grid::Grid, View},
 };
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 use self::events::StateEvent;
 
@@ -25,10 +25,19 @@ pub struct State {
 pub struct StateController {
     pub state: State,
     subscribers: HashMap<StateEvent, Vec<Rc<RefCell<dyn StateSubscriber>>>>,
+    any_subscribers: Vec<Rc<RefCell<dyn StateSubscriber>>>,
+    cmd_subscribers: Vec<Rc<RefCell<dyn StateCommandSubscriber>>>,
+}
+
+#[derive(Debug)]
+pub struct StateCommandData {
+    pub name: String,
+    pub data: String,
 }
 
 pub trait StateCommand {
     fn execute(&self, state: &mut State) -> Vec<StateEvent>;
+    fn data(&self) -> StateCommandData;
 }
 
 pub trait StateSubscriber {
@@ -36,13 +45,19 @@ pub trait StateSubscriber {
         &mut self,
         state: &mut State,
         event: StateEvent,
-    ) -> Vec<Box<dyn StateCommand>>;
+    ) -> Vec<RefCell<Box<dyn StateCommand>>>;
+}
+
+pub trait StateCommandSubscriber {
+    fn on_cmd_event(&mut self, state: &mut State, cmd: &dyn StateCommand);
 }
 
 impl StateController {
     pub fn new(dungeon: Dungeon, grid: Grid, view: View) -> Self {
         StateController {
             subscribers: HashMap::new(),
+            any_subscribers: vec![],
+            cmd_subscribers: vec![],
             state: State {
                 active_room_id: None,
                 dungeon: dungeon,
@@ -59,10 +74,16 @@ impl StateController {
         &self.state.dungeon
     }
 
-    pub fn apply(&mut self, command: Box<dyn StateCommand>) {
-        let events = command.execute(&mut self.state);
-        for e in events.iter() {
-            self.notify(e.clone());
+    pub fn apply(&mut self, command: RefCell<Box<dyn StateCommand>>) {
+        {
+            let events = command.borrow().execute(&mut self.state);
+            for e in events.iter() {
+                self.notify(e.clone());
+            }
+        }
+        for sub in self.cmd_subscribers.iter() {
+            sub.borrow_mut()
+                .on_cmd_event(&mut self.state, command.borrow().as_ref());
         }
     }
 
@@ -71,16 +92,37 @@ impl StateController {
         self.subscribers.get_mut(&event).unwrap().push(subscriber);
     }
 
+    pub fn subscribe_any(&mut self, subscriber: Rc<RefCell<dyn StateSubscriber>>) {
+        self.any_subscribers.push(subscriber);
+    }
+
+    pub fn subscribe_cmds(&mut self, subscriber: Rc<RefCell<dyn StateCommandSubscriber>>) {
+        self.cmd_subscribers.push(subscriber);
+    }
+
     pub fn notify(&mut self, event: StateEvent) {
+        let mut all_cmds: Vec<RefCell<Box<dyn StateCommand>>> = vec![];
         match self.subscribers.get(&event) {
             None => (),
             Some(listeners) => {
                 for listener in listeners {
-                    listener
-                        .borrow_mut()
-                        .on_state_event(&mut self.state, event.clone());
+                    all_cmds.append(
+                        &mut listener
+                            .borrow_mut()
+                            .on_state_event(&mut self.state, event.clone()),
+                    );
                 }
             }
+        }
+        for listener in self.any_subscribers.iter() {
+            all_cmds.append(
+                &mut listener
+                    .borrow_mut()
+                    .on_state_event(&mut self.state, event.clone()),
+            );
+        }
+        for cmd in all_cmds {
+            self.apply(cmd);
         }
     }
 }
