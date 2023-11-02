@@ -13,8 +13,8 @@ use dungeon::Dungeon;
 use gtk::gdk::ffi::GDK_BUTTON_PRIMARY;
 use gtk::gdk::ButtonEvent;
 use gtk::gdk::EventType::ButtonPress;
-use gtk::glib::{MainContext, Propagation};
-use gtk::{gdk, gio, prelude::*, EventControllerLegacy};
+use gtk::glib::Propagation;
+use gtk::{gdk, prelude::*, EventControllerLegacy};
 use gtk::{glib, Application, ApplicationWindow};
 use gtk::{DrawingArea, EventControllerMotion};
 use observers::{DebugObserver, StorageObserver};
@@ -57,7 +57,7 @@ fn build_canvas(control: Rc<RefCell<StateController>>) -> DrawingArea {
         canvas.set_draw_func(move |_area, ctx, w, h| {
             let control = control.borrow();
             // fill with background color
-            ctx.set_source_rgb(128.0 / 255.0, 223.0 / 255.0, 255.0 / 255.0);
+            ctx.set_source_rgb(0.1411764705882353, 0.28627450980392155, 0.49411764705882355);
             ctx.paint().unwrap();
 
             // apply "camera"

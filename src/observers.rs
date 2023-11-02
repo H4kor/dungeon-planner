@@ -4,10 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::state::{
-    commands::AddRoomCommand, StateCommand, StateCommandSubscriber, StateController,
-    StateSubscriber,
-};
+use crate::state::{StateCommand, StateCommandSubscriber, StateController, StateSubscriber};
 use std::io::prelude::*;
 
 pub struct DebugObserver {}

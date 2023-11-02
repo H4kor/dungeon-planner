@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::common::Vec2;
-use crate::room::{Room, RoomId};
+use crate::room::RoomId;
 use crate::state::commands::menu::SelectRoomCommand;
 use crate::state::commands::{
     AddRoomCommand, AddVertexToRoomCommand, ChangeRoomName, ChangeRoomNotes,

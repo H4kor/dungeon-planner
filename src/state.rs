@@ -7,7 +7,7 @@ use crate::{
     room::RoomId,
     view::{grid::Grid, View},
 };
-use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use self::events::StateEvent;
 

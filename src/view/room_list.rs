@@ -1,11 +1,10 @@
-use crate::room::{self, RoomId};
 use crate::state::{
     commands::menu::SelectRoomCommand, events::StateEvent, State, StateCommand, StateController,
     StateSubscriber,
 };
 use crate::view::room_list_entry::RoomListEntry;
 use gtk::prelude::*;
-use gtk::{Label, ListBox, PolicyType, ScrolledWindow};
+use gtk::{ListBox, PolicyType, ScrolledWindow};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct RoomList {
