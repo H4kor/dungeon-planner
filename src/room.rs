@@ -1,6 +1,6 @@
 use crate::{
     common::{Rgb, Vec2},
-    view::primitives::{Line, Polygon, Primitive},
+    view::primitives::{Polygon, Primitive},
 };
 pub type RoomId = u32;
 

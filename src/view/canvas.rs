@@ -2,11 +2,9 @@ use crate::common::Vec2;
 use crate::state::commands::AddVertexToRoomCommand;
 use crate::state::StateController;
 use gtk::gdk::ffi::GDK_BUTTON_PRIMARY;
-use gtk::gdk::ButtonEvent;
-use gtk::gdk::EventType::ButtonPress;
-use gtk::glib::Propagation;
-use gtk::{prelude::*, EventControllerLegacy, GestureClick};
+use gtk::{prelude::*, GestureClick};
 use gtk::{DrawingArea, EventControllerMotion};
+use std::boxed::Box;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -94,23 +92,17 @@ impl Canvas {
             let canvas = canvas.clone();
             gesture_click.connect_pressed(move |_, _, _, _| {
                 let control = &mut *control.borrow_mut();
-                match control.state.active_room_id {
-                    None => (),
-                    Some(active_room_id) => match control.state.dungeon.room(active_room_id) {
-                        None => (),
-                        Some(room) => {
-                            let room_id = room.id.unwrap();
-                            control.apply(RefCell::new(std::boxed::Box::new(
-                                AddVertexToRoomCommand {
-                                    room_id: room_id,
-                                    pos: control.state.grid.snap(Vec2 {
-                                        x: control.state.cursor.pos.x as i32,
-                                        y: control.state.cursor.pos.y as i32,
-                                    }),
-                                },
-                            )));
-                        }
-                    },
+                if let Some(active_room_id) = control.state.active_room_id {
+                    if let Some(room) = control.state.dungeon.room(active_room_id) {
+                        let room_id = room.id.unwrap();
+                        control.apply(RefCell::new(Box::new(AddVertexToRoomCommand {
+                            room_id: room_id,
+                            pos: control.state.grid.snap(Vec2 {
+                                x: control.state.cursor.pos.x as i32,
+                                y: control.state.cursor.pos.y as i32,
+                            }),
+                        })));
+                    }
                 }
                 canvas.borrow().update();
             });
