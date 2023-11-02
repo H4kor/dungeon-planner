@@ -22,14 +22,15 @@ impl RoomEdit {
             let control = control.clone();
             name_i.connect_changed(move |field| {
                 let name = field.text().to_string();
-                let mut control = control.borrow_mut();
-                match control.state.active_room_id {
-                    None => (),
-                    Some(room_id) => {
-                        control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomName {
-                            room_id: room_id,
-                            name: name,
-                        })))
+                if let Ok(mut control) = control.try_borrow_mut() {
+                    match control.state.active_room_id {
+                        None => (),
+                        Some(room_id) => {
+                            control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomName {
+                                room_id: room_id,
+                                name: name,
+                            })))
+                        }
                     }
                 }
             });
@@ -37,7 +38,7 @@ impl RoomEdit {
 
         {
             let control = control.clone();
-            notes_i.buffer().connect_changed(move |buffer| {
+            notes_i.buffer().connect_end_user_action(move |buffer| {
                 let (start, end) = buffer.bounds();
                 let notes = buffer.text(&start, &end, true).to_string();
                 let mut control = control.borrow_mut();
@@ -86,7 +87,12 @@ impl StateSubscriber for RoomEdit {
     ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
         match event {
             StateEvent::ActiveRoomChanged(None) => self.widget.set_visible(false),
-            StateEvent::ActiveRoomChanged(Some(_)) => self.widget.set_visible(true),
+            StateEvent::ActiveRoomChanged(Some(room_id)) => {
+                let room = state.dungeon.room(room_id).unwrap();
+                self.name_input.set_text(&room.name);
+                self.notes_input.buffer().set_text(&room.notes);
+                self.widget.set_visible(true);
+            }
             _ => (),
         }
         vec![]
