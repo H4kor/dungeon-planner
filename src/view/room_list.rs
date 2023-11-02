@@ -60,7 +60,6 @@ impl StateSubscriber for RoomList {
         state: &mut State,
         event: StateEvent,
     ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
-        println!("RoomList {:?}", event);
         match event {
             StateEvent::RoomAdded(room_id) => {
                 let room = state.dungeon.room(room_id).unwrap();
