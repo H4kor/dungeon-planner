@@ -32,7 +32,7 @@ pub struct StateController {
 #[derive(Debug)]
 pub struct StateCommandData {
     pub name: String,
-    pub data: String,
+    pub data: serde_json::Value,
 }
 
 pub trait StateCommand {

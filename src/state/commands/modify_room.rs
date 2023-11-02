@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use crate::{
     common::Vec2,
     room::RoomId,
@@ -18,7 +20,11 @@ impl StateCommand for AddVertexToRoomCommand {
     fn data(&self) -> crate::state::StateCommandData {
         StateCommandData {
             name: "AddVertexToRoomCommand".to_owned(),
-            data: format!("{} {} {}", self.room_id, self.pos.x, self.pos.y),
+            data: json!({
+                "room_id": self.room_id,
+                "x": self.pos.x,
+                "y": self.pos.y
+            }),
         }
     }
 }
@@ -37,7 +43,10 @@ impl StateCommand for ChangeRoomName {
     fn data(&self) -> crate::state::StateCommandData {
         StateCommandData {
             name: "ChangeRoomName".to_owned(),
-            data: format!("{} {}", self.room_id, self.name),
+            data: json!({
+                "room_id": self.room_id,
+                "name": self.name,
+            }),
         }
     }
 }
@@ -56,7 +65,10 @@ impl StateCommand for ChangeRoomNotes {
     fn data(&self) -> crate::state::StateCommandData {
         StateCommandData {
             name: "ChangeRoomNotes".to_owned(),
-            data: format!("{} {}", self.room_id, self.notes),
+            data: json!({
+                "room_id": self.room_id,
+                "notes": self.notes,
+            }),
         }
     }
 }

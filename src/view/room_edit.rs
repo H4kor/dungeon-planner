@@ -38,7 +38,8 @@ impl RoomEdit {
         {
             let control = control.clone();
             notes_i.buffer().connect_changed(move |buffer| {
-                let notes = buffer.to_string();
+                let (start, end) = buffer.bounds();
+                let notes = buffer.text(&start, &end, true).to_string();
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),

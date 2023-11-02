@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use crate::{
     room::RoomId,
     state::{events::StateEvent, StateCommand, StateCommandData},
@@ -16,10 +18,7 @@ impl StateCommand for SelectRoomCommand {
     fn data(&self) -> crate::state::StateCommandData {
         StateCommandData {
             name: "SelectRoomCommand".to_owned(),
-            data: match self.room_id {
-                Some(x) => format!("{}", x),
-                None => "".to_owned(),
-            },
+            data: json!({"room_id": self.room_id}),
         }
     }
 }
