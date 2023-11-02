@@ -42,6 +42,7 @@ impl StorageObserver {
         let file = OpenOptions::new()
             .write(true)
             .append(true)
+            .create(true)
             .open("dungeon.txt")
             .unwrap();
         let obs = Rc::new(RefCell::new(StorageObserver { file: file }));

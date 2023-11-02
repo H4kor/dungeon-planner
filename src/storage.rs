@@ -54,17 +54,18 @@ fn line_to_command(l: &String) -> Option<RefCell<Box<dyn StateCommand>>> {
 }
 
 pub fn load_dungeon(control: Rc<RefCell<StateController>>) {
-    let file = File::open("dungeon.txt").unwrap();
-    let lines = io::BufReader::new(file).lines();
+    if let Ok(file) = File::open("dungeon.txt") {
+        let lines = io::BufReader::new(file).lines();
 
-    for line in lines {
-        if let Ok(ip) = line {
-            match line_to_command(&ip) {
-                None => {
-                    println!("Unable to interpret line as command: {}", ip)
-                }
-                Some(cmd) => control.borrow_mut().apply(cmd),
-            };
+        for line in lines {
+            if let Ok(ip) = line {
+                match line_to_command(&ip) {
+                    None => {
+                        println!("Unable to interpret line as command: {}", ip)
+                    }
+                    Some(cmd) => control.borrow_mut().apply(cmd),
+                };
+            }
         }
     }
 }
