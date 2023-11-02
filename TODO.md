@@ -1,0 +1,1 @@
+- better system to deserialize commands (macros might help?)

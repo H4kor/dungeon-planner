@@ -1,4 +1,4 @@
-use crate::common::Vec2;
+use crate::common::{Rgb, Vec2};
 use crate::state::commands::AddVertexToRoomCommand;
 use crate::state::StateController;
 use gtk::gdk::ffi::GDK_BUTTON_PRIMARY;
@@ -7,6 +7,8 @@ use gtk::{DrawingArea, EventControllerMotion};
 use std::boxed::Box;
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use super::primitives::{Line, Primitive};
 
 pub struct Canvas {
     pub widget: DrawingArea,
@@ -64,6 +66,28 @@ impl Canvas {
                     for prim in prims {
                         prim.draw(ctx)
                     }
+                }
+
+                // draw nearest wall
+                match control.state.dungeon.nearest_wall(cp) {
+                    None => (),
+                    Some((_, wall)) => Line {
+                        from: Vec2::<f64> {
+                            x: wall.p1.x as f64,
+                            y: wall.p1.y as f64,
+                        },
+                        to: Vec2::<f64> {
+                            x: wall.p2.x as f64,
+                            y: wall.p2.y as f64,
+                        },
+                        color: Rgb {
+                            r: 1.0,
+                            g: 0.0,
+                            b: 0.0,
+                        },
+                        width: 10.0,
+                    }
+                    .draw(ctx),
                 }
 
                 // debug circle
