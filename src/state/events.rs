@@ -5,7 +5,7 @@ use std::hash::Hash;
 pub enum StateEvent {
     RoomAdded(RoomId),
     RoomModified(RoomId),
-    ActiveRoomChanged,
+    ActiveRoomChanged(Option<RoomId>),
 }
 
 impl PartialEq for StateEvent {

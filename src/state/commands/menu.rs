@@ -4,13 +4,12 @@ use crate::{
 };
 
 pub struct SelectRoomCommand {
-    pub room_id: RoomId,
+    pub room_id: Option<RoomId>,
 }
 
 impl StateCommand for SelectRoomCommand {
     fn execute(&self, state: &mut crate::state::State) -> Vec<crate::state::events::StateEvent> {
-        state.active_room_id = Some(self.room_id);
-        println!("Active Room {}", state.active_room_id.unwrap());
-        vec![StateEvent::ActiveRoomChanged]
+        state.active_room_id = self.room_id;
+        vec![StateEvent::ActiveRoomChanged(self.room_id)]
     }
 }

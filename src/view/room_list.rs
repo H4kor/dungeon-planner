@@ -41,9 +41,9 @@ impl RoomList {
                         .dynamic_cast::<RoomListEntry>()
                         .unwrap()
                         .room_id();
-                    state
-                        .borrow_mut()
-                        .apply(Box::new(SelectRoomCommand { room_id: room_id }));
+                    state.borrow_mut().apply(Box::new(SelectRoomCommand {
+                        room_id: Some(room_id),
+                    }));
                 }
                 None => {
                     println!("nothing")
@@ -54,6 +54,7 @@ impl RoomList {
         let mut state = state.borrow_mut();
         state.subscribe(StateEvent::RoomAdded(0), room_list.clone());
         state.subscribe(StateEvent::RoomModified(0), room_list.clone());
+        state.subscribe(StateEvent::ActiveRoomChanged(None), room_list.clone());
         room_list
     }
 }
@@ -78,7 +79,12 @@ impl StateSubscriber for RoomList {
                     .filter(|r| r.room_id() == room_id)
                     .for_each(|w| w.update(room));
             }
-            _ => (),
+            StateEvent::ActiveRoomChanged(room_id) => match room_id {
+                None => self.list_box.unselect_all(),
+                Some(room_id) => self
+                    .list_box
+                    .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
+            },
         }
         vec![]
     }

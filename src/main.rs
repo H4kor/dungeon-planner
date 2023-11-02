@@ -23,6 +23,7 @@ use view::room_list::RoomList;
 use view::View;
 
 use crate::common::Vec2;
+use crate::state::commands::menu::SelectRoomCommand;
 use crate::state::commands::AddVertexToRoomCommand;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
@@ -191,6 +192,7 @@ fn build_ui(app: &Application) {
                 gdk::Key::Left => view_obj.move_view(Vec2 { x: -SPEED, y: 0 }),
                 gdk::Key::Up => view_obj.move_view(Vec2 { x: 0, y: -SPEED }),
                 gdk::Key::Down => view_obj.move_view(Vec2 { x: 0, y: SPEED }),
+                gdk::Key::Escape => control.apply(Box::new(SelectRoomCommand { room_id: None })),
                 _ => (),
             }
             control.state.view = view_obj;
