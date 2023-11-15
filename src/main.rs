@@ -98,19 +98,12 @@ fn build_ui(app: &Application) {
         let canvas = canvas.clone();
         control_key.connect_key_pressed(move |_, key, _, _| {
             let mut control = control.borrow_mut();
-            let mut view_obj = control.state.view;
-            const SPEED: i32 = 10;
             match key {
-                gdk::Key::Right => view_obj.move_view(Vec2 { x: SPEED, y: 0 }),
-                gdk::Key::Left => view_obj.move_view(Vec2 { x: -SPEED, y: 0 }),
-                gdk::Key::Up => view_obj.move_view(Vec2 { x: 0, y: -SPEED }),
-                gdk::Key::Down => view_obj.move_view(Vec2 { x: 0, y: SPEED }),
                 gdk::Key::Escape => {
                     control.apply(RefCell::new(Box::new(SelectRoomCommand { room_id: None })))
                 }
                 _ => (),
             }
-            control.state.view = view_obj;
             canvas.borrow().update();
             glib::Propagation::Proceed
         });

@@ -145,7 +145,6 @@ impl Canvas {
                     gesture_drag.connect_begin(move |_, _| last_pos.set(None));
                 }
                 gesture_drag.connect_drag_update(move |_, x, y| {
-                    println!("Drag update {} {}", x, y);
                     let mut control = control.borrow_mut();
                     let mut view_obj = control.state.view;
                     let last = last_pos.get().unwrap_or(Vec2 { x: 0, y: 0 });
