@@ -1,11 +1,11 @@
 use crate::common::{Rgb, Vec2};
 use crate::state::commands::AddVertexToRoomCommand;
 use crate::state::StateController;
-use gtk::gdk::ffi::GDK_BUTTON_PRIMARY;
-use gtk::{prelude::*, GestureClick};
+use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
+use gtk::{prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
 use std::boxed::Box;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use super::primitives::{Line, Primitive};
@@ -131,6 +131,36 @@ impl Canvas {
                 canvas.borrow().update();
             });
         }
+
+        let gesture_drag = GestureDrag::builder()
+            .button(GDK_BUTTON_SECONDARY as u32)
+            .build();
+
+        {
+            {
+                let control = control.clone();
+                let last_pos: Rc<Cell<Option<Vec2<i32>>>> = Rc::new(Cell::new(None));
+                {
+                    let last_pos = last_pos.clone();
+                    gesture_drag.connect_begin(move |_, _| last_pos.set(None));
+                }
+                gesture_drag.connect_drag_update(move |_, x, y| {
+                    println!("Drag update {} {}", x, y);
+                    let mut control = control.borrow_mut();
+                    let mut view_obj = control.state.view;
+                    let last = last_pos.get().unwrap_or(Vec2 { x: 0, y: 0 });
+                    let cur = Vec2 {
+                        x: x as i32,
+                        y: y as i32,
+                    };
+                    view_obj.move_view(last - cur);
+                    control.state.view = view_obj;
+                    last_pos.set(Some(cur));
+                });
+            }
+        }
+
+        drawing_area.add_controller(gesture_drag);
         drawing_area.add_controller(gesture_click);
         drawing_area.add_controller(pos_controller);
         canvas
