@@ -51,11 +51,8 @@ impl Canvas {
                 }
 
                 // draw room
-                let cp = control.state.cursor.pos;
-                let next_vert = control.state.grid.snap(Vec2::<i32> {
-                    x: cp.x as i32,
-                    y: cp.y as i32,
-                });
+                let cp = control.state.cursor.pos + control.state.view.world_min().into();
+                let next_vert = control.state.grid.snap(cp.into());
 
                 for room in control.dungeon().rooms.iter() {
                     let mut vert_opt = None;
@@ -72,14 +69,8 @@ impl Canvas {
                 match control.state.dungeon.nearest_wall(cp) {
                     None => (),
                     Some((_, wall)) => Line {
-                        from: Vec2::<f64> {
-                            x: wall.p1.x as f64,
-                            y: wall.p1.y as f64,
-                        },
-                        to: Vec2::<f64> {
-                            x: wall.p2.x as f64,
-                            y: wall.p2.y as f64,
-                        },
+                        from: wall.p1.into(),
+                        to: wall.p2.into(),
                         color: Rgb {
                             r: 1.0,
                             g: 0.0,
@@ -121,10 +112,10 @@ impl Canvas {
                         let room_id = room.id.unwrap();
                         control.apply(RefCell::new(Box::new(AddVertexToRoomCommand {
                             room_id: room_id,
-                            pos: control.state.grid.snap(Vec2 {
-                                x: control.state.cursor.pos.x as i32,
-                                y: control.state.cursor.pos.y as i32,
-                            }),
+                            pos: control.state.grid.snap(
+                                (control.state.cursor.pos + control.state.view.world_min().into())
+                                    .into(),
+                            ),
                         })));
                     }
                 }

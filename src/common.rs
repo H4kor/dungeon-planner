@@ -77,6 +77,26 @@ impl<T: Mul<Output = T>> Mul<Vec2<T>> for Vec2<T> {
     }
 }
 
+impl Into<Vec2<f64>> for Vec2<i32> {
+    fn into(self) -> Vec2<f64> {
+        Vec2 {
+            x: self.x as f64,
+            y: self.y as f64,
+        }
+    }
+}
+
+impl Into<Vec2<i32>> for Vec2<f64> {
+    fn into(self) -> Vec2<i32> {
+        Vec2 {
+            x: self.x as i32,
+            y: self.y as i32,
+        }
+    }
+}
+
+/// Vec3
+
 impl<T: Add<Output = T>> Add<Vec3<T>> for Vec3<T> {
     type Output = Vec3<T>;
     fn add(self, rhs: Vec3<T>) -> Vec3<T> {
