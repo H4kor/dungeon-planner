@@ -59,13 +59,7 @@ impl Room {
         let mut lines = Vec::<Box<dyn Primitive>>::new();
 
         lines.push(Box::new(Polygon {
-            points: verts
-                .iter()
-                .map(|p| Vec2::<f64> {
-                    x: p.x as f64,
-                    y: p.y as f64,
-                })
-                .collect(),
+            points: verts.iter().map(|p| Into::<Vec2<f64>>::into(*p)).collect(),
             fill_color: self.room_color,
             fill_opacity: 0.3,
             stroke_color: self.wall_color,
@@ -106,14 +100,8 @@ impl Wall {
     pub fn distance(&self, p: Vec2<f64>) -> f64 {
         // Return minimum distance between line segment vw and point p
         // https://stackoverflow.com/a/1501725/1224467
-        let v = Vec2::<f64> {
-            x: self.p1.x as f64,
-            y: self.p1.y as f64,
-        };
-        let w = Vec2::<f64> {
-            x: self.p2.x as f64,
-            y: self.p2.y as f64,
-        };
+        let v: Vec2<f64> = self.p1.into();
+        let w: Vec2<f64> = self.p2.into();
         let l2 = (w - v).sqr_len(); // i.e. |w-v|^2 -  avoid a sqrt
         if l2 == 0.0 {
             return (p - v).len(); // v == w case
