@@ -6,7 +6,7 @@ use std::{
 
 use serde_json::json;
 
-use crate::state::{StateCommand, StateCommandSubscriber, StateController, StateSubscriber};
+use crate::state::{State, StateCommand, StateCommandSubscriber, StateController, StateSubscriber};
 use std::io::prelude::*;
 
 pub struct DebugObserver {}
@@ -33,6 +33,7 @@ impl StateSubscriber for DebugObserver {
 
 pub struct StorageObserver {
     file: File,
+    active: bool,
 }
 
 impl StorageObserver {
@@ -44,15 +45,27 @@ impl StorageObserver {
             .create(true)
             .open("dungeon.txt")
             .unwrap();
-        let obs = Rc::new(RefCell::new(StorageObserver { file: file }));
+        let obs = Rc::new(RefCell::new(StorageObserver {
+            file: file,
+            active: false,
+        }));
 
         state.borrow_mut().subscribe_cmds(obs.clone());
         obs
+    }
+    pub fn deactivate(&mut self) {
+        self.active = false
+    }
+    pub fn activate(&mut self) {
+        self.active = true
     }
 }
 
 impl StateCommandSubscriber for StorageObserver {
     fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
+        if !self.active {
+            return;
+        }
         let name = match cmd {
             StateCommand::AddRoom => "AddRoomCommand".to_owned(),
             StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
@@ -78,5 +91,43 @@ impl StateCommandSubscriber for StorageObserver {
             }),
         };
         writeln!(self.file, "{} >> {}", name, data).unwrap();
+    }
+}
+
+pub struct UndoObserver {
+    cmds: Vec<StateCommand>,
+    active: bool,
+}
+
+impl UndoObserver {
+    pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
+        let obs = Rc::new(RefCell::new(UndoObserver {
+            cmds: vec![],
+            active: true,
+        }));
+        control.borrow_mut().subscribe_cmds(obs.clone());
+        obs
+    }
+
+    pub fn undo(&mut self) {
+        self.cmds.pop();
+    }
+
+    pub fn get_stack(&self) -> Vec<StateCommand> {
+        self.cmds.clone()
+    }
+    pub fn end_restore(&mut self) {
+        self.active = true
+    }
+    pub fn start_restore(&mut self) {
+        self.active = false
+    }
+}
+
+impl StateCommandSubscriber for UndoObserver {
+    fn on_cmd_event(&mut self, state: &mut State, cmd: StateCommand) {
+        if self.active {
+            self.cmds.push(cmd)
+        }
     }
 }

@@ -84,22 +84,28 @@ pub trait StateCommandSubscriber {
     fn on_cmd_event(&mut self, state: &mut State, cmd: StateCommand);
 }
 
+impl State {
+    pub fn new() -> Self {
+        State {
+            active_room_id: None,
+            dungeon: Dungeon::new(),
+            grid: Grid::new(),
+            view: View::new(),
+            mode: EditMode::Select,
+            cursor: CursorState {
+                pos: Vec2 { x: 0.0, y: 0.0 },
+            },
+        }
+    }
+}
+
 impl StateController {
-    pub fn new(dungeon: Dungeon, grid: Grid, view: View) -> Self {
+    pub fn new() -> Self {
         StateController {
             subscribers: HashMap::new(),
             any_subscribers: vec![],
             cmd_subscribers: vec![],
-            state: State {
-                active_room_id: None,
-                dungeon: dungeon,
-                grid: grid,
-                view: view,
-                mode: EditMode::Select,
-                cursor: CursorState {
-                    pos: Vec2 { x: 0.0, y: 0.0 },
-                },
-            },
+            state: State::new(),
         }
     }
 
@@ -157,6 +163,10 @@ impl StateController {
         for cmd in all_cmds {
             self.apply(cmd);
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.state = State::new();
     }
 }
 
