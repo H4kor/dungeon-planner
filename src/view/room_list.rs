@@ -1,7 +1,4 @@
-use crate::state::{
-    commands::menu::SelectRoomCommand, events::StateEvent, State, StateCommand, StateController,
-    StateSubscriber,
-};
+use crate::state::{events::StateEvent, State, StateCommand, StateController, StateSubscriber};
 use crate::view::room_list_entry::RoomListEntry;
 use gtk::prelude::*;
 use gtk::{ListBox, PolicyType, ScrolledWindow};
@@ -40,9 +37,7 @@ impl RoomList {
                     .room_id();
                 state
                     .borrow_mut()
-                    .apply(RefCell::new(Box::new(SelectRoomCommand {
-                        room_id: Some(room_id),
-                    })));
+                    .apply(StateCommand::SelectRoom(Some(room_id)));
             });
         }
 
@@ -55,11 +50,7 @@ impl RoomList {
 }
 
 impl StateSubscriber for RoomList {
-    fn on_state_event(
-        &mut self,
-        state: &mut State,
-        event: StateEvent,
-    ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
+    fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
         match event {
             StateEvent::RoomAdded(room_id) => {
                 let room = state.dungeon.room(room_id).unwrap();

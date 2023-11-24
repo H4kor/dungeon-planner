@@ -4,7 +4,6 @@ use std::rc::Rc;
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
-use crate::state::commands::{ChangeRoomName, ChangeRoomNotes};
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateSubscriber};
 
@@ -25,12 +24,7 @@ impl RoomEdit {
                 if let Ok(mut control) = control.try_borrow_mut() {
                     match control.state.active_room_id {
                         None => (),
-                        Some(room_id) => {
-                            control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomName {
-                                room_id: room_id,
-                                name: name,
-                            })))
-                        }
+                        Some(room_id) => control.apply(StateCommand::ChangeRoomName(room_id, name)),
                     }
                 }
             });
@@ -44,12 +38,7 @@ impl RoomEdit {
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),
-                    Some(room_id) => {
-                        control.apply(RefCell::new(std::boxed::Box::new(ChangeRoomNotes {
-                            room_id: room_id,
-                            notes: notes,
-                        })))
-                    }
+                    Some(room_id) => control.apply(StateCommand::ChangeRoomNodes(room_id, notes)),
                 }
             });
         }
@@ -84,7 +73,7 @@ impl StateSubscriber for RoomEdit {
         &mut self,
         state: &mut crate::state::State,
         event: StateEvent,
-    ) -> Vec<RefCell<std::boxed::Box<dyn StateCommand>>> {
+    ) -> Vec<StateCommand> {
         match event {
             StateEvent::ActiveRoomChanged(None) => self.widget.set_visible(false),
             StateEvent::ActiveRoomChanged(Some(room_id)) => {

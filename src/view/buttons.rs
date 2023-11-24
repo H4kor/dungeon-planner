@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::state::commands::AddRoomCommand;
+use crate::state::StateCommand;
 use crate::state::StateController;
 use gtk::prelude::*;
 use gtk::Button;
@@ -15,7 +15,7 @@ impl AddRoomButton {
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();
-            control.apply(RefCell::new(Box::new(AddRoomCommand {})));
+            control.apply(StateCommand::AddRoom);
         });
 
         AddRoomButton { widget: button }

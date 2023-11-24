@@ -6,13 +6,11 @@ mod state;
 mod storage;
 mod view;
 
-use crate::common::Vec2;
-use crate::state::commands::menu::SelectRoomCommand;
 use dungeon::Dungeon;
 use gtk::{gdk, prelude::*};
 use gtk::{glib, Application, ApplicationWindow};
 use observers::{DebugObserver, StorageObserver};
-use state::StateController;
+use state::{StateCommand, StateController};
 use std::cell::RefCell;
 use std::rc::Rc;
 use view::buttons::AddRoomButton;
@@ -99,9 +97,7 @@ fn build_ui(app: &Application) {
         control_key.connect_key_pressed(move |_, key, _, _| {
             let mut control = control.borrow_mut();
             match key {
-                gdk::Key::Escape => {
-                    control.apply(RefCell::new(Box::new(SelectRoomCommand { room_id: None })))
-                }
+                gdk::Key::Escape => control.apply(StateCommand::SelectRoom(None)),
                 _ => (),
             }
             canvas.borrow().update();

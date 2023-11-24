@@ -1,10 +1,8 @@
 use crate::common::{Rgb, Vec2};
-use crate::state::commands::AddVertexToRoomCommand;
-use crate::state::StateController;
+use crate::state::{StateCommand, StateController};
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
 use gtk::{prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
-use std::boxed::Box;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -110,13 +108,13 @@ impl Canvas {
                 if let Some(active_room_id) = control.state.active_room_id {
                     if let Some(room) = control.state.dungeon.room(active_room_id) {
                         let room_id = room.id.unwrap();
-                        control.apply(RefCell::new(Box::new(AddVertexToRoomCommand {
-                            room_id: room_id,
-                            pos: control.state.grid.snap(
+                        control.apply(StateCommand::AddVertexToRoom(
+                            room_id,
+                            control.state.grid.snap(
                                 (control.state.cursor.pos + control.state.view.world_min().into())
                                     .into(),
                             ),
-                        })));
+                        ));
                     }
                 }
                 canvas.borrow().update();
