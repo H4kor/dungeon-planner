@@ -1,5 +1,5 @@
 use crate::common::{Rgb, Vec2};
-use crate::state::{StateCommand, StateController};
+use crate::state::{StateCommand, StateController, StateEventSubscriber};
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
 use gtk::{prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
@@ -54,10 +54,11 @@ impl Canvas {
 
                 for room in control.dungeon().rooms.iter() {
                     let mut vert_opt = None;
-                    if control.state.active_room_id == room.id {
+                    let active = control.state.active_room_id == room.id;
+                    if active {
                         vert_opt = Some(next_vert)
                     }
-                    let prims = room.draw(vert_opt);
+                    let prims = room.draw(vert_opt, active);
                     for prim in prims {
                         prim.draw(ctx)
                     }
@@ -151,10 +152,23 @@ impl Canvas {
         drawing_area.add_controller(gesture_drag);
         drawing_area.add_controller(gesture_click);
         drawing_area.add_controller(pos_controller);
+
+        control.borrow_mut().subscribe_any(canvas.clone());
         canvas
     }
 
     pub fn update(&self) {
         self.widget.queue_draw()
+    }
+}
+
+impl StateEventSubscriber for Canvas {
+    fn on_state_event(
+        &mut self,
+        _state: &mut crate::state::State,
+        _event: crate::state::events::StateEvent,
+    ) -> Vec<StateCommand> {
+        self.widget.queue_draw();
+        vec![]
     }
 }

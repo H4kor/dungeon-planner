@@ -1,5 +1,6 @@
 use crate::{
     common::{Rgb, Vec2},
+    config::{ACTIVE_ROOM_COLOR, DEFAULT_ROOM_COLOR, WALL_WIDTH},
     view::primitives::{Polygon, Primitive},
 };
 pub type RoomId = u32;
@@ -24,9 +25,7 @@ pub struct Room {
     verts: Vec<Vec2<i32>>,
     pub name: String,
     pub notes: String,
-    wall_color: Rgb,
     room_color: Rgb,
-    wall_width: f64,
 }
 
 impl Room {
@@ -36,21 +35,11 @@ impl Room {
             verts: vec![],
             name: "New Room".to_owned(),
             notes: String::new(),
-            wall_color: Rgb {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-            },
-            room_color: Rgb {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-            },
-            wall_width: 7.0,
+            room_color: DEFAULT_ROOM_COLOR,
         }
     }
 
-    pub fn draw(&self, next_vert: Option<Vec2<i32>>) -> Vec<Box<dyn Primitive>> {
+    pub fn draw(&self, next_vert: Option<Vec2<i32>>, active: bool) -> Vec<Box<dyn Primitive>> {
         let mut verts = self.verts.clone();
         match next_vert {
             Some(v) => verts.push(v),
@@ -58,12 +47,17 @@ impl Room {
         }
         let mut lines = Vec::<Box<dyn Primitive>>::new();
 
+        let color = match active {
+            false => self.room_color,
+            true => ACTIVE_ROOM_COLOR,
+        };
+
         lines.push(Box::new(Polygon {
             points: verts.iter().map(|p| Into::<Vec2<f64>>::into(*p)).collect(),
-            fill_color: self.room_color,
+            fill_color: color,
             fill_opacity: 0.3,
-            stroke_color: self.wall_color,
-            stroke_width: self.wall_width,
+            stroke_color: color,
+            stroke_width: WALL_WIDTH,
         }));
 
         lines

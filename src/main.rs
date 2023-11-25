@@ -1,4 +1,5 @@
 mod common;
+mod config;
 mod dungeon;
 pub mod observers;
 mod room;
