@@ -38,7 +38,7 @@ impl RoomEdit {
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),
-                    Some(room_id) => control.apply(StateCommand::ChangeRoomNodes(room_id, notes)),
+                    Some(room_id) => control.apply(StateCommand::ChangeRoomNotes(room_id, notes)),
                 }
             });
         }

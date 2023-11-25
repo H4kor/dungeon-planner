@@ -11,7 +11,7 @@ pub struct RoomList {
 }
 
 impl RoomList {
-    pub fn new(state: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
+    pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
         let list_box = ListBox::builder()
             .selection_mode(gtk::SelectionMode::Single)
             .build();
@@ -28,20 +28,20 @@ impl RoomList {
         }));
 
         {
-            let state = state.clone();
+            let control = control.clone();
             list_box.connect_row_activated(move |_, row| {
                 let room_id = row
                     .clone()
                     .dynamic_cast::<RoomListEntry>()
                     .unwrap()
                     .room_id();
-                state
+                control
                     .borrow_mut()
                     .apply(StateCommand::SelectRoom(Some(room_id)));
             });
         }
 
-        let mut state = state.borrow_mut();
+        let mut state = control.borrow_mut();
         state.subscribe(StateEvent::RoomAdded(0), room_list.clone());
         state.subscribe(StateEvent::RoomModified(0), room_list.clone());
         state.subscribe(StateEvent::ActiveRoomChanged(None), room_list.clone());

@@ -71,7 +71,7 @@ impl StateCommandSubscriber for StorageObserver {
             StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
             StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
             StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
-            StateCommand::ChangeRoomNodes(_, _) => "ChangeRoomNotes".to_owned(),
+            StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -85,7 +85,7 @@ impl StateCommandSubscriber for StorageObserver {
                 "room_id": room_id,
                 "name": name,
             }),
-            StateCommand::ChangeRoomNodes(room_id, notes) => json!({
+            StateCommand::ChangeRoomNotes(room_id, notes) => json!({
                 "room_id": room_id,
                 "notes": notes,
             }),

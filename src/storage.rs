@@ -37,7 +37,7 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
             }
             "ChangeRoomNotes" => {
                 let v: Value = serde_json::from_str(data).unwrap();
-                Some(StateCommand::ChangeRoomNodes(
+                Some(StateCommand::ChangeRoomNotes(
                     v["room_id"].as_u64().unwrap() as RoomId,
                     v["notes"].as_str().unwrap().to_owned(),
                 ))
