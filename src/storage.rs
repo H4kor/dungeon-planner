@@ -1,5 +1,5 @@
 use crate::common::Vec2;
-use crate::room::RoomId;
+use crate::room::{RoomId, WallId};
 use crate::state::{EditMode, StateCommand, StateController};
 use serde_json::json;
 use serde_json::Value;
@@ -50,6 +50,17 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["mode"].as_str().unwrap(),
                 )))
             }
+            "SplitWall" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::SplitWall(
+                    v["room_id"].as_u64().unwrap() as RoomId,
+                    v["wall_id"].as_u64().unwrap() as WallId,
+                    Vec2 {
+                        x: v["x"].as_i64().unwrap() as i32,
+                        y: v["y"].as_i64().unwrap() as i32,
+                    },
+                ))
+            }
             _ => None,
         },
     }
@@ -90,6 +101,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
             StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
             StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),
+            StateCommand::SplitWall(_, _, _) => "SplitWall".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -109,6 +121,12 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             }),
             StateCommand::ChangeMode(mode) => json!({
                 "mode": mode.to_str()
+            }),
+            StateCommand::SplitWall(room_id, wall_id, pos) => json!({
+                "room_id": room_id,
+                "wall_id": wall_id,
+                "x": pos.x,
+                "y": pos.y
             }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();

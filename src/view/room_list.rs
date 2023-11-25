@@ -76,7 +76,7 @@ impl StateEventSubscriber for RoomList {
                 self.rebuild_list(state);
             }
             StateEvent::RoomModified(room_id) => {
-                let room = state.dungeon.room(room_id).unwrap();
+                let room = state.dungeon.room_mut(room_id).unwrap();
                 self.rows
                     .iter_mut()
                     .filter(|r| r.room_id() == room_id)

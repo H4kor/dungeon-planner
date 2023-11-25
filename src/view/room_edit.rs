@@ -77,7 +77,7 @@ impl StateEventSubscriber for RoomEdit {
         match event {
             StateEvent::ActiveRoomChanged(None) => self.widget.set_visible(false),
             StateEvent::ActiveRoomChanged(Some(room_id)) => {
-                let room = state.dungeon.room(room_id).unwrap();
+                let room = state.dungeon.room_mut(room_id).unwrap();
                 self.name_input.set_text(&room.name);
                 self.notes_input.buffer().set_text(&room.notes);
                 self.widget.set_visible(true);

@@ -23,7 +23,7 @@ impl Dungeon {
             None => self.next_id(),
             Some(x) => {
                 // if Id is already used, generate a new one.
-                match self.room(x) {
+                match self.room_mut(x) {
                     Some(_) => self.next_id(),
                     None => x,
                 }
@@ -44,8 +44,11 @@ impl Dungeon {
     }
 
     /// get a room by its id
-    pub fn room(&mut self, room_id: RoomId) -> Option<&mut Room> {
+    pub fn room_mut(&mut self, room_id: RoomId) -> Option<&mut Room> {
         self.rooms.iter_mut().find(|r| r.id == Some(room_id))
+    }
+    pub fn room(&self, room_id: RoomId) -> Option<&Room> {
+        self.rooms.iter().find(|r| r.id == Some(room_id))
     }
 
     /// get the nearest wall to a given point
@@ -55,11 +58,11 @@ impl Dungeon {
         let mut min_wall = None;
         let mut min_d = f64::INFINITY;
         for room in self.rooms.iter() {
-            for wall in room.walls().iter() {
+            if let Some(wall) = room.nearest_wall(pos) {
                 let d = wall.distance(pos);
                 if d < min_d {
                     min_room_id = room.id;
-                    min_wall = Some(*wall);
+                    min_wall = Some(wall);
                     min_d = d;
                 }
             }

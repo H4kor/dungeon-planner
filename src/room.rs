@@ -13,8 +13,14 @@ pub type WallId = u32;
 #[derive(Clone, Copy)]
 pub struct Wall {
     pub id: RoomId,
+    pub p1_idx: usize,
     pub p1: Vec2<i32>,
     pub p2: Vec2<i32>,
+}
+
+pub struct NextVert {
+    pub in_wall_id: Option<WallId>,
+    pub pos: Vec2<i32>,
 }
 
 /// A Room is part of a Dungeon
@@ -39,10 +45,21 @@ impl Room {
         }
     }
 
-    pub fn draw(&self, next_vert: Option<Vec2<i32>>, active: bool) -> Vec<Box<dyn Primitive>> {
+    pub fn draw(&self, next_vert: Option<NextVert>, active: bool) -> Vec<Box<dyn Primitive>> {
         let mut verts = self.verts.clone();
         match next_vert {
-            Some(v) => verts.push(v),
+            Some(v) => match v.in_wall_id {
+                Some(wall_id) => {
+                    let wall = self
+                        .walls()
+                        .iter()
+                        .find(|w| w.id == wall_id)
+                        .unwrap()
+                        .clone();
+                    verts.insert(wall.p1_idx + 1, v.pos)
+                }
+                None => verts.push(v.pos),
+            },
             None => (),
         }
         let mut lines = Vec::<Box<dyn Primitive>>::new();
@@ -75,6 +92,7 @@ impl Room {
             for (i, v) in self.verts[1..].iter().enumerate() {
                 walls.push(Wall {
                     id: i as WallId,
+                    p1_idx: i,
                     p1: prev,
                     p2: *v,
                 });
@@ -82,6 +100,7 @@ impl Room {
             }
             walls.push(Wall {
                 id: walls.len() as RoomId,
+                p1_idx: walls.len(),
                 p1: prev,
                 p2: self.verts[0],
             })
@@ -128,6 +147,29 @@ impl Room {
         }
         // uneven crossing == inside
         crossings % 2 == 1
+    }
+
+    pub(crate) fn nearest_wall(&self, pos: Vec2<f64>) -> Option<Wall> {
+        let mut min_wall = None;
+        let mut min_d = f64::INFINITY;
+        for wall in self.walls().iter() {
+            let d = wall.distance(pos);
+            if d < min_d {
+                min_wall = Some(*wall);
+                min_d = d;
+            }
+        }
+        min_wall
+    }
+
+    pub(crate) fn split(&mut self, wall_id: u32, pos: Vec2<i32>) {
+        let wall = self
+            .walls()
+            .iter()
+            .find(|w| w.id == wall_id)
+            .unwrap()
+            .clone();
+        self.verts.insert(wall.p1_idx + 1, pos)
     }
 }
 
@@ -215,6 +257,7 @@ mod tests {
     fn wall_dist() {
         let w = Wall {
             id: 0,
+            p1_idx: 0,
             p1: Vec2 { x: 0, y: 0 },
             p2: Vec2 { x: 1, y: 0 },
         };

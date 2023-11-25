@@ -1,4 +1,5 @@
 use crate::common::{Rgb, Vec2};
+use crate::room::{NextVert, WallId};
 use crate::state::{EditMode, StateCommand, StateController, StateEventSubscriber};
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
 use gtk::{prelude::*, GestureClick, GestureDrag};
@@ -26,9 +27,11 @@ impl Canvas {
         let canvas = Rc::new(RefCell::new(Canvas {
             widget: drawing_area.clone(),
         }));
+        let selected_wall: Rc<Cell<Option<WallId>>> = Rc::new(Cell::new(None));
 
         {
             let control = control.clone();
+            let selected_wall = selected_wall.clone();
             drawing_area.set_draw_func(move |_area, ctx, w, h| {
                 let control = control.borrow();
                 // fill with background color
@@ -53,11 +56,27 @@ impl Canvas {
                 let next_vert = control.state.grid.snap(cp.into());
 
                 for room in control.dungeon().rooms.iter() {
-                    let mut vert_opt = None;
                     let active = control.state.active_room_id == room.id;
-                    if active && control.state.mode == EditMode::AppendRoom {
-                        vert_opt = Some(next_vert)
-                    }
+                    let vert_opt = match active {
+                        true => match control.state.mode {
+                            EditMode::AppendRoom => Some(NextVert {
+                                in_wall_id: None,
+                                pos: next_vert,
+                            }),
+                            EditMode::SplitEdge => {
+                                println!("{:?}", selected_wall.get());
+                                match selected_wall.get() {
+                                    Some(wall) => Some(NextVert {
+                                        in_wall_id: Some(wall),
+                                        pos: next_vert,
+                                    }),
+                                    None => None,
+                                }
+                            }
+                            _ => None,
+                        },
+                        false => None,
+                    };
                     let prims = room.draw(vert_opt, active);
                     for prim in prims {
                         prim.draw(ctx)
@@ -65,20 +84,26 @@ impl Canvas {
                 }
 
                 // draw nearest wall
-                // match control.state.dungeon.nearest_wall(cp) {
-                //     None => (),
-                //     Some((_, wall)) => Line {
-                //         from: wall.p1.into(),
-                //         to: wall.p2.into(),
-                //         color: Rgb {
-                //             r: 1.0,
-                //             g: 0.0,
-                //             b: 0.0,
-                //         },
-                //         width: 10.0,
-                //     }
-                //     .draw(ctx),
-                // }
+                if selected_wall.get() == None && control.state.mode == EditMode::SplitEdge {
+                    if let Some(active_room_id) = control.state.active_room_id {
+                        if let Some(room) = control.state.dungeon.room(active_room_id) {
+                            match room.nearest_wall(cp) {
+                                None => (),
+                                Some(wall) => Line {
+                                    from: wall.p1.into(),
+                                    to: wall.p2.into(),
+                                    color: Rgb {
+                                        r: 1.0,
+                                        g: 0.0,
+                                        b: 0.0,
+                                    },
+                                    width: 3.0,
+                                }
+                                .draw(ctx),
+                            }
+                        }
+                    }
+                }
 
                 // debug circle
                 // ctx.set_source_rgb(1.0, 0.0, 0.0);
@@ -104,6 +129,7 @@ impl Canvas {
         {
             let control = control.clone();
             let canvas = canvas.clone();
+
             gesture_click.connect_pressed(move |_, _, _, _| {
                 let control = &mut *control.borrow_mut();
                 match control.state.mode {
@@ -113,7 +139,7 @@ impl Canvas {
                     }
                     crate::state::EditMode::AppendRoom => {
                         if let Some(active_room_id) = control.state.active_room_id {
-                            if let Some(room) = control.state.dungeon.room(active_room_id) {
+                            if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
                                 let room_id = room.id.unwrap();
                                 control.apply(StateCommand::AddVertexToRoom(
                                     room_id,
@@ -126,7 +152,35 @@ impl Canvas {
                             }
                         }
                     }
-                    crate::state::EditMode::SplitEdge => todo!(),
+                    crate::state::EditMode::SplitEdge => match selected_wall.get() {
+                        Some(wall_id) => {
+                            if let Some(active_room_id) = control.state.active_room_id {
+                                if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
+                                    let room_id = room.id.unwrap();
+                                    control.apply(StateCommand::SplitWall(
+                                        room_id,
+                                        wall_id,
+                                        control.state.grid.snap(
+                                            (control.state.cursor.pos
+                                                + control.state.view.world_min().into())
+                                            .into(),
+                                        ),
+                                    ));
+                                    selected_wall.set(None);
+                                }
+                            }
+                        }
+                        None => {
+                            if let Some(active_room_id) = control.state.active_room_id {
+                                if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
+                                    if let Some(wall) = room.nearest_wall(control.state.cursor.pos)
+                                    {
+                                        selected_wall.set(Some(wall.id))
+                                    }
+                                }
+                            }
+                        }
+                    },
                 }
                 canvas.borrow().update();
             });
