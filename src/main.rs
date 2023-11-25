@@ -6,19 +6,16 @@ mod state;
 mod storage;
 mod view;
 
-use dungeon::Dungeon;
 use gtk::{gdk, prelude::*};
 use gtk::{glib, Application, ApplicationWindow};
-use observers::{DebugObserver, StorageObserver, UndoObserver};
+use observers::{DebugObserver, HistoryObserver};
 use state::{StateCommand, StateController};
 use std::cell::RefCell;
 use std::rc::Rc;
 use view::buttons::AddRoomButton;
 use view::canvas::Canvas;
-use view::grid::Grid;
 use view::room_edit::RoomEdit;
 use view::room_list::RoomList;
-use view::View;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -36,8 +33,7 @@ fn main() -> glib::ExitCode {
 fn build_ui(app: &Application) {
     let control = Rc::new(RefCell::new(StateController::new()));
 
-    let undoer = UndoObserver::new(control.clone());
-    let storer = StorageObserver::new(control.clone());
+    let history = HistoryObserver::new(control.clone(), "dungeon.txt".to_owned());
 
     /*
      * |--------|-----------------------|
@@ -93,7 +89,7 @@ fn build_ui(app: &Application) {
     {
         let control = control.clone();
         let canvas = canvas.clone();
-        let storer = storer.clone();
+        let history = history.clone();
         control_key.connect_key_pressed(move |_, key, _, modifier| {
             let mut control = control.borrow_mut();
             match key {
@@ -109,17 +105,15 @@ fn build_ui(app: &Application) {
                         gdk::Key::z => {
                             control.reset();
                             let cmds = {
-                                undoer.borrow_mut().undo();
-                                undoer.borrow_mut().get_stack()
+                                history.borrow_mut().undo();
+                                history.borrow_mut().get_stack()
                             };
 
-                            storer.borrow_mut().deactivate();
-                            undoer.borrow_mut().start_restore();
+                            history.borrow_mut().start_restore();
                             for cmd in cmds {
                                 control.apply(cmd)
                             }
-                            undoer.borrow_mut().end_restore();
-                            storer.borrow_mut().activate();
+                            history.borrow_mut().end_restore();
                         }
                         _ => (),
                     }
@@ -133,7 +127,7 @@ fn build_ui(app: &Application) {
 
     DebugObserver::new(control.clone());
     storage::load_dungeon(control.clone());
-    storer.borrow_mut().activate();
+    history.borrow_mut().activate();
 
     // Present window
     window.add_controller(control_key);

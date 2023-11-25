@@ -1,4 +1,6 @@
-use crate::state::{events::StateEvent, State, StateCommand, StateController, StateSubscriber};
+use crate::state::{
+    events::StateEvent, State, StateCommand, StateController, StateEventSubscriber,
+};
 use crate::view::room_list_entry::RoomListEntry;
 use gtk::prelude::*;
 use gtk::{ListBox, PolicyType, ScrolledWindow};
@@ -49,7 +51,7 @@ impl RoomList {
     }
 }
 
-impl StateSubscriber for RoomList {
+impl StateEventSubscriber for RoomList {
     fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
         match event {
             StateEvent::RoomAdded(room_id) => {

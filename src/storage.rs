@@ -1,8 +1,10 @@
-use serde_json::Value;
-
 use crate::common::Vec2;
 use crate::room::RoomId;
 use crate::state::{StateCommand, StateController};
+use serde_json::json;
+use serde_json::Value;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 use std::io::{self, BufRead};
 use std::{cell::RefCell, fs::File, rc::Rc};
 
@@ -62,4 +64,45 @@ pub fn load_dungeon(control: Rc<RefCell<StateController>>) {
             }
         }
     }
+}
+
+pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .append(false)
+        .create(true)
+        .truncate(true)
+        .open(save_file.clone())
+        .unwrap();
+
+    let mut data_str = String::new();
+    for cmd in cmds {
+        let name = match cmd {
+            StateCommand::AddRoom => "AddRoomCommand".to_owned(),
+            StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
+            StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
+            StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
+            StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
+        };
+        let data = match cmd {
+            StateCommand::AddRoom => serde_json::Value::Null,
+            StateCommand::SelectRoom(room_id) => json!({"room_id": room_id}),
+            StateCommand::AddVertexToRoom(room_id, pos) => json!({
+                "room_id": room_id,
+                "x": pos.x,
+                "y": pos.y
+            }),
+            StateCommand::ChangeRoomName(room_id, name) => json!({
+                "room_id": room_id,
+                "name": name,
+            }),
+            StateCommand::ChangeRoomNotes(room_id, notes) => json!({
+                "room_id": room_id,
+                "notes": notes,
+            }),
+        };
+        data_str += format!("{} >> {}\n", name, data).as_str();
+    }
+    file.write(data_str.as_bytes()).unwrap();
+    file.flush().unwrap();
 }

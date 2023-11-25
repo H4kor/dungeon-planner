@@ -5,7 +5,7 @@ use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
 use crate::state::events::StateEvent;
-use crate::state::{StateCommand, StateController, StateSubscriber};
+use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
 pub struct RoomEdit {
     pub widget: Box,
@@ -68,7 +68,7 @@ impl RoomEdit {
     }
 }
 
-impl StateSubscriber for RoomEdit {
+impl StateEventSubscriber for RoomEdit {
     fn on_state_event(
         &mut self,
         state: &mut crate::state::State,

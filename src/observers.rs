@@ -1,13 +1,6 @@
-use std::{
-    cell::RefCell,
-    fs::{File, OpenOptions},
-    rc::Rc,
-};
-
-use serde_json::json;
-
-use crate::state::{State, StateCommand, StateCommandSubscriber, StateController, StateSubscriber};
-use std::io::prelude::*;
+use crate::state::{StateCommand, StateCommandSubscriber, StateController, StateEventSubscriber};
+use crate::storage;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct DebugObserver {}
 
@@ -20,7 +13,7 @@ impl DebugObserver {
     }
 }
 
-impl StateSubscriber for DebugObserver {
+impl StateEventSubscriber for DebugObserver {
     fn on_state_event(
         &mut self,
         _state: &mut crate::state::State,
@@ -31,82 +24,33 @@ impl StateSubscriber for DebugObserver {
     }
 }
 
-pub struct StorageObserver {
-    file: File,
-    active: bool,
+#[derive(PartialEq)]
+enum PersistenceMode {
+    Restoring, // initial state <- data being restored from file
+    Record,    // normal mode <- recording all commands
+    Replaying, // during undo <- commands are not added to vector
 }
 
-impl StorageObserver {
-    pub fn new(state: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        // let file = File::create("dungeon.txt").unwrap();
-        let file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create(true)
-            .open("dungeon.txt")
-            .unwrap();
-        let obs = Rc::new(RefCell::new(StorageObserver {
-            file: file,
-            active: false,
+pub struct HistoryObserver {
+    save_file: String,
+    mode: PersistenceMode,
+    cmds: Vec<StateCommand>,
+}
+
+impl HistoryObserver {
+    pub fn new(state: Rc<RefCell<StateController>>, save_file: String) -> Rc<RefCell<Self>> {
+        let obs = Rc::new(RefCell::new(HistoryObserver {
+            save_file: save_file,
+            mode: PersistenceMode::Restoring,
+            cmds: vec![],
         }));
 
         state.borrow_mut().subscribe_cmds(obs.clone());
         obs
     }
-    pub fn deactivate(&mut self) {
-        self.active = false
-    }
+
     pub fn activate(&mut self) {
-        self.active = true
-    }
-}
-
-impl StateCommandSubscriber for StorageObserver {
-    fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
-        if !self.active {
-            return;
-        }
-        let name = match cmd {
-            StateCommand::AddRoom => "AddRoomCommand".to_owned(),
-            StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
-            StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
-            StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
-            StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
-        };
-        let data = match cmd {
-            StateCommand::AddRoom => serde_json::Value::Null,
-            StateCommand::SelectRoom(room_id) => json!({"room_id": room_id}),
-            StateCommand::AddVertexToRoom(room_id, pos) => json!({
-                "room_id": room_id,
-                "x": pos.x,
-                "y": pos.y
-            }),
-            StateCommand::ChangeRoomName(room_id, name) => json!({
-                "room_id": room_id,
-                "name": name,
-            }),
-            StateCommand::ChangeRoomNotes(room_id, notes) => json!({
-                "room_id": room_id,
-                "notes": notes,
-            }),
-        };
-        writeln!(self.file, "{} >> {}", name, data).unwrap();
-    }
-}
-
-pub struct UndoObserver {
-    cmds: Vec<StateCommand>,
-    active: bool,
-}
-
-impl UndoObserver {
-    pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        let obs = Rc::new(RefCell::new(UndoObserver {
-            cmds: vec![],
-            active: true,
-        }));
-        control.borrow_mut().subscribe_cmds(obs.clone());
-        obs
+        self.mode = PersistenceMode::Record
     }
 
     pub fn undo(&mut self) {
@@ -117,17 +61,18 @@ impl UndoObserver {
         self.cmds.clone()
     }
     pub fn end_restore(&mut self) {
-        self.active = true
+        self.mode = PersistenceMode::Record
     }
     pub fn start_restore(&mut self) {
-        self.active = false
+        self.mode = PersistenceMode::Replaying
     }
 }
 
-impl StateCommandSubscriber for UndoObserver {
-    fn on_cmd_event(&mut self, state: &mut State, cmd: StateCommand) {
-        if self.active {
-            self.cmds.push(cmd)
+impl StateCommandSubscriber for HistoryObserver {
+    fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
+        if self.mode == PersistenceMode::Record || self.mode == PersistenceMode::Restoring {
+            self.cmds.push(cmd);
+            storage::save_to_file(self.save_file.clone(), &self.cmds);
         }
     }
 }

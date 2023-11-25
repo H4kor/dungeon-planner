@@ -4,7 +4,7 @@ pub mod events;
 use crate::{
     common::Vec2,
     dungeon::Dungeon,
-    room::{Room, RoomId},
+    room::RoomId,
     view::{grid::Grid, View},
 };
 pub use commands::StateCommand;
@@ -31,8 +31,8 @@ pub struct State {
 }
 pub struct StateController {
     pub state: State,
-    subscribers: HashMap<StateEvent, Vec<Rc<RefCell<dyn StateSubscriber>>>>,
-    any_subscribers: Vec<Rc<RefCell<dyn StateSubscriber>>>,
+    subscribers: HashMap<StateEvent, Vec<Rc<RefCell<dyn StateEventSubscriber>>>>,
+    any_subscribers: Vec<Rc<RefCell<dyn StateEventSubscriber>>>,
     cmd_subscribers: Vec<Rc<RefCell<dyn StateCommandSubscriber>>>,
 }
 
@@ -42,7 +42,7 @@ pub struct StateCommandData {
     pub data: serde_json::Value,
 }
 
-pub trait StateSubscriber {
+pub trait StateEventSubscriber {
     fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand>;
 }
 
@@ -92,12 +92,16 @@ impl StateController {
         }
     }
 
-    pub fn subscribe(&mut self, event: StateEvent, subscriber: Rc<RefCell<dyn StateSubscriber>>) {
+    pub fn subscribe(
+        &mut self,
+        event: StateEvent,
+        subscriber: Rc<RefCell<dyn StateEventSubscriber>>,
+    ) {
         self.subscribers.entry(event.clone()).or_default();
         self.subscribers.get_mut(&event).unwrap().push(subscriber);
     }
 
-    pub fn subscribe_any(&mut self, subscriber: Rc<RefCell<dyn StateSubscriber>>) {
+    pub fn subscribe_any(&mut self, subscriber: Rc<RefCell<dyn StateEventSubscriber>>) {
         self.any_subscribers.push(subscriber);
     }
 
