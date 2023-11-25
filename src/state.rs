@@ -1,4 +1,5 @@
 mod commands;
+mod edit_mode;
 pub mod events;
 
 use crate::{
@@ -8,35 +9,10 @@ use crate::{
     view::{grid::Grid, View},
 };
 pub use commands::StateCommand;
+pub use edit_mode::EditMode;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use self::events::StateEvent;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EditMode {
-    Select,
-    AppendRoom,
-    SplitEdge,
-}
-
-impl EditMode {
-    pub fn to_str(&self) -> String {
-        match self {
-            EditMode::Select => "Select".to_owned(),
-            EditMode::AppendRoom => "AppendRoom".to_owned(),
-            EditMode::SplitEdge => "SplitEdge".to_owned(),
-        }
-    }
-
-    pub fn from_str(s: &str) -> Self {
-        match s {
-            "Select" => EditMode::Select,
-            "AppendRoom" => EditMode::AppendRoom,
-            "SplitEdge" => EditMode::SplitEdge,
-            _ => todo!(),
-        }
-    }
-}
 
 pub struct CursorState {
     pub pos: Vec2<f64>,
@@ -55,12 +31,6 @@ pub struct StateController {
     subscribers: HashMap<StateEvent, Vec<Rc<RefCell<dyn StateEventSubscriber>>>>,
     any_subscribers: Vec<Rc<RefCell<dyn StateEventSubscriber>>>,
     cmd_subscribers: Vec<Rc<RefCell<dyn StateCommandSubscriber>>>,
-}
-
-#[derive(Debug)]
-pub struct StateCommandData {
-    pub name: String,
-    pub data: serde_json::Value,
 }
 
 pub trait StateEventSubscriber {
