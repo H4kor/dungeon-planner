@@ -1,12 +1,14 @@
 mod common;
 mod config;
 mod dungeon;
+mod export;
 pub mod observers;
 mod room;
 mod state;
 mod storage;
 mod view;
 
+use export::to_pdf;
 use gtk::{gdk, prelude::*};
 use gtk::{glib, Application, ApplicationWindow};
 use observers::{DebugObserver, HistoryObserver};
@@ -33,6 +35,9 @@ fn main() -> glib::ExitCode {
 
 fn build_ui(app: &Application) {
     let control = Rc::new(RefCell::new(StateController::new()));
+
+    // to_pdf(&control.borrow().state.dungeon);
+    // return;
 
     let history = HistoryObserver::new(control.clone(), "dungeon.txt".to_owned());
 

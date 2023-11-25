@@ -49,16 +49,31 @@ impl RoomList {
         state.subscribe(StateEvent::ActiveRoomChanged(None), room_list.clone());
         room_list
     }
+
+    fn rebuild_list(&mut self, state: &State) {
+        for row in &self.rows {
+            self.list_box.remove(row)
+        }
+        self.rows = vec![];
+        for room in &state.dungeon.rooms {
+            let room_label = RoomListEntry::new(&room.clone());
+            self.rows.push(room_label);
+            self.list_box.append(self.rows.last().unwrap());
+        }
+        match state.active_room_id {
+            None => self.list_box.unselect_all(),
+            Some(room_id) => self
+                .list_box
+                .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
+        }
+    }
 }
 
 impl StateEventSubscriber for RoomList {
     fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
         match event {
-            StateEvent::RoomAdded(room_id) => {
-                let room = state.dungeon.room(room_id).unwrap();
-                let room_label = RoomListEntry::new(room);
-                self.rows.push(room_label);
-                self.list_box.append(self.rows.last().unwrap());
+            StateEvent::RoomAdded(_) => {
+                self.rebuild_list(state);
             }
             StateEvent::RoomModified(room_id) => {
                 let room = state.dungeon.room(room_id).unwrap();

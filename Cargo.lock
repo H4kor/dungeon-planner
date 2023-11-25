@@ -22,9 +22,9 @@ checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
 
 [[package]]
 name = "cairo-rs"
-version = "0.18.2"
+version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c0466dfa8c0ee78deef390c274ad756801e0a6dbb86c5ef0924a298c5761c4d"
+checksum = "f33613627f0dea6a731b0605101fad59ba4f193a52c96c4687728d822605a8a1"
 dependencies = [
  "bitflags",
  "cairo-sys-rs",
@@ -59,6 +59,7 @@ dependencies = [
 name = "dungeon_planner"
 version = "0.1.0"
 dependencies = [
+ "cairo-rs",
  "gtk4",
  "serde_json",
 ]
