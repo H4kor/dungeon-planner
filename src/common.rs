@@ -6,18 +6,16 @@ pub struct Vec2<T> {
     pub y: T,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Vec3<T> {
-    pub x: T,
-    pub y: T,
-    pub w: T,
-}
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Rgb {
     pub r: f64,
     pub g: f64,
     pub b: f64,
+}
+
+pub struct Line {
+    pub a: Vec2<f64>,
+    pub b: Vec2<f64>,
 }
 
 impl<T: Mul<T, Output = T> + Add<T, Output = T> + Into<f64> + Copy> Vec2<T> {
@@ -77,6 +75,17 @@ impl<T: Mul<Output = T>> Mul<Vec2<T>> for Vec2<T> {
     }
 }
 
+impl Mul<Vec2<f64>> for f64 {
+    type Output = Vec2<f64>;
+
+    fn mul(self, rhs: Vec2<f64>) -> Self::Output {
+        Vec2 {
+            x: rhs.x * self,
+            y: rhs.y * self,
+        }
+    }
+}
+
 impl Into<Vec2<f64>> for Vec2<i32> {
     fn into(self) -> Vec2<f64> {
         Vec2 {
@@ -95,44 +104,22 @@ impl Into<Vec2<i32>> for Vec2<f64> {
     }
 }
 
-/// Vec3
+/**
+ * LINE
+ */
 
-impl<T: Add<Output = T>> Add<Vec3<T>> for Vec3<T> {
-    type Output = Vec3<T>;
-    fn add(self, rhs: Vec3<T>) -> Vec3<T> {
-        let x = self.x + rhs.x;
-        let y = self.y + rhs.y;
-        let w = self.w + rhs.w;
-        Vec3 { x, y, w }
-    }
-}
-
-impl<T: Add<Output = T> + Copy> AddAssign<Vec3<T>> for Vec3<T> {
-    fn add_assign(&mut self, other: Self) {
-        *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            w: self.w + other.w,
+impl Line {
+    pub fn min(&self) -> Vec2<f64> {
+        return Vec2 {
+            x: f64::min(self.a.x, self.b.x),
+            y: f64::min(self.a.y, self.b.y),
         };
     }
-}
 
-impl<T: Div<Output = T>> Div<Vec3<T>> for Vec3<T> {
-    type Output = Vec3<T>;
-    fn div(self, rhs: Vec3<T>) -> Vec3<T> {
-        let x = self.x / rhs.x;
-        let y = self.y / rhs.y;
-        let w = self.w / rhs.w;
-        Vec3 { x, y, w }
-    }
-}
-
-impl<T: Mul<Output = T>> Mul<Vec3<T>> for Vec3<T> {
-    type Output = Vec3<T>;
-    fn mul(self, rhs: Vec3<T>) -> Vec3<T> {
-        let x = self.x * rhs.x;
-        let y = self.y * rhs.y;
-        let w = self.w * rhs.w;
-        Vec3 { x, y, w }
+    pub fn max(&self) -> Vec2<f64> {
+        return Vec2 {
+            x: f64::max(self.a.x, self.b.x),
+            y: f64::max(self.a.y, self.b.y),
+        };
     }
 }

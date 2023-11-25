@@ -1,5 +1,5 @@
 use crate::{
-    common::{Rgb, Vec2},
+    common::{Line, Rgb, Vec2},
     config::{ACTIVE_ROOM_COLOR, DEFAULT_ROOM_COLOR, WALL_WIDTH},
     view::primitives::{Polygon, Primitive},
 };
@@ -87,6 +87,47 @@ impl Room {
             })
         }
         walls
+    }
+
+    fn lines(&self) -> Vec<Line> {
+        let mut ls = vec![];
+        for i in 1..self.verts.len() {
+            ls.push(Line {
+                a: self.verts[i - 1].into(),
+                b: self.verts[i].into(),
+            });
+        }
+        if self.verts.len() > 2 {
+            ls.push(Line {
+                a: self.verts[self.verts.len() - 1].into(),
+                b: self.verts[0].into(),
+            });
+        }
+
+        ls
+    }
+
+    pub fn contains_point(&self, pos: Vec2<f64>) -> bool {
+        let mut crossings: i32 = 0;
+        for line in self.lines() {
+            // filter out lines not containing pos.y
+            if line.min().y > pos.y {
+                continue;
+            }
+            if line.max().y < pos.y {
+                continue;
+            }
+            // calculate x of line at pos.y
+            let d = line.b - line.a;
+            let f = d.y / (pos.y - line.a.y);
+            let c = line.a + f * d;
+            if c.x < pos.x {
+                // line lines "before" pos
+                crossings += 1;
+            }
+        }
+        // uneven crossing == inside
+        crossings % 2 == 1
     }
 }
 
@@ -183,5 +224,38 @@ mod tests {
         assert_eq!(w.distance(Vec2 { x: 1.0, y: 1.0 }), 1.0);
         assert_eq!(w.distance(Vec2 { x: 2.0, y: 0.0 }), 1.0);
         assert_eq!(w.distance(Vec2 { x: -2.0, y: 0.0 }), 2.0);
+    }
+
+    #[test]
+    fn contains_1() {
+        let mut r = Room::new(None);
+        r.append(Vec2 { x: 0, y: 0 });
+        r.append(Vec2 { x: 0, y: 10 });
+        r.append(Vec2 { x: 10, y: 10 });
+        r.append(Vec2 { x: 10, y: 0 });
+
+        assert_eq!(r.contains_point(Vec2 { x: 5.0, y: 5.0 }), true);
+        assert_eq!(r.contains_point(Vec2 { x: -5.0, y: 5.0 }), false);
+        assert_eq!(r.contains_point(Vec2 { x: 5.0, y: -5.0 }), false);
+    }
+
+    #[test]
+    fn contains_2() {
+        let mut r = Room::new(None);
+        // U shape 150 - 250   350 - 450
+        // Y 350 - 650
+        r.append(Vec2 { x: 150, y: 350 });
+        r.append(Vec2 { x: 250, y: 350 });
+        r.append(Vec2 { x: 250, y: 550 });
+        r.append(Vec2 { x: 350, y: 550 });
+        r.append(Vec2 { x: 350, y: 350 });
+        r.append(Vec2 { x: 450, y: 350 });
+        r.append(Vec2 { x: 450, y: 650 });
+        r.append(Vec2 { x: 150, y: 650 });
+
+        assert_eq!(r.contains_point(Vec2 { x: 200., y: 400.0 }), true);
+        assert_eq!(r.contains_point(Vec2 { x: 400., y: 400.0 }), true);
+        assert_eq!(r.contains_point(Vec2 { x: 300., y: 400.0 }), false);
+        assert_eq!(r.contains_point(Vec2 { x: 300., y: 600.0 }), true);
     }
 }

@@ -1,6 +1,6 @@
 use crate::common::Vec2;
 use crate::room::RoomId;
-use crate::state::{StateCommand, StateController};
+use crate::state::{EditMode, StateCommand, StateController};
 use serde_json::json;
 use serde_json::Value;
 use std::fs::OpenOptions;
@@ -44,6 +44,12 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["notes"].as_str().unwrap().to_owned(),
                 ))
             }
+            "ChangeMode" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeMode(EditMode::from_str(
+                    v["mode"].as_str().unwrap(),
+                )))
+            }
             _ => None,
         },
     }
@@ -83,6 +89,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
             StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
             StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
+            StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -99,6 +106,9 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeRoomNotes(room_id, notes) => json!({
                 "room_id": room_id,
                 "notes": notes,
+            }),
+            StateCommand::ChangeMode(mode) => json!({
+                "mode": mode.to_str()
             }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();

@@ -3,11 +3,12 @@ use crate::{
     room::{Room, RoomId},
 };
 
-use super::{events::StateEvent, State};
+use super::{events::StateEvent, EditMode, State};
 
 #[derive(Clone)]
 pub enum StateCommand {
     AddRoom,
+    ChangeMode(EditMode),
     SelectRoom(Option<RoomId>),
     AddVertexToRoom(RoomId, Vec2<i32>),
     ChangeRoomName(RoomId, String),
@@ -20,6 +21,10 @@ impl StateCommand {
             StateCommand::AddRoom => {
                 let room_id = state.dungeon.add_room(Room::new(None));
                 vec![StateEvent::RoomAdded(room_id)]
+            }
+            StateCommand::ChangeMode(mode) => {
+                state.mode = *mode;
+                vec![StateEvent::EditModeChanged(*mode)]
             }
             StateCommand::SelectRoom(room_id) => {
                 state.active_room_id = *room_id;

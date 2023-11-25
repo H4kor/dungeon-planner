@@ -1,5 +1,5 @@
 use crate::common::{Rgb, Vec2};
-use crate::state::{StateCommand, StateController, StateEventSubscriber};
+use crate::state::{EditMode, StateCommand, StateController, StateEventSubscriber};
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
 use gtk::{prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
@@ -55,7 +55,7 @@ impl Canvas {
                 for room in control.dungeon().rooms.iter() {
                     let mut vert_opt = None;
                     let active = control.state.active_room_id == room.id;
-                    if active {
+                    if active && control.state.mode == EditMode::AppendRoom {
                         vert_opt = Some(next_vert)
                     }
                     let prims = room.draw(vert_opt, active);
@@ -65,20 +65,20 @@ impl Canvas {
                 }
 
                 // draw nearest wall
-                match control.state.dungeon.nearest_wall(cp) {
-                    None => (),
-                    Some((_, wall)) => Line {
-                        from: wall.p1.into(),
-                        to: wall.p2.into(),
-                        color: Rgb {
-                            r: 1.0,
-                            g: 0.0,
-                            b: 0.0,
-                        },
-                        width: 10.0,
-                    }
-                    .draw(ctx),
-                }
+                // match control.state.dungeon.nearest_wall(cp) {
+                //     None => (),
+                //     Some((_, wall)) => Line {
+                //         from: wall.p1.into(),
+                //         to: wall.p2.into(),
+                //         color: Rgb {
+                //             r: 1.0,
+                //             g: 0.0,
+                //             b: 0.0,
+                //         },
+                //         width: 10.0,
+                //     }
+                //     .draw(ctx),
+                // }
 
                 // debug circle
                 // ctx.set_source_rgb(1.0, 0.0, 0.0);
@@ -106,17 +106,27 @@ impl Canvas {
             let canvas = canvas.clone();
             gesture_click.connect_pressed(move |_, _, _, _| {
                 let control = &mut *control.borrow_mut();
-                if let Some(active_room_id) = control.state.active_room_id {
-                    if let Some(room) = control.state.dungeon.room(active_room_id) {
-                        let room_id = room.id.unwrap();
-                        control.apply(StateCommand::AddVertexToRoom(
-                            room_id,
-                            control.state.grid.snap(
-                                (control.state.cursor.pos + control.state.view.world_min().into())
-                                    .into(),
-                            ),
-                        ));
+                match control.state.mode {
+                    crate::state::EditMode::Select => {
+                        let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
+                        control.apply(StateCommand::SelectRoom(room_id));
                     }
+                    crate::state::EditMode::AppendRoom => {
+                        if let Some(active_room_id) = control.state.active_room_id {
+                            if let Some(room) = control.state.dungeon.room(active_room_id) {
+                                let room_id = room.id.unwrap();
+                                control.apply(StateCommand::AddVertexToRoom(
+                                    room_id,
+                                    control.state.grid.snap(
+                                        (control.state.cursor.pos
+                                            + control.state.view.world_min().into())
+                                        .into(),
+                                    ),
+                                ));
+                            }
+                        }
+                    }
+                    crate::state::EditMode::SplitEdge => todo!(),
                 }
                 canvas.borrow().update();
             });

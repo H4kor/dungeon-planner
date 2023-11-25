@@ -1,11 +1,14 @@
 use crate::room::RoomId;
 use std::hash::Hash;
 
+use super::EditMode;
+
 #[derive(Clone, Debug)]
 pub enum StateEvent {
     RoomAdded(RoomId),
     RoomModified(RoomId),
     ActiveRoomChanged(Option<RoomId>),
+    EditModeChanged(EditMode),
 }
 
 impl PartialEq for StateEvent {

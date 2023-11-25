@@ -69,4 +69,13 @@ impl Dungeon {
             Some(room_id) => Some((room_id, min_wall.unwrap())),
         }
     }
+
+    pub(crate) fn room_at(&self, pos: Vec2<f64>) -> Option<RoomId> {
+        for room in &self.rooms {
+            if room.contains_point(pos.into()) {
+                return room.id;
+            }
+        }
+        None
+    }
 }

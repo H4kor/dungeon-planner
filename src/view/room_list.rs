@@ -88,6 +88,7 @@ impl StateEventSubscriber for RoomList {
                     .list_box
                     .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
             },
+            _ => (),
         }
         vec![]
     }
