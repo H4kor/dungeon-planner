@@ -54,6 +54,8 @@ pub fn to_pdf(dungeon: &Dungeon) {
 
     let mut cur_h = START_H;
     for room in dungeon.rooms() {
+        // TODO: take care of large rooms and split over multiple pages.
+
         // prepare elements
         let (_, mut hl) = layout_headline();
         hl.set_text(&room.name);
