@@ -1,7 +1,7 @@
 use cairo::Context;
-use pango::{ffi::PANGO_SCALE, FontDescription};
+use pango::ffi::PANGO_SCALE;
 
-use crate::dungeon::{self, Dungeon};
+use crate::{common::Rgb, dungeon::Dungeon};
 
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
@@ -12,6 +12,17 @@ const RIGHT_END: f64 = PAGE_W - 20.0;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
 const HEADLINE_IMAGE_SPACING: f64 = 12.0;
 const IMAGE_NOTES_SPACEING: f64 = 12.0;
+const IMAGE_SIZE: f64 = 120.0;
+const HEADLINE_COLOR: Rgb = Rgb {
+    r: 0.0,
+    g: 0.0,
+    b: 0.0,
+};
+const NOTES_COLOR: Rgb = Rgb {
+    r: 0.0,
+    g: 0.0,
+    b: 0.0,
+};
 
 fn text_font() -> pango::FontDescription {
     let mut font = pango::FontDescription::default();
@@ -31,7 +42,7 @@ fn layout_text() -> (pango::Context, pango::Layout) {
     p_ctx.set_font_map(Some(&pangocairo::FontMap::default()));
     let layout = pango::Layout::new(&p_ctx);
     layout.set_width(TEXT_WIDTH as i32 * PANGO_SCALE);
-    let mut font = text_font();
+    let font = text_font();
     layout.set_font_description(Some(&font));
 
     (p_ctx, layout)
@@ -42,7 +53,7 @@ fn layout_headline() -> (pango::Context, pango::Layout) {
     p_ctx.set_font_map(Some(&pangocairo::FontMap::default()));
     let layout = pango::Layout::new(&p_ctx);
     layout.set_width(TEXT_WIDTH as i32 * PANGO_SCALE);
-    let mut font = headline_font();
+    let font = headline_font();
     layout.set_font_description(Some(&font));
 
     (p_ctx, layout)
@@ -57,29 +68,29 @@ pub fn to_pdf(dungeon: &Dungeon) {
         // TODO: take care of large rooms and split over multiple pages.
 
         // prepare elements
-        let (_, mut hl) = layout_headline();
+        let (_, hl) = layout_headline();
         hl.set_text(&room.name);
-        let (_, mut tl) = layout_text();
+        let (_, tl) = layout_text();
         tl.set_text(&room.notes);
 
         // calculate total height
         let (h_extent, _) = hl.extents();
         let (t_extent, _) = tl.extents();
-        let img_height = 100.0;
         let total_h = h_extent.height() as f64 / PANGO_SCALE as f64
             + HEADLINE_IMAGE_SPACING
-            + img_height
+            + IMAGE_SIZE
             + IMAGE_NOTES_SPACEING
             + t_extent.height() as f64 / PANGO_SCALE as f64
             + 25.0;
 
         if total_h + cur_h > END_H {
-            ctx.show_page();
+            ctx.show_page().unwrap();
             cur_h = START_H;
         }
 
         // add headline
         {
+            ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
             pangocairo::show_layout(&ctx, &hl);
             let (extent, _) = hl.extents();
@@ -87,13 +98,35 @@ pub fn to_pdf(dungeon: &Dungeon) {
             cur_h += extent.height() as f64 / PANGO_SCALE as f64;
         }
 
-        // TODO: Render Image here
+        // Render Image
         {
-            cur_h += 120.0;
+            cur_h += HEADLINE_IMAGE_SPACING;
+            let prims = room.draw(None, true);
+            if !prims.is_empty() {
+                let mut bbox = prims[0].bbox();
+                for p in prims.iter() {
+                    bbox &= p.bbox()
+                }
+                let size = bbox.max - bbox.min;
+                let scale = IMAGE_SIZE / f64::max(size.x, size.y);
+                ctx.translate(
+                    -bbox.min.x * scale + LEFT_SPACE,
+                    -bbox.min.y * scale + cur_h,
+                );
+                ctx.scale(scale, scale);
+
+                for prim in prims.iter() {
+                    prim.draw(&ctx)
+                }
+                ctx.identity_matrix();
+                cur_h += size.y * scale;
+            }
+            cur_h += IMAGE_NOTES_SPACEING;
         }
 
         // add notes
         {
+            ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
             pangocairo::show_layout(&ctx, &tl);
             let (extent, _) = tl.extents();

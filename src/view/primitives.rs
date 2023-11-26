@@ -1,12 +1,12 @@
 use std::cmp::min;
 
-use crate::common::{Rgb, Vec2};
+use crate::common::{BBox, Rgb, Vec2};
 use gtk;
 
 pub trait Primitive {
     fn draw(&self, ctx: &gtk::cairo::Context);
     // tight bounding box with (min, max) as output
-    fn bbox(&self) -> (Vec2<f64>, Vec2<f64>);
+    fn bbox(&self) -> BBox;
 }
 
 pub struct Line {
@@ -33,17 +33,17 @@ impl Primitive for Line {
         ctx.stroke().unwrap();
     }
 
-    fn bbox(&self) -> (Vec2<f64>, Vec2<f64>) {
-        (
-            Vec2 {
+    fn bbox(&self) -> BBox {
+        BBox {
+            min: Vec2 {
                 x: f64::min(self.from.x, self.to.x),
                 y: f64::min(self.from.y, self.to.y),
             },
-            Vec2 {
+            max: Vec2 {
                 x: f64::max(self.from.x, self.to.x),
                 y: f64::max(self.from.y, self.to.y),
             },
-        )
+        }
     }
 }
 
@@ -74,9 +74,9 @@ impl Primitive for Polygon {
         ctx.stroke().unwrap();
     }
 
-    fn bbox(&self) -> (Vec2<f64>, Vec2<f64>) {
-        (
-            Vec2 {
+    fn bbox(&self) -> BBox {
+        BBox {
+            min: Vec2 {
                 x: self
                     .points
                     .iter()
@@ -88,7 +88,7 @@ impl Primitive for Polygon {
                     .map(|p| p.y)
                     .fold(f64::INFINITY, |a, b| a.min(b)),
             },
-            Vec2 {
+            max: Vec2 {
                 x: self
                     .points
                     .iter()
@@ -100,6 +100,6 @@ impl Primitive for Polygon {
                     .map(|p| p.y)
                     .fold(f64::NEG_INFINITY, |a, b| a.max(b)),
             },
-        )
+        }
     }
 }
