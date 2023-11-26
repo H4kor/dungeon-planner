@@ -6,10 +6,12 @@ use crate::dungeon::{self, Dungeon};
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
 const START_H: f64 = 20.0;
-const END_H: f64 = 800.0;
+const END_H: f64 = PAGE_H - 20.0;
 const LEFT_SPACE: f64 = 20.0;
 const RIGHT_END: f64 = PAGE_W - 20.0;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
+const HEADLINE_IMAGE_SPACING: f64 = 12.0;
+const IMAGE_NOTES_SPACEING: f64 = 12.0;
 
 fn text_font() -> pango::FontDescription {
     let mut font = pango::FontDescription::default();
@@ -52,10 +54,30 @@ pub fn to_pdf(dungeon: &Dungeon) {
 
     let mut cur_h = START_H;
     for room in dungeon.rooms() {
+        // prepare elements
+        let (_, mut hl) = layout_headline();
+        hl.set_text(&room.name);
+        let (_, mut tl) = layout_text();
+        tl.set_text(&room.notes);
+
+        // calculate total height
+        let (h_extent, _) = hl.extents();
+        let (t_extent, _) = tl.extents();
+        let img_height = 100.0;
+        let total_h = h_extent.height() as f64 / PANGO_SCALE as f64
+            + HEADLINE_IMAGE_SPACING
+            + img_height
+            + IMAGE_NOTES_SPACEING
+            + t_extent.height() as f64 / PANGO_SCALE as f64
+            + 25.0;
+
+        if total_h + cur_h > END_H {
+            ctx.show_page();
+            cur_h = START_H;
+        }
+
         // add headline
         {
-            let (_, mut hl) = layout_headline();
-            hl.set_text(&room.name);
             ctx.move_to(LEFT_SPACE, cur_h);
             pangocairo::show_layout(&ctx, &hl);
             let (extent, _) = hl.extents();
@@ -70,8 +92,6 @@ pub fn to_pdf(dungeon: &Dungeon) {
 
         // add notes
         {
-            let (_, mut tl) = layout_text();
-            tl.set_text(&room.notes);
             ctx.move_to(LEFT_SPACE, cur_h);
             pangocairo::show_layout(&ctx, &tl);
             let (extent, _) = tl.extents();
@@ -83,7 +103,7 @@ pub fn to_pdf(dungeon: &Dungeon) {
         {
             cur_h += 20.0;
             ctx.move_to(LEFT_SPACE, cur_h);
-            ctx.set_line_width(5.0);
+            ctx.set_line_width(2.0);
             ctx.line_to(RIGHT_END, cur_h);
             ctx.stroke().unwrap();
             cur_h += 20.0
