@@ -77,7 +77,7 @@ impl Canvas {
                         },
                         false => None,
                     };
-                    let prims = room.draw(vert_opt, active);
+                    let prims = room.draw(vert_opt, active, None);
                     for prim in prims {
                         prim.draw(ctx)
                     }

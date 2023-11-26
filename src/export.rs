@@ -4,6 +4,7 @@ use pango::ffi::PANGO_SCALE;
 use crate::{
     common::{Rgb, Vec2},
     dungeon::Dungeon,
+    room::RoomDrawOptions,
     view::grid::Grid,
 };
 
@@ -105,7 +106,18 @@ pub fn to_pdf(dungeon: &Dungeon) {
         // Render Image
         {
             cur_h += HEADLINE_IMAGE_SPACING;
-            let prims = room.draw(None, true);
+            let prims = room.draw(
+                None,
+                false,
+                Some(RoomDrawOptions {
+                    color: Some(Rgb {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                    }),
+                    fill: Some(true),
+                }),
+            );
             if !prims.is_empty() {
                 let mut bbox = prims[0].bbox();
                 for p in prims.iter() {
@@ -128,15 +140,21 @@ pub fn to_pdf(dungeon: &Dungeon) {
                     g: 0.5,
                     b: 0.5,
                 };
+                grid.width = 1.0;
 
                 // set clipping
                 ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
                 ctx.clip();
                 ctx.new_path();
 
+                // draw grid
+                ctx.set_dash(&vec![10.0, 10.0], 0.0);
                 for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
                     prim.draw(&ctx)
                 }
+                ctx.set_dash(&vec![], 0.0);
+
+                // draw room
                 for prim in prims.iter() {
                     prim.draw(&ctx)
                 }

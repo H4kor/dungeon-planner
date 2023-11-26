@@ -23,6 +23,11 @@ pub struct NextVert {
     pub pos: Vec2<i32>,
 }
 
+pub struct RoomDrawOptions {
+    pub color: Option<Rgb>,
+    pub fill: Option<bool>,
+}
+
 /// A Room is part of a Dungeon
 /// It has a shape and further information, such as name and notes
 #[derive(Clone)]
@@ -45,7 +50,12 @@ impl Room {
         }
     }
 
-    pub fn draw(&self, next_vert: Option<NextVert>, active: bool) -> Vec<Box<dyn Primitive>> {
+    pub fn draw(
+        &self,
+        next_vert: Option<NextVert>,
+        active: bool,
+        options: Option<RoomDrawOptions>,
+    ) -> Vec<Box<dyn Primitive>> {
         let mut verts = self.verts.clone();
         match next_vert {
             Some(v) => match v.in_wall_id {
@@ -65,14 +75,26 @@ impl Room {
         let mut lines = Vec::<Box<dyn Primitive>>::new();
 
         let color = match active {
-            false => self.room_color,
+            false => match options {
+                Some(RoomDrawOptions {
+                    color: Some(c),
+                    fill: _,
+                }) => c,
+                _ => self.room_color,
+            },
             true => ACTIVE_ROOM_COLOR,
         };
 
         lines.push(Box::new(Polygon {
             points: verts.iter().map(|p| Into::<Vec2<f64>>::into(*p)).collect(),
             fill_color: color,
-            fill_opacity: 0.3,
+            fill_opacity: match options {
+                Some(RoomDrawOptions {
+                    color: _,
+                    fill: Some(false),
+                }) => 0.0,
+                _ => 0.3,
+            },
             stroke_color: color,
             stroke_width: WALL_WIDTH,
         }));
