@@ -1,7 +1,11 @@
 use cairo::Context;
 use pango::ffi::PANGO_SCALE;
 
-use crate::{common::Rgb, dungeon::Dungeon};
+use crate::{
+    common::{Rgb, Vec2},
+    dungeon::Dungeon,
+    view::grid::Grid,
+};
 
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
@@ -107,6 +111,9 @@ pub fn to_pdf(dungeon: &Dungeon) {
                 for p in prims.iter() {
                     bbox &= p.bbox()
                 }
+                bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
+                bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
+
                 let size = bbox.max - bbox.min;
                 let scale = IMAGE_SIZE / f64::max(size.x, size.y);
                 ctx.translate(
@@ -115,9 +122,26 @@ pub fn to_pdf(dungeon: &Dungeon) {
                 );
                 ctx.scale(scale, scale);
 
+                let mut grid = Grid::new();
+                grid.color = Rgb {
+                    r: 0.5,
+                    g: 0.5,
+                    b: 0.5,
+                };
+
+                // set clipping
+                ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
+                ctx.clip();
+                ctx.new_path();
+
+                for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
+                    prim.draw(&ctx)
+                }
                 for prim in prims.iter() {
                     prim.draw(&ctx)
                 }
+
+                ctx.reset_clip();
                 ctx.identity_matrix();
                 cur_h += size.y * scale;
             }

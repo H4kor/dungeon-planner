@@ -3,9 +3,9 @@ use crate::view::primitives::{Line, Primitive};
 
 #[derive(Clone, Copy)]
 pub struct Grid {
-    size: Vec2<i32>,
-    color: Rgb,
-    width: f64,
+    pub size: Vec2<i32>,
+    pub color: Rgb,
+    pub width: f64,
 }
 
 impl Grid {
