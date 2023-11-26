@@ -36,9 +36,6 @@ fn main() -> glib::ExitCode {
 fn build_ui(app: &Application) {
     let control = Rc::new(RefCell::new(StateController::new()));
 
-    // to_pdf(&control.borrow().state.dungeon);
-    // return;
-
     let history = HistoryObserver::new(control.clone(), "dungeon.txt".to_owned());
 
     /*
@@ -127,6 +124,9 @@ fn build_ui(app: &Application) {
                                 control.apply(cmd)
                             }
                             history.borrow_mut().end_restore();
+                        }
+                        gdk::Key::p => {
+                            to_pdf(&control.state.dungeon);
                         }
                         _ => (),
                     }

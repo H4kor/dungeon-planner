@@ -81,4 +81,8 @@ impl Dungeon {
         }
         None
     }
+
+    pub(crate) fn rooms(&self) -> &Vec<Room> {
+        &self.rooms
+    }
 }
