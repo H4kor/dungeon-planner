@@ -1,7 +1,5 @@
 - Print Room Number/Name in room polygon
 - Save Dialog to choose location of save file
 - Print Dialog to choose location of PDF
-- Word wrap in Notes
-- allow to increase size of side bar
 - Add complete dungeon on first page of PDF
 - Don't emit update notes command on every key stroke. Bundle updates

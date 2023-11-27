@@ -16,7 +16,9 @@ pub struct RoomEdit {
 impl RoomEdit {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
         let name_i = Entry::builder().build();
-        let notes_i = TextView::builder().build();
+        let notes_i = TextView::builder()
+            .wrap_mode(gtk::WrapMode::WordChar)
+            .build();
         {
             let control = control.clone();
             name_i.connect_changed(move |field| {

@@ -23,7 +23,6 @@ impl RoomList {
                 .hscrollbar_policy(PolicyType::Never) // Disable horizontal scrolling
                 .min_content_width(360)
                 .height_request(300)
-                .width_request(180)
                 .child(&list_box)
                 .build(),
             rows: vec![],

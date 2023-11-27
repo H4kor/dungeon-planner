@@ -49,9 +49,7 @@ fn build_ui(app: &Application) {
      * |--------|-----------------------|
      */
 
-    let main_box = gtk::Box::builder().build();
     let side_box = gtk::Box::builder()
-        .width_request(300)
         .orientation(gtk::Orientation::Vertical)
         .build();
 
@@ -84,8 +82,10 @@ fn build_ui(app: &Application) {
     side_box.append(&room_list.borrow().scrolled_window);
     side_box.append(&room_edit.borrow().widget);
 
-    main_box.append(&side_box);
-    main_box.append(&canvas.borrow().widget);
+    let main_box = gtk::Paned::builder()
+        .start_child(&side_box)
+        .end_child(&canvas.borrow().widget)
+        .build();
 
     // Create a window
     let window = ApplicationWindow::builder()
