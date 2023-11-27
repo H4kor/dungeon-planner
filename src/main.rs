@@ -92,6 +92,7 @@ fn build_ui(app: &Application) {
         .application(app)
         .title("Dungeon Planner")
         .child(&main_box)
+        .maximized(true)
         .build();
 
     let control_key = gtk::EventControllerKey::new();
