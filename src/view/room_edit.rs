@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use gtk::glib;
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
@@ -18,6 +19,8 @@ impl RoomEdit {
         let name_i = Entry::builder().build();
         let notes_i = TextView::builder()
             .wrap_mode(gtk::WrapMode::WordChar)
+            .left_margin(10)
+            .right_margin(10)
             .build();
         {
             let control = control.clone();
@@ -33,16 +36,25 @@ impl RoomEdit {
         }
 
         {
+            let buffer = notes_i.buffer();
             let control = control.clone();
-            notes_i.buffer().connect_end_user_action(move |buffer| {
+            glib::timeout_add_seconds_local(2, move || {
                 let (start, end) = buffer.bounds();
                 let notes = buffer.text(&start, &end, true).to_string();
                 let mut control = control.borrow_mut();
                 match control.state.active_room_id {
                     None => (),
-                    Some(room_id) => control.apply(StateCommand::ChangeRoomNotes(room_id, notes)),
+                    Some(room_id) => {
+                        if let Some(room) = control.state.dungeon.room(room_id) {
+                            if room.notes != notes {
+                                control.apply(StateCommand::ChangeRoomNotes(room_id, notes))
+                            };
+                        }
+                    }
                 }
+                glib::ControlFlow::Continue
             });
+            // notes_i.buffer().connect_end_user_action();
         }
 
         let b = Box::builder()

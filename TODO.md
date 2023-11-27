@@ -2,4 +2,3 @@
 - Save Dialog to choose location of save file
 - Print Dialog to choose location of PDF
 - Add complete dungeon on first page of PDF
-- Don't emit update notes command on every key stroke. Bundle updates
