@@ -3,12 +3,13 @@ use crate::room::{RoomId, WallId};
 use crate::state::{EditMode, StateCommand, StateController};
 use serde_json::json;
 use serde_json::Value;
-use std::fs::OpenOptions;
+use std::fs::{read_to_string, OpenOptions};
 use std::io::prelude::*;
 use std::io::{self, BufRead};
 use std::{cell::RefCell, fs::File, rc::Rc};
 
 fn line_to_command(l: &String) -> Option<StateCommand> {
+    println!("{}", l);
     match l.split_once(" >> ") {
         None => None,
         Some((name, data)) => match name {
@@ -21,6 +22,7 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                 }))
             }
             "AddVertexToRoomCommand" => {
+                println!("{}", data);
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::AddVertexToRoom(
                     v["room_id"].as_u64().unwrap() as RoomId,
@@ -68,17 +70,19 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
 
 pub fn load_dungeon(control: Rc<RefCell<StateController>>) {
     if let Ok(file) = File::open("dungeon.txt") {
-        let lines = io::BufReader::new(file).lines();
+        let lines: Vec<String> = read_to_string("dungeon.txt")
+            .unwrap() // panic on possible file-reading errors
+            .lines() // split the string into an iterator of string slices
+            .map(String::from) // make each slice into a string
+            .collect(); // gather them together into a vector
 
         for line in lines {
-            if let Ok(ip) = line {
-                match line_to_command(&ip) {
-                    None => {
-                        println!("Unable to interpret line as command: {}", ip)
-                    }
-                    Some(cmd) => control.borrow_mut().apply(cmd),
-                };
-            }
+            match line_to_command(&line) {
+                None => {
+                    println!("Unable to interpret line as command: {}", line)
+                }
+                Some(cmd) => control.borrow_mut().apply(cmd),
+            };
         }
     }
 }

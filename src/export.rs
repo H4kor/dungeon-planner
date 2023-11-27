@@ -2,7 +2,7 @@ use cairo::Context;
 use pango::ffi::PANGO_SCALE;
 
 use crate::{
-    common::{Rgb, Vec2},
+    common::{BBox, Rgb, Vec2},
     dungeon::Dungeon,
     room::RoomDrawOptions,
     view::grid::Grid,
@@ -69,6 +69,82 @@ pub fn to_pdf(dungeon: &Dungeon) {
     let ctx = Context::new(pdf).unwrap();
 
     let mut cur_h = START_H;
+
+    // Draw entire dungeon
+    {
+        // determine size of dungeon
+        let mut bbox = BBox {
+            min: Vec2 {
+                x: f64::INFINITY,
+                y: f64::INFINITY,
+            },
+            max: Vec2 {
+                x: f64::NEG_INFINITY,
+                y: f64::NEG_INFINITY,
+            },
+        };
+        let mut all_prims = vec![];
+        for room in dungeon.rooms() {
+            let mut prims = room.draw(
+                None,
+                false,
+                Some(RoomDrawOptions {
+                    color: Some(Rgb {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                    }),
+                    fill: Some(true),
+                }),
+            );
+            for p in prims.iter() {
+                bbox &= p.bbox()
+            }
+            all_prims.append(&mut prims)
+        }
+        bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
+        bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
+
+        let size = bbox.max - bbox.min;
+        let max_scale_x = (RIGHT_END - LEFT_SPACE) / size.x;
+        let max_scale_y = (END_H - START_H) / size.y;
+        let scale = f64::min(max_scale_x, max_scale_y);
+        ctx.translate(
+            -bbox.min.x * scale + LEFT_SPACE,
+            -bbox.min.y * scale + (((END_H - START_H) - (size.y * scale)) / 2.0),
+        );
+        ctx.scale(scale, scale);
+
+        let mut grid = Grid::new();
+        grid.color = Rgb {
+            r: 0.5,
+            g: 0.5,
+            b: 0.5,
+        };
+        grid.width = 1.0;
+
+        // set clipping
+        ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
+        ctx.clip();
+        ctx.new_path();
+
+        // draw grid
+        ctx.set_dash(&vec![10.0, 10.0], 0.0);
+        for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
+            prim.draw(&ctx)
+        }
+        ctx.set_dash(&vec![], 0.0);
+
+        // draw room
+        for prim in all_prims.iter() {
+            prim.draw(&ctx)
+        }
+
+        ctx.reset_clip();
+        ctx.identity_matrix();
+        ctx.show_page().unwrap();
+    }
+
     for room in dungeon.rooms() {
         // TODO: take care of large rooms and split over multiple pages.
 
