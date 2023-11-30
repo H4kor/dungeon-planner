@@ -8,8 +8,10 @@ mod state;
 mod storage;
 mod view;
 
+use cairo::glib::clone;
 use export::to_pdf;
-use gtk::{gdk, prelude::*};
+use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel, SimpleAction, SimpleActionGroup};
+use gtk::{gdk, prelude::*, FileChooserDialog, PopoverMenuBar};
 use gtk::{glib, Application, ApplicationWindow};
 use observers::{DebugObserver, HistoryObserver};
 use state::{StateCommand, StateController};
@@ -28,6 +30,9 @@ fn main() -> glib::ExitCode {
 
     // Connect to "activate" signal of `app`
     app.connect_activate(build_ui);
+
+    // Set keyboard accelerator to trigger "win.close".
+    app.set_accels_for_action("win.close", &["<Ctrl>W"]);
 
     // Run the application
     app.run()
@@ -87,16 +92,81 @@ fn build_ui(app: &Application) {
         .end_child(&canvas.borrow().widget)
         .build();
 
+    let file_menu = Menu::new();
+    let file_menu_open = MenuItem::new(Some("Open ..."), Some("file.open"));
+    let file_menu_print = MenuItem::new(Some("Print ..."), Some("file.print"));
+    file_menu.insert_item(0, &file_menu_open);
+    file_menu.insert_item(1, &file_menu_print);
+
+    // https://gtk-rs.org/gtk4-rs/stable/latest/book/actions.html?highlight=Act#menus
+
+    let menu = Menu::new();
+    menu.insert_submenu(0, Some("File"), &file_menu);
+    let menu_model: MenuModel = menu.into();
+
+    let menubar = PopoverMenuBar::from_model(Some(&menu_model));
+
+    let window_box = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+    window_box.append(&menubar);
+    window_box.append(&main_box);
+
     // Create a window
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Dungeon Planner")
-        .child(&main_box)
+        .child(&window_box)
         .maximized(true)
+        .show_menubar(true)
         .build();
 
-    let control_key = gtk::EventControllerKey::new();
+    // actions
+    let file_actions = SimpleActionGroup::new();
+    let action_file_open = ActionEntry::builder("open")
+        .activate(clone!( @weak control, @weak history => move |_, _, _| {
+            let file_dialog = FileChooserDialog::builder()
+                .title("Open Dungeon File ...")
+                .action(gtk::FileChooserAction::Open)
+                .select_multiple(false)
+                .create_folders(true)
+                .modal(true)
+                .build();
+            file_dialog.add_button("Open", gtk::ResponseType::Accept);
+            file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+            file_dialog.connect_response(clone!(@weak control, @weak history => move |dialog, r| {
+                println!("{}", r);
+                match r {
+                    gtk::ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let path = file.parse_name().to_string();
+                        control.borrow_mut().reset();
+                        history.borrow_mut().change_file(path.clone());
+                        storage::load_dungeon(control.clone(), path);
+                        history.borrow_mut().activate();
+                        dialog.close();
+                    }
+                    gtk::ResponseType::Cancel => dialog.close(),
+                    gtk::ResponseType::DeleteEvent => (),
+                    _ => todo!(),
+                }
+            }));
+            file_dialog.show();
+        }))
+        .build();
 
+    file_actions.add_action_entries([action_file_open]);
+    window.insert_action_group("file", Some(&file_actions));
+
+    let action_close = ActionEntry::builder("close")
+        .activate(|window: &ApplicationWindow, _, _| {
+            window.close();
+        })
+        .build();
+    window.add_action_entries([action_close]);
+
+    // controllers
+    let control_key = gtk::EventControllerKey::new();
     {
         let control = control.clone();
         let canvas = canvas.clone();
@@ -140,7 +210,7 @@ fn build_ui(app: &Application) {
     }
 
     DebugObserver::new(control.clone());
-    storage::load_dungeon(control.clone());
+    storage::load_dungeon(control.clone(), "dungeon.txt".to_owned());
     history.borrow_mut().activate();
 
     // Present window

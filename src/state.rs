@@ -128,6 +128,7 @@ impl StateController {
 
     pub fn reset(&mut self) {
         self.state = State::new();
+        self.notify(StateEvent::Reset);
     }
 }
 

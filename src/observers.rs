@@ -49,6 +49,12 @@ impl HistoryObserver {
         obs
     }
 
+    pub fn change_file(&mut self, new_file: String) {
+        self.save_file = new_file;
+        self.mode = PersistenceMode::Restoring;
+        self.cmds = vec![];
+    }
+
     pub fn activate(&mut self) {
         self.mode = PersistenceMode::Record
     }

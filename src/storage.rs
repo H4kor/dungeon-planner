@@ -68,9 +68,9 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
     }
 }
 
-pub fn load_dungeon(control: Rc<RefCell<StateController>>) {
-    if let Ok(file) = File::open("dungeon.txt") {
-        let lines: Vec<String> = read_to_string("dungeon.txt")
+pub fn load_dungeon(control: Rc<RefCell<StateController>>, path: String) -> bool {
+    if let Ok(_) = File::open(path.clone()) {
+        let lines: Vec<String> = read_to_string(path.clone())
             .unwrap() // panic on possible file-reading errors
             .lines() // split the string into an iterator of string slices
             .map(String::from) // make each slice into a string
@@ -79,11 +79,15 @@ pub fn load_dungeon(control: Rc<RefCell<StateController>>) {
         for line in lines {
             match line_to_command(&line) {
                 None => {
-                    println!("Unable to interpret line as command: {}", line)
+                    println!("Unable to interpret line as command: {}", line);
+                    return false;
                 }
                 Some(cmd) => control.borrow_mut().apply(cmd),
             };
         }
+        true
+    } else {
+        false
     }
 }
 

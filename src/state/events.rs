@@ -9,6 +9,7 @@ pub enum StateEvent {
     RoomModified(RoomId),
     ActiveRoomChanged(Option<RoomId>),
     EditModeChanged(EditMode),
+    Reset,
 }
 
 impl PartialEq for StateEvent {
