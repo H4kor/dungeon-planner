@@ -1,11 +1,8 @@
-use crate::export::to_pdf;
 use crate::observers::HistoryObserver;
 use crate::state::{StateCommand, StateController};
-use crate::storage;
 use cairo::glib::clone;
 use gtk::gio::{ActionEntry, SimpleActionGroup};
-use gtk::glib;
-use gtk::{prelude::*, FileChooserDialog};
+use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
