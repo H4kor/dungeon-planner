@@ -22,6 +22,12 @@ pub struct Polygon {
     pub stroke_width: f64,
 }
 
+pub struct Text {
+    pub text: String,
+    pub color: Rgb,
+    pub at: Vec2<f64>,
+    pub size: f64,
+}
 impl Primitive for Line {
     fn draw(&self, ctx: &gtk::cairo::Context) {
         ctx.set_line_width(self.width);
@@ -98,6 +104,35 @@ impl Primitive for Polygon {
                     .map(|p| p.y)
                     .fold(f64::NEG_INFINITY, |a, b| a.max(b)),
             },
+        }
+    }
+}
+
+impl Primitive for Text {
+    fn draw(&self, ctx: &gtk::cairo::Context) {
+        ctx.set_source_rgb(self.color.r, self.color.g, self.color.b);
+        ctx.set_font_size(self.size);
+        ctx.set_line_width(1.0);
+        let ext = ctx.text_extents(&self.text).unwrap();
+        ctx.move_to(
+            self.at.x - ext.width() / 2.0,
+            self.at.y + ext.height() / 2.0,
+        );
+        ctx.text_path(&self.text);
+        ctx.fill().unwrap();
+
+        // debug circle
+        // ctx.set_source_rgba(1.0, 0.2, 0.2, 0.6);
+        // ctx.arc(self.at.x, self.at.y, 10.0, 0.0, 2.0 * std::f64::consts::PI);
+        // ctx.close_path();
+        // ctx.fill().unwrap();
+    }
+
+    fn bbox(&self) -> BBox {
+        // TODO
+        BBox {
+            min: self.at,
+            max: self.at,
         }
     }
 }

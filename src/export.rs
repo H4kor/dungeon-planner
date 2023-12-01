@@ -150,7 +150,10 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 
         // prepare elements
         let (_, hl) = layout_headline();
-        hl.set_text(&room.name);
+        match room.id {
+            Some(room_id) => hl.set_text(&format!("{}: {}", room_id, &room.name)),
+            None => hl.set_text(&room.name),
+        }
         let (_, tl) = layout_text();
         tl.set_text(&room.notes);
 

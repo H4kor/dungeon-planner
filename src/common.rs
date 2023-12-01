@@ -13,6 +13,7 @@ pub struct Rgb {
     pub b: f64,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Line {
     pub a: Vec2<f64>,
     pub b: Vec2<f64>,

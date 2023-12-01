@@ -1,7 +1,7 @@
 use crate::{
     common::{Line, Rgb, Vec2},
     config::{ACTIVE_ROOM_COLOR, DEFAULT_ROOM_COLOR, WALL_WIDTH},
-    view::primitives::{Polygon, Primitive},
+    view::primitives::{Polygon, Primitive, Text},
 };
 pub type RoomId = u32;
 pub type WallId = u32;
@@ -57,6 +57,7 @@ impl Room {
         options: Option<RoomDrawOptions>,
     ) -> Vec<Box<dyn Primitive>> {
         let mut verts = self.verts.clone();
+        let mut show_room_number = true;
         match next_vert {
             Some(v) => match v.in_wall_id {
                 Some(wall_id) => {
@@ -66,13 +67,13 @@ impl Room {
                         .find(|w| w.id == wall_id)
                         .unwrap()
                         .clone();
-                    verts.insert(wall.p1_idx + 1, v.pos)
+                    verts.insert(wall.p1_idx + 1, v.pos);
+                    show_room_number = false;
                 }
                 None => verts.push(v.pos),
             },
             None => (),
         }
-        let mut lines = Vec::<Box<dyn Primitive>>::new();
 
         let color = match active {
             false => match options {
@@ -85,7 +86,8 @@ impl Room {
             true => ACTIVE_ROOM_COLOR,
         };
 
-        lines.push(Box::new(Polygon {
+        let mut prims = Vec::<Box<dyn Primitive>>::new();
+        let poly = Box::new(Polygon {
             points: verts.iter().map(|p| Into::<Vec2<f64>>::into(*p)).collect(),
             fill_color: color,
             fill_opacity: match options {
@@ -97,9 +99,55 @@ impl Room {
             },
             stroke_color: color,
             stroke_width: WALL_WIDTH,
-        }));
+        });
+        let bbox = poly.bbox();
+        prims.push(poly);
 
-        lines
+        if show_room_number {
+            // get bbox of polygon
+            // iterate over each cell in BBox
+            // if in polygon
+            // calc min distance to polygon
+            // take cell with max min dist which is in polygon
+            let mut max_min_dist = f64::NEG_INFINITY;
+            let mut best_p = None;
+
+            let grid = 50.0;
+            let x_steps: u32 = ((bbox.max.x - bbox.min.x) / grid).ceil() as u32;
+            let y_steps: u32 = ((bbox.max.y - bbox.min.y) / grid).ceil() as u32;
+            for x_i in 0..x_steps {
+                for y_i in 0..y_steps {
+                    let p = bbox.min
+                        + Vec2::<f64> {
+                            x: (x_i as f64) * grid + 25.0,
+                            y: (y_i as f64) * grid + 25.0,
+                        };
+                    if self.contains_point(p) {
+                        let d = self
+                            .walls()
+                            .iter()
+                            .map(|w| w.distance(p))
+                            .reduce(f64::min)
+                            .unwrap_or(f64::NEG_INFINITY);
+                        if d > max_min_dist {
+                            max_min_dist = d;
+                            best_p = Some(p);
+                        }
+                    }
+                }
+            }
+
+            if let Some(p) = best_p {
+                prims.push(Box::new(Text {
+                    at: Into::<Vec2<f64>>::into(p),
+                    text: self.id.unwrap_or(0).to_string(),
+                    color: color,
+                    size: 25.0,
+                }));
+            }
+        }
+
+        prims
     }
 
     pub fn append(&mut self, vert: Vec2<i32>) {
@@ -160,7 +208,7 @@ impl Room {
             }
             // calculate x of line at pos.y
             let d = line.b - line.a;
-            let f = d.y / (pos.y - line.a.y);
+            let f = (pos.y - line.a.y) / d.y;
             let c = line.a + f * d;
             if c.x < pos.x {
                 // line lines "before" pos
@@ -322,5 +370,16 @@ mod tests {
         assert_eq!(r.contains_point(Vec2 { x: 400., y: 400.0 }), true);
         assert_eq!(r.contains_point(Vec2 { x: 300., y: 400.0 }), false);
         assert_eq!(r.contains_point(Vec2 { x: 300., y: 600.0 }), true);
+    }
+
+    #[test]
+    fn contains_3() {
+        let mut r = Room::new(None);
+        // triangle
+        r.append(Vec2 { x: 100, y: 0 });
+        r.append(Vec2 { x: 50, y: 100 });
+        r.append(Vec2 { x: 150, y: 100 });
+
+        assert_eq!(r.contains_point(Vec2 { x: 100., y: 50. }), true);
     }
 }
