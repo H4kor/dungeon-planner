@@ -37,6 +37,7 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("file.open", &["<Ctrl>O"]);
     app.set_accels_for_action("file.save", &["<Ctrl>S"]);
     app.set_accels_for_action("file.save_as", &["<Ctrl><Shift>S"]);
+    app.set_accels_for_action("file.export_pdf", &["<Ctrl>P"]);
 
     // Run the application
     app.run()
@@ -101,7 +102,7 @@ fn build_ui(app: &Application) {
     let file_menu_open = MenuItem::new(Some("Open ..."), Some("file.open"));
     let file_menu_save = MenuItem::new(Some("Save ..."), Some("file.save"));
     let file_menu_save_as = MenuItem::new(Some("Save As ..."), Some("file.save_as"));
-    let file_menu_print = MenuItem::new(Some("Print ..."), Some("file.print"));
+    let file_menu_print = MenuItem::new(Some("Export PDF ..."), Some("file.export_pdf"));
     file_menu.insert_item(0, &file_menu_new);
     file_menu.insert_item(5, &file_menu_open);
     file_menu.insert_item(10, &file_menu_save);
@@ -238,11 +239,40 @@ fn build_ui(app: &Application) {
         }))
         .build();
 
+    let action_file_export_pdf = ActionEntry::builder("export_pdf")
+        .activate(clone!( @weak control, @weak history => move |_, _, _| {
+            let file_dialog = FileChooserDialog::builder()
+                .title("Export Dungeon ...")
+                .action(gtk::FileChooserAction::Save)
+                .select_multiple(false)
+                .create_folders(true)
+                .modal(true)
+                .build();
+            file_dialog.add_button("Export", gtk::ResponseType::Accept);
+            file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+            file_dialog.connect_response(clone!(@weak control, @weak history => move |dialog, r| {
+                match r {
+                    gtk::ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let path = file.parse_name().to_string();
+                        to_pdf(&control.borrow().state.dungeon, path);
+                        dialog.close();
+                    }
+                    gtk::ResponseType::Cancel => dialog.close(),
+                    gtk::ResponseType::DeleteEvent => (),
+                    _ => todo!(),
+                }
+            }));
+            file_dialog.show();
+        }))
+        .build();
+
     file_actions.add_action_entries([
         action_file_new,
         action_file_open,
         action_file_save,
         action_file_save_as,
+        action_file_export_pdf,
     ]);
     window.insert_action_group("file", Some(&file_actions));
 
@@ -268,28 +298,22 @@ fn build_ui(app: &Application) {
             }
             match modifier {
                 // CTRL + [ ]
-                gdk::ModifierType::CONTROL_MASK => {
-                    println!("Control!");
-                    match key {
-                        gdk::Key::z => {
-                            control.reset();
-                            let cmds = {
-                                history.borrow_mut().undo();
-                                history.borrow_mut().get_stack()
-                            };
+                gdk::ModifierType::CONTROL_MASK => match key {
+                    gdk::Key::z => {
+                        control.reset();
+                        let cmds = {
+                            history.borrow_mut().undo();
+                            history.borrow_mut().get_stack()
+                        };
 
-                            history.borrow_mut().start_restore();
-                            for cmd in cmds {
-                                control.apply(cmd)
-                            }
-                            history.borrow_mut().end_restore();
+                        history.borrow_mut().start_restore();
+                        for cmd in cmds {
+                            control.apply(cmd)
                         }
-                        gdk::Key::p => {
-                            to_pdf(&control.state.dungeon);
-                        }
-                        _ => (),
+                        history.borrow_mut().end_restore();
                     }
-                }
+                    _ => (),
+                },
                 x => println!("Modifier {:?}", x),
             }
             canvas.borrow().update();

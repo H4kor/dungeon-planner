@@ -64,8 +64,8 @@ fn layout_headline() -> (pango::Context, pango::Layout) {
     (p_ctx, layout)
 }
 
-pub fn to_pdf(dungeon: &Dungeon) {
-    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, "foo.pdf").unwrap();
+pub fn to_pdf(dungeon: &Dungeon, path: String) {
+    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
     let ctx = Context::new(pdf).unwrap();
 
     let mut cur_h = START_H;
