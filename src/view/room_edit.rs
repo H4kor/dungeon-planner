@@ -74,9 +74,7 @@ impl RoomEdit {
             notes_input: notes_i,
         }));
 
-        control
-            .borrow_mut()
-            .subscribe(StateEvent::ActiveRoomChanged(None), re.clone());
+        control.borrow_mut().subscribe_any(re.clone());
 
         re
     }
@@ -96,6 +94,7 @@ impl StateEventSubscriber for RoomEdit {
                 self.notes_input.buffer().set_text(&room.notes);
                 self.widget.set_visible(true);
             }
+            StateEvent::Reset => self.widget.set_visible(false),
             _ => (),
         }
         vec![]

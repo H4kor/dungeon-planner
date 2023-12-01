@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use crate::common::{BBox, Rgb, Vec2};
 use gtk;
 

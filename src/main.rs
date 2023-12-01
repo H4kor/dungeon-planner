@@ -9,10 +9,8 @@ mod state;
 mod storage;
 mod view;
 
-use cairo::glib::clone;
-use export::to_pdf;
-use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel, SimpleAction, SimpleActionGroup};
-use gtk::{gdk, prelude::*, FileChooserDialog, PopoverMenuBar};
+use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
+use gtk::{gdk, prelude::*, PopoverMenuBar};
 use gtk::{glib, Application, ApplicationWindow};
 use observers::{DebugObserver, HistoryObserver};
 use state::{StateCommand, StateController};

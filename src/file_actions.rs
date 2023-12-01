@@ -16,7 +16,7 @@ pub fn file_actions(
     let file_actions = SimpleActionGroup::new();
     let action_file_new = ActionEntry::builder("new")
         .activate(
-            clone!( @weak control, @weak history => move |window: &SimpleActionGroup, _, _| {
+            clone!( @weak control, @weak history => move |_window: &SimpleActionGroup, _, _| {
                 history.borrow_mut().reset();
                 control.borrow_mut().reset();
             }),
@@ -24,7 +24,7 @@ pub fn file_actions(
         .build();
 
     let action_file_open = ActionEntry::builder("open")
-        .activate(clone!( @weak control, @weak history => move |window: &SimpleActionGroup, _, _| {
+        .activate(clone!( @weak control, @weak history => move |_window: &SimpleActionGroup, _, _| {
             let file_dialog = FileChooserDialog::builder()
                 .title("Open Dungeon File ...")
                 .action(gtk::FileChooserAction::Open)
@@ -56,7 +56,7 @@ pub fn file_actions(
         .build();
 
     let action_file_save = ActionEntry::builder("save")
-        .activate(clone!( @weak control, @weak history => move |window: &SimpleActionGroup, _, _| {
+        .activate(clone!( @weak control, @weak history => move |_window: &SimpleActionGroup, _, _| {
             let save_file = history.borrow().save_file();
             match save_file {
                 Some(_) => {
@@ -93,7 +93,7 @@ pub fn file_actions(
         .build();
 
     let action_file_save_as = ActionEntry::builder("save_as")
-        .activate(clone!( @weak control, @weak history => move |window: &SimpleActionGroup, _, _| {
+        .activate(clone!( @weak control, @weak history => move |_window: &SimpleActionGroup, _, _| {
             let file_dialog = FileChooserDialog::builder()
                 .title("Save Dungeon As ...")
                 .action(gtk::FileChooserAction::Save)
@@ -122,7 +122,7 @@ pub fn file_actions(
         .build();
 
     let action_file_export_pdf = ActionEntry::builder("export_pdf")
-        .activate(clone!( @weak control, @weak history => move |window: &SimpleActionGroup, _, _| {
+        .activate(clone!( @weak control, @weak history => move |_window: &SimpleActionGroup, _, _| {
             let file_dialog = FileChooserDialog::builder()
                 .title("Export Dungeon ...")
                 .action(gtk::FileChooserAction::Save)

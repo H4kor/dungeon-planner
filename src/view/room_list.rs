@@ -43,9 +43,7 @@ impl RoomList {
         }
 
         let mut state = control.borrow_mut();
-        state.subscribe(StateEvent::RoomAdded(0), room_list.clone());
-        state.subscribe(StateEvent::RoomModified(0), room_list.clone());
-        state.subscribe(StateEvent::ActiveRoomChanged(None), room_list.clone());
+        state.subscribe_any(room_list.clone());
         room_list
     }
 
@@ -87,6 +85,7 @@ impl StateEventSubscriber for RoomList {
                     .list_box
                     .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
             },
+            StateEvent::Reset => self.rebuild_list(state),
             _ => (),
         }
         vec![]

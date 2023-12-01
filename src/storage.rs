@@ -5,7 +5,6 @@ use serde_json::json;
 use serde_json::Value;
 use std::fs::{read_to_string, OpenOptions};
 use std::io::prelude::*;
-use std::io::{self, BufRead};
 use std::{cell::RefCell, fs::File, rc::Rc};
 
 fn line_to_command(l: &String) -> Option<StateCommand> {
