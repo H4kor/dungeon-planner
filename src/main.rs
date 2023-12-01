@@ -17,7 +17,7 @@ use observers::{DebugObserver, HistoryObserver};
 use state::StateController;
 use std::cell::RefCell;
 use std::rc::Rc;
-use view::buttons::{AddRoomButton, AppendRoomButton, SelectRoomButton, SplitEdgeButton};
+use view::buttons::{AddRoomButton, EditModeButton};
 use view::canvas::Canvas;
 use view::room_edit::RoomEdit;
 use view::room_list::RoomList;
@@ -39,7 +39,7 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("file.save_as", &["<Ctrl><Shift>S"]);
     app.set_accels_for_action("file.export_pdf", &["<Ctrl>P"]);
 
-    app.set_accels_for_action("edit.unselect", &["<Esc>"]);
+    app.set_accels_for_action("edit.unselect", &["Escape"]);
     app.set_accels_for_action("edit.undo", &["<Ctrl>Z"]);
 
     // Run the application
@@ -72,16 +72,22 @@ fn build_ui(app: &Application) {
 
     let canvas = Canvas::new(control.clone());
     let add_room_button = AddRoomButton::new(control.clone());
-    let select_room_button = SelectRoomButton::new(control.clone());
-    let split_edge_button = SplitEdgeButton::new(control.clone());
-    let append_verts_button = AppendRoomButton::new(control.clone());
+    let select_room_button =
+        EditModeButton::new(control.clone(), state::EditMode::Select, "edit-find");
+    let split_edge_button =
+        EditModeButton::new(control.clone(), state::EditMode::SplitEdge, "edit-cut");
+    let append_verts_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::AppendRoom,
+        "document-edit",
+    );
     let room_list = RoomList::new(control.clone());
     let room_edit = RoomEdit::new(control.clone());
 
     tool_box.append(&add_room_button.widget);
-    tool_box.append(&select_room_button.widget);
-    tool_box.append(&split_edge_button.widget);
-    tool_box.append(&append_verts_button.widget);
+    tool_box.append(&select_room_button.borrow().widget);
+    tool_box.append(&split_edge_button.borrow().widget);
+    tool_box.append(&append_verts_button.borrow().widget);
 
     side_box.append(&tool_box);
     side_box.append(&room_list.borrow().scrolled_window);
