@@ -131,14 +131,14 @@ fn build_ui(app: &Application) {
     // Create a window
     let window = ApplicationWindow::builder()
         .application(app)
-        .title("Dungeon Planner")
+        .title("Dungeon Planner - Unsaved Dungeon")
         .child(&window_box)
         .maximized(true)
         .show_menubar(true)
         .build();
 
     // actions
-    let file_actions = file_actions::file_actions(control.clone(), history.clone());
+    let file_actions = file_actions::file_actions(control.clone(), history.clone(), window.clone());
     window.insert_action_group("file", Some(&file_actions));
 
     let edit_actions = edit_actions::edit_actions(control.clone(), history.clone());
