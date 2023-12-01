@@ -33,6 +33,10 @@ fn main() -> glib::ExitCode {
 
     // Set keyboard accelerator to trigger "win.close".
     app.set_accels_for_action("win.close", &["<Ctrl>W"]);
+    app.set_accels_for_action("file.new", &["<Ctrl>N"]);
+    app.set_accels_for_action("file.open", &["<Ctrl>O"]);
+    app.set_accels_for_action("file.save", &["<Ctrl>S"]);
+    app.set_accels_for_action("file.save_as", &["<Ctrl><Shift>S"]);
 
     // Run the application
     app.run()
@@ -41,7 +45,7 @@ fn main() -> glib::ExitCode {
 fn build_ui(app: &Application) {
     let control = Rc::new(RefCell::new(StateController::new()));
 
-    let history = HistoryObserver::new(control.clone(), "dungeon.txt".to_owned());
+    let history = HistoryObserver::new(control.clone(), None);
 
     /*
      * |--------|-----------------------|
@@ -93,10 +97,16 @@ fn build_ui(app: &Application) {
         .build();
 
     let file_menu = Menu::new();
+    let file_menu_new = MenuItem::new(Some("New Dungeon"), Some("file.new"));
     let file_menu_open = MenuItem::new(Some("Open ..."), Some("file.open"));
+    let file_menu_save = MenuItem::new(Some("Save ..."), Some("file.save"));
+    let file_menu_save_as = MenuItem::new(Some("Save As ..."), Some("file.save_as"));
     let file_menu_print = MenuItem::new(Some("Print ..."), Some("file.print"));
-    file_menu.insert_item(0, &file_menu_open);
-    file_menu.insert_item(1, &file_menu_print);
+    file_menu.insert_item(0, &file_menu_new);
+    file_menu.insert_item(5, &file_menu_open);
+    file_menu.insert_item(10, &file_menu_save);
+    file_menu.insert_item(11, &file_menu_save_as);
+    file_menu.insert_item(20, &file_menu_print);
 
     // https://gtk-rs.org/gtk4-rs/stable/latest/book/actions.html?highlight=Act#menus
 
@@ -123,6 +133,13 @@ fn build_ui(app: &Application) {
 
     // actions
     let file_actions = SimpleActionGroup::new();
+    let action_file_new = ActionEntry::builder("new")
+        .activate(clone!( @weak control, @weak history => move |_, _, _| {
+            history.borrow_mut().reset();
+            control.borrow_mut().reset();
+        }))
+        .build();
+
     let action_file_open = ActionEntry::builder("open")
         .activate(clone!( @weak control, @weak history => move |_, _, _| {
             let file_dialog = FileChooserDialog::builder()
@@ -155,7 +172,78 @@ fn build_ui(app: &Application) {
         }))
         .build();
 
-    file_actions.add_action_entries([action_file_open]);
+    let action_file_save = ActionEntry::builder("save")
+        .activate(clone!( @weak control, @weak history => move |_, _, _| {
+            let save_file = history.borrow().save_file();
+            match save_file {
+                Some(_) => {
+                    history.borrow_mut().save_to_file();
+                },
+                None => {
+                    let file_dialog = FileChooserDialog::builder()
+                        .title("Save Dungeon ...")
+                        .action(gtk::FileChooserAction::Save)
+                        .select_multiple(false)
+                        .create_folders(true)
+                        .modal(true)
+                        .build();
+                    file_dialog.add_button("Save", gtk::ResponseType::Accept);
+                    file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+                    file_dialog.connect_response(clone!(@weak control, @weak history => move |dialog, r| {
+                        match r {
+                            gtk::ResponseType::Accept => {
+                                let file = dialog.file().unwrap();
+                                let path = file.parse_name().to_string();
+                                history.borrow_mut().change_file(path.clone());
+                                history.borrow_mut().save_to_file();
+                                dialog.close();
+                            }
+                            gtk::ResponseType::Cancel => dialog.close(),
+                            gtk::ResponseType::DeleteEvent => (),
+                            _ => todo!(),
+                        }
+                    }));
+                    file_dialog.show();
+                },
+            }
+        }))
+        .build();
+
+    let action_file_save_as = ActionEntry::builder("save_as")
+        .activate(clone!( @weak control, @weak history => move |_, _, _| {
+            let file_dialog = FileChooserDialog::builder()
+                .title("Save Dungeon As ...")
+                .action(gtk::FileChooserAction::Save)
+                .select_multiple(false)
+                .create_folders(true)
+                .modal(true)
+                .build();
+            file_dialog.add_button("Save", gtk::ResponseType::Accept);
+            file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+            file_dialog.connect_response(clone!(@weak control, @weak history => move |dialog, r| {
+                match r {
+                    gtk::ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let path = file.parse_name().to_string();
+                        history.borrow_mut().change_file(path.clone());
+                        history.borrow_mut().save_to_file();
+                        dialog.close();
+                    }
+                    gtk::ResponseType::Cancel => dialog.close(),
+                    gtk::ResponseType::DeleteEvent => (),
+                    _ => todo!(),
+                }
+            }));
+            file_dialog.show();
+        }))
+        .build();
+
+    file_actions.add_action_entries([
+        action_file_new,
+        action_file_open,
+        action_file_save,
+        action_file_save_as,
+    ]);
     window.insert_action_group("file", Some(&file_actions));
 
     let action_close = ActionEntry::builder("close")
@@ -210,7 +298,6 @@ fn build_ui(app: &Application) {
     }
 
     DebugObserver::new(control.clone());
-    storage::load_dungeon(control.clone(), "dungeon.txt".to_owned());
     history.borrow_mut().activate();
 
     // Present window
