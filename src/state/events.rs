@@ -7,6 +7,7 @@ use super::EditMode;
 pub enum StateEvent {
     RoomAdded(RoomId),
     RoomModified(RoomId),
+    RoomDeleted(RoomId),
     ActiveRoomChanged(Option<RoomId>),
     EditModeChanged(EditMode),
     Reset,

@@ -40,6 +40,7 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("file.export_pdf", &["<Ctrl>P"]);
 
     app.set_accels_for_action("edit.unselect", &["Escape"]);
+    app.set_accels_for_action("edit.delete_room", &["Delete"]);
     app.set_accels_for_action("edit.undo", &["<Ctrl>Z"]);
 
     // Run the application

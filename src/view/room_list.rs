@@ -86,6 +86,7 @@ impl StateEventSubscriber for RoomList {
                     .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
             },
             StateEvent::Reset => self.rebuild_list(state),
+            StateEvent::RoomDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
         vec![]

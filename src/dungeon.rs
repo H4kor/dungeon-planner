@@ -85,4 +85,16 @@ impl Dungeon {
     pub(crate) fn rooms(&self) -> &Vec<Room> {
         &self.rooms
     }
+
+    pub(crate) fn remove_room(&mut self, room_id: u32) {
+        let idx = self.rooms.iter().position(|r| r.id == Some(room_id));
+        match idx {
+            Some(i) => {
+                self.rooms.remove(i);
+            }
+            None => {
+                println!("Room Id not found for deletion")
+            }
+        };
+    }
 }

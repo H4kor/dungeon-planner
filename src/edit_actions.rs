@@ -38,7 +38,22 @@ pub fn edit_actions(
         )
         .build();
 
-    edit_actions.add_action_entries([edit_action_unselect, edit_action_undo]);
+    let edit_action_delete_room = ActionEntry::builder("delete_room")
+        .activate(
+            clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
+                let active_room_id = control.borrow().state.active_room_id;
+                if let Some(room_id) = active_room_id {
+                    control.borrow_mut().apply(StateCommand::DeleteRoom(room_id))
+                }
+            }),
+        )
+        .build();
+
+    edit_actions.add_action_entries([
+        edit_action_unselect,
+        edit_action_undo,
+        edit_action_delete_room,
+    ]);
 
     edit_actions
 }

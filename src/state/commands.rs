@@ -14,6 +14,7 @@ pub enum StateCommand {
     ChangeRoomName(RoomId, String),
     ChangeRoomNotes(RoomId, String),
     SplitWall(RoomId, WallId, Vec2<i32>),
+    DeleteRoom(RoomId),
 }
 
 impl StateCommand {
@@ -50,6 +51,15 @@ impl StateCommand {
                     .unwrap()
                     .split(*wall_id, *pos);
                 vec![StateEvent::RoomModified(*room_id)]
+            }
+            StateCommand::DeleteRoom(room_id) => {
+                state.dungeon.remove_room(*room_id);
+                let mut events = vec![StateEvent::RoomDeleted(*room_id)];
+                if state.active_room_id == Some(*room_id) {
+                    state.active_room_id = None;
+                    events.push(StateEvent::ActiveRoomChanged(None));
+                }
+                events
             }
         }
     }
