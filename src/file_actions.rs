@@ -21,12 +21,12 @@ pub fn pdf_filter() -> FileFilter {
     ff
 }
 
-fn save_as_dialog(
+fn save_as_dialog<F: Fn() + 'static>(
     title: String,
     control: Rc<RefCell<StateController>>,
     history: Rc<RefCell<HistoryObserver>>,
     window: ApplicationWindow,
-    after_success: impl Fn() + 'static,
+    after_success: F,
 ) {
     let file_dialog = FileChooserDialog::builder()
         .title(title)
@@ -63,6 +63,122 @@ fn save_as_dialog(
     file_dialog.show();
 }
 
+fn open_dialog(
+    control: Rc<RefCell<StateController>>,
+    history: Rc<RefCell<HistoryObserver>>,
+    window: ApplicationWindow,
+) {
+    let file_dialog = FileChooserDialog::builder()
+        .title("Open Dungeon File ...")
+        .action(gtk::FileChooserAction::Open)
+        .select_multiple(false)
+        .create_folders(true)
+        .modal(true)
+        .filter(&dungeon_file_filter())
+        .build();
+    file_dialog.add_button("Open", gtk::ResponseType::Accept);
+    file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+    file_dialog.connect_response(
+        clone!(@weak control, @weak history, @weak window => move |dialog, r| {
+            println!("{}", r);
+            match r {
+                gtk::ResponseType::Accept => {
+                    let file = dialog.file().unwrap();
+                    let path = file.parse_name().to_string();
+                    control.borrow_mut().reset();
+                    history.borrow_mut().change_file(path.clone());
+                    storage::load_dungeon(control.clone(), path.clone());
+                    history.borrow_mut().activate();
+                    let title = format!("Dungeon Planner - {path}");
+                    window.set_title(Some(&title));
+                    dialog.close();
+                }
+                gtk::ResponseType::Cancel => dialog.close(),
+                gtk::ResponseType::DeleteEvent => (),
+                _ => todo!(),
+            }
+        }),
+    );
+    file_dialog.show();
+}
+
+pub fn unsaved_dialog(
+    control: Rc<RefCell<StateController>>,
+    history: Rc<RefCell<HistoryObserver>>,
+    window: ApplicationWindow,
+) {
+    let unsaved_dialog = MessageDialog::builder()
+        .message_type(gtk::MessageType::Warning)
+        .buttons(gtk::ButtonsType::YesNo)
+        .text("You have unsaved changes. Do you want to save these?")
+        .modal(true)
+        .build();
+    unsaved_dialog.connect_response(clone!( @weak control, @weak history, @weak window => move |dialog, r| {
+        println!("unsaved_dialog.connect_response: {:?}", r);
+        match r {
+            gtk::ResponseType::Yes => {
+                match history.clone().borrow().save_file() {
+                    Some(_) => history.borrow_mut().save_to_file(),
+                    None => save_as_dialog(
+                        "Save Dungeon ...".to_owned(),
+                        control.clone(), history.clone(), window.clone(),
+                        Box::new(clone!( @weak control, @weak history, @weak window => move || {
+                            history.borrow_mut().reset();
+                            control.borrow_mut().reset();
+                            let title = format!("Dungeon Planner - Unsaved Dungeon");
+                            window.set_title(Some(&title));
+                        }))
+                    ),
+                }
+            }
+            gtk::ResponseType::No => {
+                history.borrow_mut().reset();
+                control.borrow_mut().reset();
+                let title = format!("Dungeon Planner - Unsaved Dungeon");
+                window.set_title(Some(&title));
+            },
+            _ => (),
+        }
+        dialog.close();
+    }));
+    unsaved_dialog.show();
+}
+
+pub fn unsaved_dialog_open(
+    control: Rc<RefCell<StateController>>,
+    history: Rc<RefCell<HistoryObserver>>,
+    window: ApplicationWindow,
+) {
+    let unsaved_dialog = MessageDialog::builder()
+        .message_type(gtk::MessageType::Warning)
+        .buttons(gtk::ButtonsType::YesNo)
+        .text("You have unsaved changes. Do you want to save these?")
+        .modal(true)
+        .build();
+    unsaved_dialog.connect_response(clone!( @weak control, @weak history, @weak window => move |dialog, r| {
+        println!("unsaved_dialog.connect_response: {:?}", r);
+        match r {
+            gtk::ResponseType::Yes => {
+                let file = history.clone().borrow().save_file();
+                match file {
+                    Some(_) => history.borrow_mut().save_to_file(),
+                    None => save_as_dialog(
+                        "Save Dungeon ...".to_owned(),
+                        control.clone(), history.clone(), window.clone(),
+                        Box::new(clone!( @weak control, @weak history, @weak window => move || {
+                            open_dialog(control, history, window)
+                        }))
+                    ),
+                }
+            }
+            gtk::ResponseType::No => open_dialog(control, history, window),
+            _ => (),
+        }
+        dialog.close();
+    }));
+    unsaved_dialog.show();
+}
+
 pub fn file_actions(
     control: Rc<RefCell<StateController>>,
     history: Rc<RefCell<HistoryObserver>>,
@@ -78,36 +194,9 @@ pub fn file_actions(
                     let title = format!("Dungeon Planner - Unsaved Dungeon");
                     window.set_title(Some(&title));
                 } else {
-                    let unsaved_dialog = MessageDialog::builder()
-                        .message_type(gtk::MessageType::Warning)
-                        .buttons(gtk::ButtonsType::YesNo)
-                        .text("You have unsaved changes. Do you want to save these?")
-                        .modal(true)
-                        .build();
-                    unsaved_dialog.connect_response(clone!( @weak control, @weak history, @weak window => move |dialog, r| {
-                        println!("unsaved_dialog.connect_response: {:?}", r);
-                        match r {
-                            gtk::ResponseType::Yes => {
-                                match history.clone().borrow().save_file() {
-                                    Some(_) => history.borrow_mut().save_to_file(),
-                                    None => save_as_dialog(
-                                        "Save Dungeon ...".to_owned(),
-                                        control.clone(), history.clone(), window.clone(),
-                                        clone!( @weak control, @weak history, @weak window => move || {
-                                            history.borrow_mut().reset();
-                                            control.borrow_mut().reset();
-                                            let title = format!("Dungeon Planner - Unsaved Dungeon");
-                                            window.set_title(Some(&title));
-                                        })
-                                    ),
-                                }
-                            }
-                            gtk::ResponseType::No => (),
-                            _ => (),
-                        }
-                        dialog.close();
-                    }));
-                    unsaved_dialog.show();
+                    unsaved_dialog(
+                        control.clone(), history.clone(), window.clone(),
+                    );
                 }
             }),
         )
@@ -115,36 +204,15 @@ pub fn file_actions(
 
     let action_file_open = ActionEntry::builder("open")
         .activate(clone!( @weak control, @weak history, @weak window => move |_group: &SimpleActionGroup, _, _| {
-            let file_dialog = FileChooserDialog::builder()
-                .title("Open Dungeon File ...")
-                .action(gtk::FileChooserAction::Open)
-                .select_multiple(false)
-                .create_folders(true)
-                .modal(true)
-                .filter(&dungeon_file_filter())
-                .build();
-            file_dialog.add_button("Open", gtk::ResponseType::Accept);
-            file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
-            file_dialog.connect_response(clone!(@weak control, @weak history, @weak window => move |dialog, r| {
-                println!("{}", r);
-                match r {
-                    gtk::ResponseType::Accept => {
-                        let file = dialog.file().unwrap();
-                        let path = file.parse_name().to_string();
-                        control.borrow_mut().reset();
-                        history.borrow_mut().change_file(path.clone());
-                        storage::load_dungeon(control.clone(), path.clone());
-                        history.borrow_mut().activate();
-                        let title = format!("Dungeon Planner - {path}");
-                        window.set_title(Some(&title));
-                        dialog.close();
-                    }
-                    gtk::ResponseType::Cancel => dialog.close(),
-                    gtk::ResponseType::DeleteEvent => (),
-                    _ => todo!(),
-                }
-            }));
-            file_dialog.show();
+            match history.clone().borrow().unsaved_state() {
+                true => {
+                    unsaved_dialog_open(
+                        control.clone(), history.clone(), window.clone(),
+                    );
+                    
+                },
+                false => open_dialog(control, history, window)
+            }
         }))
         .build();
 
@@ -156,7 +224,7 @@ pub fn file_actions(
                     history.borrow_mut().save_to_file();
                 },
                 None => {
-                    save_as_dialog("Save Dungeon ...".to_owned(), control, history, window.clone(), ||{});
+                    save_as_dialog("Save Dungeon ...".to_owned(), control, history, window.clone(), Box::new(||{}));
                 },
             }
         }))
@@ -164,7 +232,7 @@ pub fn file_actions(
 
     let action_file_save_as = ActionEntry::builder("save_as")
         .activate(clone!( @weak control, @weak history, @weak window => move |_group: &SimpleActionGroup, _, _| {
-            save_as_dialog("Save Dungeon As ...".to_owned(), control, history, window, ||{});
+            save_as_dialog("Save Dungeon As ...".to_owned(), control, history, window, Box::new(||{}));
         }))
         .build();
 
