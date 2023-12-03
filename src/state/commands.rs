@@ -22,7 +22,13 @@ impl StateCommand {
         match self {
             StateCommand::AddRoom => {
                 let room_id = state.dungeon.add_room(Room::new(None));
-                vec![StateEvent::RoomAdded(room_id)]
+                state.active_room_id = Some(room_id);
+                state.mode = EditMode::AppendRoom;
+                vec![
+                    StateEvent::RoomAdded(room_id),
+                    StateEvent::ActiveRoomChanged(Some(room_id)),
+                    StateEvent::EditModeChanged(EditMode::AppendRoom),
+                ]
             }
             StateCommand::ChangeMode(mode) => {
                 state.mode = *mode;

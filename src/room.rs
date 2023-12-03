@@ -70,7 +70,10 @@ impl Room {
                     verts.insert(wall.p1_idx + 1, v.pos);
                     show_room_number = false;
                 }
-                None => verts.push(v.pos),
+                None => {
+                    verts.push(v.pos);
+                    show_room_number = false;
+                }
             },
             None => (),
         }

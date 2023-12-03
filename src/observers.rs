@@ -35,6 +35,7 @@ pub struct HistoryObserver {
     save_file: Option<String>,
     mode: PersistenceMode,
     cmds: Vec<StateCommand>,
+    unsaved_state: bool,
 }
 
 impl HistoryObserver {
@@ -46,6 +47,7 @@ impl HistoryObserver {
             save_file: save_file,
             mode: PersistenceMode::Restoring,
             cmds: vec![],
+            unsaved_state: false,
         }));
 
         state.borrow_mut().subscribe_cmds(obs.clone());
@@ -57,6 +59,7 @@ impl HistoryObserver {
     }
     pub fn reset(&mut self) {
         self.save_file = None;
+        self.unsaved_state = false;
         self.cmds = vec![];
     }
 
@@ -82,9 +85,16 @@ impl HistoryObserver {
         self.save_file.clone()
     }
 
-    pub fn save_to_file(&self) {
+    pub fn unsaved_state(&self) -> bool {
+        self.unsaved_state.clone()
+    }
+
+    pub fn save_to_file(&mut self) {
         match &self.save_file {
-            Some(f) => storage::save_to_file(f.to_string(), &self.cmds),
+            Some(f) => {
+                storage::save_to_file(f.to_string(), &self.cmds);
+                self.unsaved_state = false;
+            }
             None => todo!(),
         }
     }
@@ -94,6 +104,7 @@ impl StateCommandSubscriber for HistoryObserver {
     fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
         if self.mode == PersistenceMode::Record || self.mode == PersistenceMode::Restoring {
             self.cmds.push(cmd);
+            self.unsaved_state = true;
         }
     }
 }
