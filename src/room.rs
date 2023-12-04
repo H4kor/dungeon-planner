@@ -8,12 +8,12 @@ pub type WallId = u32;
 
 /// One wall of a room
 /// Has an id and two points defining its shape
-/// The id is only unique within a room
+/// The id is only unique within a room. RoomIds are persistent and not ordered
+/// RoomIds are reused
 /// Not meant to be stored, as these are derived from a Room
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Wall {
     pub id: RoomId,
-    pub p1_idx: usize,
     pub p1: Vec2<i32>,
     pub p2: Vec2<i32>,
 }
@@ -33,7 +33,8 @@ pub struct RoomDrawOptions {
 #[derive(Clone)]
 pub struct Room {
     pub id: Option<RoomId>,
-    verts: Vec<Vec2<i32>>,
+    walls: Vec<Wall>,
+    first_vert: Option<Vec2<i32>>,
     pub name: String,
     pub notes: String,
     room_color: Rgb,
@@ -43,7 +44,8 @@ impl Room {
     pub fn new(id: Option<RoomId>) -> Self {
         Self {
             id: id,
-            verts: vec![],
+            walls: vec![],
+            first_vert: None,
             name: "New Room".to_owned(),
             notes: String::new(),
             room_color: DEFAULT_ROOM_COLOR,
@@ -56,23 +58,27 @@ impl Room {
         active: bool,
         options: Option<RoomDrawOptions>,
     ) -> Vec<Box<dyn Primitive>> {
-        let mut verts = self.verts.clone();
+        let mut walls = self.walls.clone();
         let mut show_room_number = true;
         match next_vert {
             Some(v) => match v.in_wall_id {
                 Some(wall_id) => {
-                    let wall = self
-                        .walls()
-                        .iter()
-                        .find(|w| w.id == wall_id)
-                        .unwrap()
-                        .clone();
-                    verts.insert(wall.p1_idx + 1, v.pos);
+                    let idx = walls.iter().position(|w| w.id == wall_id).unwrap().clone();
+                    let wall = walls[idx];
+                    let (w1, w2) = wall.split(v.pos);
+                    walls[idx] = w1;
+                    walls.insert(idx + 1, w2);
                     show_room_number = false;
                 }
                 None => {
-                    verts.push(v.pos);
-                    show_room_number = false;
+                    if walls.len() > 0 {
+                        let idx = walls.len() - 1;
+                        let wall = walls[idx];
+                        let (w1, w2) = wall.split(v.pos);
+                        walls[idx] = w1;
+                        walls.insert(idx + 1, w2);
+                        show_room_number = false;
+                    }
                 }
             },
             None => (),
@@ -91,7 +97,10 @@ impl Room {
 
         let mut prims = Vec::<Box<dyn Primitive>>::new();
         let poly = Box::new(Polygon {
-            points: verts.iter().map(|p| Into::<Vec2<f64>>::into(*p)).collect(),
+            points: walls
+                .iter()
+                .map(|p| Into::<Vec2<f64>>::into(p.p1))
+                .collect(),
             fill_color: color,
             fill_opacity: match options {
                 Some(RoomDrawOptions {
@@ -153,50 +162,45 @@ impl Room {
         prims
     }
 
-    pub fn append(&mut self, vert: Vec2<i32>) {
-        self.verts.push(vert)
+    fn next_wall_id(&self) -> WallId {
+        self.walls.iter().map(|w| w.id).max().unwrap_or(0) + 1
     }
 
-    pub fn walls(&self) -> Vec<Wall> {
-        let mut walls = vec![];
-
-        if self.verts.len() > 1 {
-            let mut prev = self.verts[0];
-            for (i, v) in self.verts[1..].iter().enumerate() {
-                walls.push(Wall {
-                    id: i as WallId,
-                    p1_idx: i,
-                    p1: prev,
-                    p2: *v,
-                });
-                prev = *v;
-            }
-            walls.push(Wall {
-                id: walls.len() as RoomId,
-                p1_idx: walls.len(),
-                p1: prev,
-                p2: self.verts[0],
+    pub fn append(&mut self, vert: Vec2<i32>) {
+        // split last wall
+        if self.walls.len() == 0 && self.first_vert == None {
+            self.first_vert = Some(vert);
+        } else if self.walls.len() == 0 {
+            self.walls.push(Wall {
+                id: self.next_wall_id(),
+                p1: self.first_vert.unwrap(),
+                p2: vert,
+            });
+            self.walls.push(Wall {
+                id: self.next_wall_id(),
+                p1: vert,
+                p2: self.first_vert.unwrap(),
             })
+        } else {
+            let (w1, mut w2) = self.walls.pop().unwrap().split(vert);
+            self.walls.push(w1);
+            w2.id = self.next_wall_id();
+            self.walls.push(w2);
         }
-        walls
+    }
+
+    pub fn walls(&self) -> &Vec<Wall> {
+        &self.walls
     }
 
     fn lines(&self) -> Vec<Line> {
-        let mut ls = vec![];
-        for i in 1..self.verts.len() {
-            ls.push(Line {
-                a: self.verts[i - 1].into(),
-                b: self.verts[i].into(),
-            });
-        }
-        if self.verts.len() > 2 {
-            ls.push(Line {
-                a: self.verts[self.verts.len() - 1].into(),
-                b: self.verts[0].into(),
-            });
-        }
-
-        ls
+        self.walls
+            .iter()
+            .map(|w| Line {
+                a: w.p1.into(),
+                b: w.p2.into(),
+            })
+            .collect()
     }
 
     pub fn contains_point(&self, pos: Vec2<f64>) -> bool {
@@ -236,13 +240,18 @@ impl Room {
     }
 
     pub(crate) fn split(&mut self, wall_id: u32, pos: Vec2<i32>) {
-        let wall = self
-            .walls()
+        let idx = self
+            .walls
             .iter()
-            .find(|w| w.id == wall_id)
+            .position(|w| w.id == wall_id)
             .unwrap()
             .clone();
-        self.verts.insert(wall.p1_idx + 1, pos)
+
+        let (w1, mut w2) = self.walls[idx].split(pos);
+        w2.id = self.next_wall_id();
+
+        self.walls[idx] = w1;
+        self.walls.insert(idx + 1, w2);
     }
 }
 
@@ -264,6 +273,21 @@ impl Wall {
         let projection = v + (w - v) * Vec2 { x: t, y: t }; // Projection falls on the segment
         (p - projection).len()
     }
+
+    fn split(&self, vert: Vec2<i32>) -> (Wall, Wall) {
+        (
+            Wall {
+                id: self.id,
+                p1: self.p1,
+                p2: vert,
+            },
+            Wall {
+                id: self.id,
+                p1: vert,
+                p2: self.p2,
+            },
+        )
+    }
 }
 
 #[cfg(test)]
@@ -282,7 +306,7 @@ mod tests {
     #[test]
     fn test_walls_one_verts() {
         let mut r = Room::new(None);
-        r.verts = vec![Vec2 { x: 1, y: 1 }];
+        r.append(Vec2 { x: 1, y: 1 });
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
     }
@@ -290,15 +314,14 @@ mod tests {
     #[test]
     fn test_walls_two_verts() {
         let mut r = Room::new(None);
-        r.verts = vec![Vec2 { x: 1, y: 1 }, Vec2 { x: 2, y: 2 }];
+        r.append(Vec2 { x: 1, y: 1 });
+        r.append(Vec2 { x: 2, y: 2 });
         let walls = r.walls();
         assert_eq!(walls.len(), 2);
 
-        assert_eq!(walls[0].id, 0);
         assert_eq!(walls[0].p1, Vec2 { x: 1, y: 1 });
         assert_eq!(walls[0].p2, Vec2 { x: 2, y: 2 });
 
-        assert_eq!(walls[1].id, 1);
         assert_eq!(walls[1].p1, Vec2 { x: 2, y: 2 });
         assert_eq!(walls[1].p2, Vec2 { x: 1, y: 1 });
     }
@@ -306,22 +329,17 @@ mod tests {
     #[test]
     fn test_walls_three_verts() {
         let mut r = Room::new(None);
-        r.verts = vec![
-            Vec2 { x: 1, y: 1 },
-            Vec2 { x: 2, y: 2 },
-            Vec2 { x: 3, y: 3 },
-        ];
+        r.append(Vec2 { x: 1, y: 1 });
+        r.append(Vec2 { x: 2, y: 2 });
+        r.append(Vec2 { x: 3, y: 3 });
         let walls = r.walls();
         assert_eq!(walls.len(), 3);
-        assert_eq!(walls[0].id, 0);
         assert_eq!(walls[0].p1, Vec2 { x: 1, y: 1 });
         assert_eq!(walls[0].p2, Vec2 { x: 2, y: 2 });
 
-        assert_eq!(walls[1].id, 1);
         assert_eq!(walls[1].p1, Vec2 { x: 2, y: 2 });
         assert_eq!(walls[1].p2, Vec2 { x: 3, y: 3 });
 
-        assert_eq!(walls[2].id, 2);
         assert_eq!(walls[2].p1, Vec2 { x: 3, y: 3 });
         assert_eq!(walls[2].p2, Vec2 { x: 1, y: 1 });
     }
@@ -330,7 +348,6 @@ mod tests {
     fn wall_dist() {
         let w = Wall {
             id: 0,
-            p1_idx: 0,
             p1: Vec2 { x: 0, y: 0 },
             p2: Vec2 { x: 1, y: 0 },
         };

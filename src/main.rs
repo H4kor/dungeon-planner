@@ -1,5 +1,6 @@
 mod common;
 mod config;
+mod door;
 mod dungeon;
 mod edit_actions;
 mod export;
