@@ -193,6 +193,10 @@ impl Room {
         &self.walls
     }
 
+    pub fn wall(&self, id: WallId) -> Option<&Wall> {
+        self.walls.iter().find(|w| w.id == id)
+    }
+
     fn lines(&self) -> Vec<Line> {
         self.walls
             .iter()
@@ -257,13 +261,17 @@ impl Room {
 
 impl Wall {
     pub fn distance(&self, p: Vec2<f64>) -> f64 {
+        (p - self.nearest_point(p)).len()
+    }
+
+    pub fn nearest_point(&self, p: Vec2<f64>) -> Vec2<f64> {
         // Return minimum distance between line segment vw and point p
         // https://stackoverflow.com/a/1501725/1224467
         let v: Vec2<f64> = self.p1.into();
         let w: Vec2<f64> = self.p2.into();
         let l2 = (w - v).sqr_len(); // i.e. |w-v|^2 -  avoid a sqrt
         if l2 == 0.0 {
-            return (p - v).len(); // v == w case
+            return v; // v == w case
         }
         // Consider the line extending the segment, parameterized as v + t (w - v).
         // We find projection of point p onto the line.
@@ -271,7 +279,13 @@ impl Wall {
         // We clamp t from [0,1] to handle points outside the segment vw.
         let t = f64::max(0.0, f64::min(1.0, (p - v).dot(w - v) / l2));
         let projection = v + (w - v) * Vec2 { x: t, y: t }; // Projection falls on the segment
-        (p - projection).len()
+        projection
+    }
+
+    // [0, 1] as distance from p1 normalized by ||p2-p1||
+    pub fn nearest_relative_pos(&self, p: Vec2<f64>) -> f64 {
+        let on_wall = self.nearest_point(p);
+        (on_wall - self.p1.into()).len() / (self.p2 - self.p1).len()
     }
 
     fn split(&self, vert: Vec2<i32>) -> (Wall, Wall) {
@@ -287,6 +301,17 @@ impl Wall {
                 p2: self.p2,
             },
         )
+    }
+
+    pub(crate) fn rel_to_world(&self, position: f64) -> Vec2<f64> {
+        (Into::<Vec2<f64>>::into(self.p1) + position * Into::<Vec2<f64>>::into(self.p2 - self.p1))
+            .into()
+    }
+
+    // unit length vector pointing from p1 to p2
+    pub(crate) fn tangent(&self) -> Vec2<f64> {
+        let d: Vec2<f64> = (self.p2 - self.p1).into();
+        (1.0 / d.len()) * d
     }
 }
 

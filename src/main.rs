@@ -83,6 +83,8 @@ fn build_ui(app: &Application) {
         state::EditMode::AppendRoom,
         "document-edit",
     );
+    let add_door_button =
+        EditModeButton::new(control.clone(), state::EditMode::AddDoor, "insert-link");
     let room_list = RoomList::new(control.clone());
     let room_edit = RoomEdit::new(control.clone());
 
@@ -90,6 +92,7 @@ fn build_ui(app: &Application) {
     tool_box.append(&select_room_button.borrow().widget);
     tool_box.append(&split_edge_button.borrow().widget);
     tool_box.append(&append_verts_button.borrow().widget);
+    tool_box.append(&add_door_button.borrow().widget);
 
     side_box.append(&tool_box);
     side_box.append(&room_list.borrow().scrolled_window);

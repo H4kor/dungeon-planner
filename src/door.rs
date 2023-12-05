@@ -1,6 +1,7 @@
 use crate::{
-    room::{RoomId, WallId},
-    view::primitives::Primitive,
+    common::{Rgb, Vec2},
+    room::{RoomId, Wall, WallId},
+    view::primitives::{Line, Primitive},
 };
 
 pub type DoorId = u32;
@@ -32,7 +33,19 @@ impl Door {
         }
     }
 
-    pub fn draw() -> Vec<Box<dyn Primitive>> {
-        vec![]
+    pub fn draw(&self, wall: &Wall) -> Vec<Box<dyn Primitive>> {
+        let world_pos = wall.rel_to_world(self.position);
+        let tangent = wall.tangent();
+
+        vec![Box::new(Line {
+            color: Rgb {
+                r: 1.0,
+                g: 1.0,
+                b: 1.0,
+            },
+            from: world_pos - (self.width / 2.0) * tangent,
+            to: world_pos + (self.width / 2.0) * tangent,
+            width: 20.0,
+        })]
     }
 }

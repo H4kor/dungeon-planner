@@ -5,7 +5,7 @@ pub mod events;
 use crate::{
     common::Vec2,
     dungeon::Dungeon,
-    room::RoomId,
+    room::{Room, RoomId},
     view::{grid::Grid, View},
 };
 pub use commands::StateCommand;
@@ -52,6 +52,13 @@ impl State {
             cursor: CursorState {
                 pos: Vec2 { x: 0.0, y: 0.0 },
             },
+        }
+    }
+
+    pub fn active_room(&self) -> Option<&Room> {
+        match self.active_room_id {
+            Some(room_id) => self.dungeon.room(room_id),
+            None => None,
         }
     }
 }

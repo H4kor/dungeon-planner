@@ -20,6 +20,7 @@ pub struct EditModeButton {
 impl AddRoomButton {
     pub fn new(control: Rc<RefCell<StateController>>) -> Self {
         let button = Button::builder().icon_name("document-new").build();
+        button.set_size_request(48, 48);
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();
@@ -37,6 +38,7 @@ impl EditModeButton {
         icon_name: &str,
     ) -> Rc<RefCell<Self>> {
         let button = ToggleButton::builder().icon_name(icon_name).build();
+        button.set_size_request(48, 48);
 
         button.connect_clicked(clone!( @weak control => move |_button| {
             let control = &mut *control.borrow_mut();
