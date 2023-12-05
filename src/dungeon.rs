@@ -1,5 +1,6 @@
 use crate::{
     common::Vec2,
+    door::{Door, DoorId},
     room::{Room, RoomId, Wall},
 };
 
@@ -7,11 +8,15 @@ use crate::{
 /// It consists of multiple rooms
 pub struct Dungeon {
     pub rooms: Vec<Room>,
+    pub doors: Vec<Door>,
 }
 
 impl Dungeon {
     pub fn new() -> Dungeon {
-        Dungeon { rooms: vec![] }
+        Dungeon {
+            rooms: vec![],
+            doors: vec![],
+        }
     }
 
     /// Add a room to the dungeon
@@ -20,11 +25,11 @@ impl Dungeon {
     /// Returns the `RoomId`
     pub fn add_room(&mut self, mut room: Room) -> RoomId {
         let room_id = match room.id {
-            None => self.next_id(),
+            None => self.next_room_id(),
             Some(x) => {
                 // if Id is already used, generate a new one.
                 match self.room_mut(x) {
-                    Some(_) => self.next_id(),
+                    Some(_) => self.next_room_id(),
                     None => x,
                 }
             }
@@ -35,7 +40,7 @@ impl Dungeon {
     }
 
     /// generates an unused `RoomId`.
-    fn next_id(&self) -> RoomId {
+    fn next_room_id(&self) -> RoomId {
         let max_id = self.rooms.iter().map(|r| r.id.unwrap_or(0)).max();
         match max_id {
             None => 1,
@@ -96,5 +101,34 @@ impl Dungeon {
                 println!("Room Id not found for deletion")
             }
         };
+    }
+
+    pub fn door(&self, id: DoorId) -> Option<&Door> {
+        self.doors.iter().find(|d| d.id == Some(id))
+    }
+
+    pub fn add_door(&mut self, mut door: Door) -> DoorId {
+        let door_id = match door.id {
+            None => self.next_door_id(),
+            Some(x) => {
+                // if Id is already used, generate a new one.
+                match self.door(x) {
+                    Some(_) => self.next_door_id(),
+                    None => x,
+                }
+            }
+        };
+        door.id = Some(door_id);
+        self.doors.push(door);
+        door_id
+    }
+
+    fn next_door_id(&self) -> DoorId {
+        self.doors
+            .iter()
+            .map(|r| r.id.unwrap_or(0))
+            .max()
+            .unwrap_or(0)
+            + 1
     }
 }

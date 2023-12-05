@@ -1,8 +1,9 @@
 use crate::common::{Rgb, Vec2};
-use crate::room::{NextVert, WallId};
-use crate::state::{EditMode, StateCommand, StateController, StateEventSubscriber};
+use crate::room::{NextVert, Wall, WallId};
+use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
+use cairo::glib::{clone, Closure};
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
-use gtk::{prelude::*, GestureClick, GestureDrag};
+use gtk::{glib, prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -11,6 +12,8 @@ use super::primitives::{Line, Primitive};
 
 pub struct Canvas {
     pub widget: DrawingArea,
+    selected_wall: Option<WallId>,
+    last_pos: Option<Vec2<i32>>,
 }
 
 impl Canvas {
@@ -26,13 +29,13 @@ impl Canvas {
 
         let canvas = Rc::new(RefCell::new(Canvas {
             widget: drawing_area.clone(),
+            selected_wall: None,
+            last_pos: None,
         }));
-        let selected_wall: Rc<Cell<Option<WallId>>> = Rc::new(Cell::new(None));
+        // let selected_wall: Rc<Cell<Option<WallId>>> = Rc::new(Cell::new(None));
 
-        {
-            let control = control.clone();
-            let selected_wall = selected_wall.clone();
-            drawing_area.set_draw_func(move |_area, ctx, w, h| {
+        drawing_area.set_draw_func(
+            clone!( @strong canvas, @weak control => move |_area, ctx, w, h| {
                 let control = control.borrow();
                 // fill with background color
                 ctx.set_source_rgb(0.1411764705882353, 0.28627450980392155, 0.49411764705882355);
@@ -51,7 +54,7 @@ impl Canvas {
                     prim.draw(ctx)
                 }
 
-                // draw room
+                // draw rooms
                 let cp = control.state.cursor.pos + control.state.view.world_min().into();
                 let next_vert = control.state.grid.snap(cp.into());
 
@@ -64,8 +67,7 @@ impl Canvas {
                                 pos: next_vert,
                             }),
                             EditMode::SplitEdge => {
-                                println!("{:?}", selected_wall.get());
-                                match selected_wall.get() {
+                                match canvas.borrow().selected_wall() {
                                     Some(wall) => Some(NextVert {
                                         in_wall_id: Some(wall),
                                         pos: next_vert,
@@ -83,76 +85,80 @@ impl Canvas {
                     }
                 }
 
-                // draw nearest wall
-                if selected_wall.get() == None && control.state.mode == EditMode::SplitEdge {
-                    if let Some(active_room_id) = control.state.active_room_id {
-                        if let Some(room) = control.state.dungeon.room(active_room_id) {
-                            match room.nearest_wall(cp) {
-                                None => (),
-                                Some(wall) => Line {
-                                    from: wall.p1.into(),
-                                    to: wall.p2.into(),
-                                    color: Rgb {
-                                        r: 1.0,
-                                        g: 0.0,
-                                        b: 0.0,
-                                    },
-                                    width: 3.0,
+                /*
+                 * Mode Specific Drawing
+                 */
+                match control.state.mode {
+                    EditMode::Select => {}
+                    EditMode::AppendRoom => {}
+                    EditMode::SplitEdge => {
+                        // Highlight nearest wall
+                        if canvas.borrow().selected_wall() == None {
+                            if let Some(active_room_id) = control.state.active_room_id {
+                                if let Some(room) = control.state.dungeon.room(active_room_id) {
+                                    match room.nearest_wall(cp) {
+                                        None => (),
+                                        Some(wall) => Line {
+                                            from: wall.p1.into(),
+                                            to: wall.p2.into(),
+                                            color: Rgb {
+                                                r: 1.0,
+                                                g: 0.0,
+                                                b: 0.0,
+                                            },
+                                            width: 3.0,
+                                        }
+                                        .draw(ctx),
+                                    }
                                 }
-                                .draw(ctx),
                             }
                         }
                     }
+                    EditMode::AddDoor => {}
                 }
 
                 // debug circle
                 // ctx.set_source_rgb(1.0, 0.0, 0.0);
                 // ctx.arc(200.0, 200.0, 20.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
                 // ctx.fill().unwrap()
-            });
-        }
+            }),
+        );
 
         let pos_controller = EventControllerMotion::new();
-        {
-            let control = control.clone();
-            let canvas = canvas.clone();
-            pos_controller.connect_motion(move |_con, x, y| {
-                let control = &mut *control.borrow_mut();
-                control.state.cursor.set_pos(Vec2 { x: x, y: y });
-                canvas.borrow().update();
-            });
-        }
+        pos_controller.connect_motion(clone!( @strong canvas, @weak control => move |_con, x, y| {
+            let control = &mut *control.borrow_mut();
+            control.state.cursor.set_pos(Vec2 { x: x, y: y });
+            canvas.borrow().update();
+        }));
         let gesture_click = GestureClick::builder()
             .button(GDK_BUTTON_PRIMARY as u32)
             .build();
 
-        {
-            let control = control.clone();
-            let canvas = canvas.clone();
-
-            gesture_click.connect_pressed(move |_, _, _, _| {
-                let control = &mut *control.borrow_mut();
-                match control.state.mode {
-                    crate::state::EditMode::Select => {
-                        let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
-                        control.apply(StateCommand::SelectRoom(room_id));
-                    }
-                    crate::state::EditMode::AppendRoom => {
-                        if let Some(active_room_id) = control.state.active_room_id {
-                            if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
-                                let room_id = room.id.unwrap();
-                                control.apply(StateCommand::AddVertexToRoom(
-                                    room_id,
-                                    control.state.grid.snap(
-                                        (control.state.cursor.pos
-                                            + control.state.view.world_min().into())
-                                        .into(),
-                                    ),
-                                ));
-                            }
+        gesture_click.connect_pressed(clone!( @strong canvas, @weak control => move |_, _, _, _| {
+            let control = &mut *control.borrow_mut();
+            match control.state.mode {
+                EditMode::Select => {
+                    let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
+                    control.apply(StateCommand::SelectRoom(room_id));
+                }
+                EditMode::AppendRoom => {
+                    if let Some(active_room_id) = control.state.active_room_id {
+                        if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
+                            let room_id = room.id.unwrap();
+                            control.apply(StateCommand::AddVertexToRoom(
+                                room_id,
+                                control.state.grid.snap(
+                                    (control.state.cursor.pos
+                                        + control.state.view.world_min().into())
+                                    .into(),
+                                ),
+                            ));
                         }
                     }
-                    crate::state::EditMode::SplitEdge => match selected_wall.get() {
+                }
+                EditMode::SplitEdge => {
+                    let selected_wall = canvas.borrow().selected_wall();
+                    match selected_wall {
                         Some(wall_id) => {
                             if let Some(active_room_id) = control.state.active_room_id {
                                 if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
@@ -166,52 +172,37 @@ impl Canvas {
                                             .into(),
                                         ),
                                     ));
-                                    selected_wall.set(None);
+                                    canvas.borrow_mut().set_selected_wall(None);
                                 }
                             }
                         }
                         None => {
-                            if let Some(active_room_id) = control.state.active_room_id {
-                                if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
-                                    if let Some(wall) = room.nearest_wall(control.state.cursor.pos)
-                                    {
-                                        selected_wall.set(Some(wall.id))
-                                    }
-                                }
-                            }
+                            canvas.borrow_mut().select_nearest_wall(&control.state);
                         }
-                    },
-                }
-                canvas.borrow().update();
-            });
-        }
+                }},
+                EditMode::AddDoor => todo!(),
+            }
+            canvas.borrow().update();
+        }));
 
         let gesture_drag = GestureDrag::builder()
             .button(GDK_BUTTON_SECONDARY as u32)
             .build();
-
-        {
-            {
-                let control = control.clone();
-                let last_pos: Rc<Cell<Option<Vec2<i32>>>> = Rc::new(Cell::new(None));
-                {
-                    let last_pos = last_pos.clone();
-                    gesture_drag.connect_begin(move |_, _| last_pos.set(None));
-                }
-                gesture_drag.connect_drag_update(move |_, x, y| {
-                    let mut control = control.borrow_mut();
-                    let mut view_obj = control.state.view;
-                    let last = last_pos.get().unwrap_or(Vec2 { x: 0, y: 0 });
-                    let cur = Vec2 {
-                        x: x as i32,
-                        y: y as i32,
-                    };
-                    view_obj.move_view(last - cur);
-                    control.state.view = view_obj;
-                    last_pos.set(Some(cur));
-                });
-            }
-        }
+        gesture_drag.connect_begin(
+            clone!(@strong canvas => move |_, _| canvas.borrow_mut().set_last_pos(None)),
+        );
+        gesture_drag.connect_drag_update(clone!(@strong canvas, @weak control => move |_, x, y| {
+            let mut control = control.borrow_mut();
+            let mut view_obj = control.state.view;
+            let last = canvas.borrow().last_pos().unwrap_or(Vec2 { x: 0, y: 0 });
+            let cur = Vec2 {
+                x: x as i32,
+                y: y as i32,
+            };
+            view_obj.move_view(last - cur);
+            control.state.view = view_obj;
+            canvas.borrow_mut().set_last_pos(Some(cur));
+        }));
 
         drawing_area.add_controller(gesture_drag);
         drawing_area.add_controller(gesture_click);
@@ -223,6 +214,32 @@ impl Canvas {
 
     pub fn update(&self) {
         self.widget.queue_draw()
+    }
+
+    pub fn selected_wall(&self) -> Option<WallId> {
+        self.selected_wall
+    }
+
+    pub fn set_selected_wall(&mut self, wall_id: Option<WallId>) {
+        self.selected_wall = wall_id
+    }
+
+    pub fn select_nearest_wall(&mut self, state: &State) {
+        if let Some(active_room_id) = state.active_room_id {
+            if let Some(room) = state.dungeon.room(active_room_id) {
+                if let Some(wall) = room.nearest_wall(state.cursor.pos) {
+                    self.set_selected_wall(Some(wall.id))
+                }
+            }
+        }
+    }
+
+    pub fn last_pos(&self) -> Option<Vec2<i32>> {
+        self.last_pos
+    }
+
+    pub fn set_last_pos(&mut self, pos: Option<Vec2<i32>>) {
+        self.last_pos = pos
     }
 }
 

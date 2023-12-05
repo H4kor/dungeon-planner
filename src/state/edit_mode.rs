@@ -3,6 +3,7 @@ pub enum EditMode {
     Select,
     AppendRoom,
     SplitEdge,
+    AddDoor,
 }
 
 impl EditMode {
@@ -11,6 +12,7 @@ impl EditMode {
             EditMode::Select => "Select".to_owned(),
             EditMode::AppendRoom => "AppendRoom".to_owned(),
             EditMode::SplitEdge => "SplitEdge".to_owned(),
+            EditMode::AddDoor => "AddDoor".to_owned(),
         }
     }
 
@@ -19,6 +21,7 @@ impl EditMode {
             "Select" => EditMode::Select,
             "AppendRoom" => EditMode::AppendRoom,
             "SplitEdge" => EditMode::SplitEdge,
+            "AddDoor" => EditMode::AddDoor,
             _ => todo!(),
         }
     }
