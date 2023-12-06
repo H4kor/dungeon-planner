@@ -6,13 +6,14 @@ use crate::{
 
 pub type DoorId = u32;
 
+#[derive(Clone, Copy, Debug)]
 pub struct Door {
     pub id: Option<DoorId>,
-    part_of: RoomId,
-    leads_to: Option<RoomId>,
-    width: f64,
-    on_wall: WallId,
-    position: f64,
+    pub part_of: RoomId,
+    pub leads_to: Option<RoomId>,
+    pub width: f64,
+    pub on_wall: WallId,
+    pub position: f64,
 }
 
 impl Door {

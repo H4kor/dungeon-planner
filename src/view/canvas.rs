@@ -86,6 +86,14 @@ impl Canvas {
                     }
                 }
 
+                // draw doors
+                for door in control.dungeon().doors.iter() {
+                    let prims = door.draw(control.dungeon().room(door.part_of).unwrap().wall(door.on_wall).unwrap());
+                    for prim in prims {
+                        prim.draw(ctx)
+                    }
+                }
+
                 /*
                  * Mode Specific Drawing
                  */
@@ -110,7 +118,7 @@ impl Canvas {
                                     let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
 
                                     let door = Door::new(
-                                        wall_id, None,
+                                        room.id.unwrap(), None,
                                         50.0, // TODO: adjustable
                                         wall.id,
                                         door_pos
@@ -196,7 +204,19 @@ impl Canvas {
                             canvas.borrow_mut().select_nearest_wall(&control.state);
                         }
                         Some(wall_id) => {
-                            todo!()
+                                if let Some(room) = control.state.active_room() {
+                                    let wall = room.wall(wall_id).unwrap();
+                                    let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
+
+                                    let door = Door::new(
+                                        room.id.unwrap(), None,
+                                        50.0, // TODO: adjustable
+                                        wall.id,
+                                        door_pos
+                                    );
+                                    canvas.borrow_mut().set_selected_wall(None);
+                                    control.apply(StateCommand::AddDoor(door));
+                                }
                         }
                     }
                 },

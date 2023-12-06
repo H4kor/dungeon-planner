@@ -1,4 +1,4 @@
-use crate::room::RoomId;
+use crate::{door::DoorId, room::RoomId};
 use std::hash::Hash;
 
 use super::EditMode;
@@ -10,6 +10,7 @@ pub enum StateEvent {
     RoomDeleted(RoomId),
     ActiveRoomChanged(Option<RoomId>),
     EditModeChanged(EditMode),
+    DoorAdded(DoorId),
     Reset,
 }
 

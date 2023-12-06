@@ -1,4 +1,5 @@
 use crate::common::Vec2;
+use crate::door::Door;
 use crate::room::{RoomId, WallId};
 use crate::state::{EditMode, StateCommand, StateController};
 use serde_json::json;
@@ -68,6 +69,16 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["room_id"].as_u64().unwrap() as u32
                 ))
             }
+            "AddDoor" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::AddDoor(Door::new(
+                    v["part_of"].as_u64().unwrap() as u32,
+                    None,
+                    v["width"].as_f64().unwrap(),
+                    v["on_wall"].as_u64().unwrap() as u32,
+                    v["position"].as_f64().unwrap(),
+                )))
+            }
             _ => None,
         },
     }
@@ -116,6 +127,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),
             StateCommand::SplitWall(_, _, _) => "SplitWall".to_owned(),
             StateCommand::DeleteRoom(_) => "DeleteRoom".to_owned(),
+            StateCommand::AddDoor(_) => "AddDoor".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -143,6 +155,12 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "y": pos.y
             }),
             StateCommand::DeleteRoom(room_id) => json!({"room_id": room_id}),
+            StateCommand::AddDoor(door) => json!({
+                "part_of": door.part_of,
+                "width": door.width,
+                "on_wall": door.on_wall,
+                "position": door.position,
+            }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
     }

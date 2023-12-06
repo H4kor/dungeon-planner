@@ -1,5 +1,6 @@
 use crate::{
     common::Vec2,
+    door::Door,
     room::{Room, RoomId, WallId},
 };
 
@@ -15,6 +16,7 @@ pub enum StateCommand {
     ChangeRoomNotes(RoomId, String),
     SplitWall(RoomId, WallId, Vec2<i32>),
     DeleteRoom(RoomId),
+    AddDoor(Door),
 }
 
 impl StateCommand {
@@ -66,6 +68,13 @@ impl StateCommand {
                     events.push(StateEvent::ActiveRoomChanged(None));
                 }
                 events
+            }
+            StateCommand::AddDoor(door) => {
+                let door_id = state.dungeon.add_door(*door);
+                vec![
+                    StateEvent::RoomModified(door.part_of),
+                    StateEvent::DoorAdded(door_id),
+                ]
             }
         }
     }
