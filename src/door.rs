@@ -61,4 +61,8 @@ impl Door {
             width: 20.0,
         })]
     }
+
+    pub(crate) fn contains_point(&self, wall: &Wall, pos: Vec2<f64>) -> bool {
+        (pos - wall.rel_to_world(self.position)).len() < self.width
+    }
 }

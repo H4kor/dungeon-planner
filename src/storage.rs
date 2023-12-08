@@ -21,6 +21,13 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     None => None,
                 }))
             }
+            "SelectDoor" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::SelectDoor(match v["door_id"].as_u64() {
+                    Some(x) => Some(x as RoomId),
+                    None => None,
+                }))
+            }
             "AddVertexToRoomCommand" => {
                 println!("{}", data);
                 let v: Value = serde_json::from_str(data).unwrap();
@@ -121,6 +128,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
         let name = match cmd {
             StateCommand::AddRoom => "AddRoomCommand".to_owned(),
             StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
+            StateCommand::SelectDoor(_) => "SelectDoor".to_owned(),
             StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
             StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
             StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
@@ -131,7 +139,8 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
-            StateCommand::SelectRoom(room_id) => json!({"room_id": room_id}),
+            StateCommand::SelectRoom(room_id) => json!({ "room_id": room_id }),
+            StateCommand::SelectDoor(door_id) => json!({ "door_id": door_id }),
             StateCommand::AddVertexToRoom(room_id, pos) => json!({
                 "room_id": room_id,
                 "x": pos.x,
@@ -154,7 +163,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "x": pos.x,
                 "y": pos.y
             }),
-            StateCommand::DeleteRoom(room_id) => json!({"room_id": room_id}),
+            StateCommand::DeleteRoom(room_id) => json!({ "room_id": room_id }),
             StateCommand::AddDoor(door) => json!({
                 "part_of": door.part_of,
                 "width": door.width,

@@ -9,6 +9,7 @@ pub enum StateEvent {
     RoomModified(RoomId),
     RoomDeleted(RoomId),
     ActiveRoomChanged(Option<RoomId>),
+    ActiveDoorChanged(Option<DoorId>),
     EditModeChanged(EditMode),
     DoorAdded(DoorId),
     Reset,

@@ -107,6 +107,18 @@ impl Dungeon {
         self.doors.iter().find(|d| d.id == Some(id))
     }
 
+    pub(crate) fn door_at(&self, pos: Vec2<f64>) -> Option<DoorId> {
+        for door in &self.doors {
+            if door.contains_point(
+                self.room(door.part_of).unwrap().wall(door.on_wall).unwrap(),
+                pos.into(),
+            ) {
+                return door.id;
+            }
+        }
+        None
+    }
+
     pub fn add_door(&mut self, mut door: Door) -> DoorId {
         let door_id = match door.id {
             None => self.next_door_id(),

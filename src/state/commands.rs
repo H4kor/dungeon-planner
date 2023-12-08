@@ -1,6 +1,6 @@
 use crate::{
     common::Vec2,
-    door::Door,
+    door::{Door, DoorId},
     room::{Room, RoomId, WallId},
 };
 
@@ -17,6 +17,7 @@ pub enum StateCommand {
     SplitWall(RoomId, WallId, Vec2<i32>),
     DeleteRoom(RoomId),
     AddDoor(Door),
+    SelectDoor(Option<DoorId>),
 }
 
 impl StateCommand {
@@ -38,7 +39,19 @@ impl StateCommand {
             }
             StateCommand::SelectRoom(room_id) => {
                 state.active_room_id = *room_id;
-                vec![StateEvent::ActiveRoomChanged(*room_id)]
+                state.active_door_id = None;
+                vec![
+                    StateEvent::ActiveRoomChanged(*room_id),
+                    StateEvent::ActiveDoorChanged(None),
+                ]
+            }
+            StateCommand::SelectDoor(door_id) => {
+                state.active_room_id = None;
+                state.active_door_id = *door_id;
+                vec![
+                    StateEvent::ActiveRoomChanged(None),
+                    StateEvent::ActiveDoorChanged(*door_id),
+                ]
             }
             StateCommand::AddVertexToRoom(room_id, pos) => {
                 state.dungeon.room_mut(*room_id).unwrap().append(*pos);

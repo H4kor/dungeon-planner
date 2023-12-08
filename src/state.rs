@@ -4,6 +4,7 @@ pub mod events;
 
 use crate::{
     common::Vec2,
+    door::DoorId,
     dungeon::Dungeon,
     room::{Room, RoomId},
     view::{grid::Grid, View},
@@ -25,6 +26,7 @@ pub struct State {
     pub cursor: CursorState,
     pub mode: EditMode,
     pub active_room_id: Option<RoomId>,
+    pub active_door_id: Option<DoorId>,
 }
 pub struct StateController {
     pub state: State,
@@ -45,6 +47,7 @@ impl State {
     pub fn new() -> Self {
         State {
             active_room_id: None,
+            active_door_id: None,
             dungeon: Dungeon::new(),
             grid: Grid::new(),
             view: View::new(),

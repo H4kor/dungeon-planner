@@ -1,4 +1,5 @@
 use crate::common::{Rgb, Vec2};
+use crate::config::ACTIVE_ROOM_COLOR;
 use crate::door::{Door, DoorDrawOptions};
 use crate::room::{NextVert, Wall, WallId};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
@@ -88,6 +89,12 @@ impl Canvas {
 
                 // draw doors
                 for door in control.dungeon().doors.iter() {
+                    let options = match control.state.active_door_id == door.id {
+                        true => DoorDrawOptions{
+                            color: Some(ACTIVE_ROOM_COLOR),
+                        },
+                        false => DoorDrawOptions::empty(),
+                    };
                     let prims = door.draw(
                         control
                             .dungeon()
@@ -95,7 +102,7 @@ impl Canvas {
                             .unwrap()
                             .wall(door.on_wall)
                             .unwrap(),
-                        DoorDrawOptions::empty()
+                        options
                     );
                     for prim in prims {
                         prim.draw(ctx)
@@ -163,8 +170,13 @@ impl Canvas {
             let control = &mut *control.borrow_mut();
             match control.state.mode {
                 EditMode::Select => {
-                    let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
-                    control.apply(StateCommand::SelectRoom(room_id));
+                    let door_id = control.state.dungeon.door_at(control.state.cursor.pos);
+                    if let Some(id) = door_id {
+                        control.apply(StateCommand::SelectDoor(Some(id)));
+                    } else {
+                        let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
+                        control.apply(StateCommand::SelectRoom(room_id));
+                    }
                 }
                 EditMode::AppendRoom => {
                     if let Some(active_room_id) = control.state.active_room_id {
