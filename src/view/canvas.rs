@@ -1,5 +1,5 @@
 use crate::common::{Rgb, Vec2};
-use crate::door::Door;
+use crate::door::{Door, DoorDrawOptions};
 use crate::room::{NextVert, Wall, WallId};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
 use cairo::glib::{clone, Closure};
@@ -88,7 +88,15 @@ impl Canvas {
 
                 // draw doors
                 for door in control.dungeon().doors.iter() {
-                    let prims = door.draw(control.dungeon().room(door.part_of).unwrap().wall(door.on_wall).unwrap());
+                    let prims = door.draw(
+                        control
+                            .dungeon()
+                            .room(door.part_of)
+                            .unwrap()
+                            .wall(door.on_wall)
+                            .unwrap(),
+                        DoorDrawOptions::empty()
+                    );
                     for prim in prims {
                         prim.draw(ctx)
                     }
@@ -124,7 +132,7 @@ impl Canvas {
                                         door_pos
                                     );
 
-                                    let prims = door.draw(wall);
+                                    let prims = door.draw(wall, DoorDrawOptions::empty());
                                     for p in prims {
                                         p.draw(ctx)
                                     }

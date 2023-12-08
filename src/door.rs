@@ -6,6 +6,16 @@ use crate::{
 
 pub type DoorId = u32;
 
+pub struct DoorDrawOptions {
+    pub color: Option<Rgb>,
+}
+
+impl DoorDrawOptions {
+    pub(crate) fn empty() -> DoorDrawOptions {
+        DoorDrawOptions { color: None }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Door {
     pub id: Option<DoorId>,
@@ -34,16 +44,18 @@ impl Door {
         }
     }
 
-    pub fn draw(&self, wall: &Wall) -> Vec<Box<dyn Primitive>> {
+    pub fn draw(&self, wall: &Wall, options: DoorDrawOptions) -> Vec<Box<dyn Primitive>> {
         let world_pos = wall.rel_to_world(self.position);
         let tangent = wall.tangent();
 
+        let color = options.color.unwrap_or(Rgb {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+        });
+
         vec![Box::new(Line {
-            color: Rgb {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-            },
+            color: color,
             from: world_pos - (self.width / 2.0) * tangent,
             to: world_pos + (self.width / 2.0) * tangent,
             width: 20.0,

@@ -3,6 +3,7 @@ use pango::ffi::PANGO_SCALE;
 
 use crate::{
     common::{BBox, Rgb, Vec2},
+    door::DoorDrawOptions,
     dungeon::Dungeon,
     room::RoomDrawOptions,
     view::grid::Grid,
@@ -102,6 +103,29 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             }
             all_prims.append(&mut prims)
         }
+
+        // draw doors
+        for door in dungeon.doors.iter() {
+            let mut prims = door.draw(
+                dungeon
+                    .room(door.part_of)
+                    .unwrap()
+                    .wall(door.on_wall)
+                    .unwrap(),
+                DoorDrawOptions {
+                    color: Some(Rgb {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                    }),
+                },
+            );
+            for p in prims.iter() {
+                bbox &= p.bbox()
+            }
+            all_prims.append(&mut prims)
+        }
+
         bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
         bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
 
@@ -185,7 +209,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         // Render Image
         {
             cur_h += HEADLINE_IMAGE_SPACING;
-            let prims = room.draw(
+            let mut prims = room.draw(
                 None,
                 false,
                 Some(RoomDrawOptions {
@@ -197,6 +221,26 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
                     fill: Some(true),
                 }),
             );
+
+            // draw doors
+            for door in dungeon.room_doors(room.id.unwrap()).iter() {
+                let mut door_prims = door.draw(
+                    dungeon
+                        .room(door.part_of)
+                        .unwrap()
+                        .wall(door.on_wall)
+                        .unwrap(),
+                    DoorDrawOptions {
+                        color: Some(Rgb {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                        }),
+                    },
+                );
+                prims.append(&mut door_prims)
+            }
+
             if !prims.is_empty() {
                 let mut bbox = prims[0].bbox();
                 for p in prims.iter() {

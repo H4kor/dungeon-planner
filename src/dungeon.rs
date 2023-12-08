@@ -131,4 +131,11 @@ impl Dungeon {
             .unwrap_or(0)
             + 1
     }
+
+    pub(crate) fn room_doors(&self, room_id: RoomId) -> Vec<&Door> {
+        self.doors
+            .iter()
+            .filter(|d| d.part_of == room_id || d.leads_to == Some(room_id))
+            .collect()
+    }
 }
