@@ -38,25 +38,20 @@ impl DoorEdit {
         {
             let buffer = notes_i.buffer();
             let control = control.clone();
-            glib::timeout_add_seconds_local(2, move || {
+            buffer.connect_changed(move |buffer| {
                 let (start, end) = buffer.bounds();
                 let notes = buffer.text(&start, &end, true).to_string();
                 let mut control = control.borrow_mut();
-                println!("1");
                 match control.state.active_door_id {
                     None => (),
                     Some(door_id) => {
-                        println!("2");
                         if let Some(door) = control.state.dungeon.door(door_id) {
-                            println!("3");
                             if door.notes != notes {
-                                println!("4");
                                 control.apply(StateCommand::ChangeDoorNotes(door_id, notes))
                             };
                         }
                     }
                 }
-                glib::ControlFlow::Continue
             });
             // notes_i.buffer().connect_end_user_action();
         }
