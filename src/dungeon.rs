@@ -107,6 +107,10 @@ impl Dungeon {
         self.doors.iter().find(|d| d.id == Some(id))
     }
 
+    pub fn door_mut(&mut self, id: DoorId) -> Option<&mut Door> {
+        self.doors.iter_mut().find(|d| d.id == Some(id))
+    }
+
     pub(crate) fn door_at(&self, pos: Vec2<f64>) -> Option<DoorId> {
         for door in &self.doors {
             if door.contains_point(

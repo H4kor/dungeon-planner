@@ -16,7 +16,7 @@ impl DoorDrawOptions {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Door {
     pub id: Option<DoorId>,
     pub part_of: RoomId,
@@ -24,6 +24,8 @@ pub struct Door {
     pub width: f64,
     pub on_wall: WallId,
     pub position: f64,
+    pub name: String,
+    pub notes: String,
 }
 
 impl Door {
@@ -41,6 +43,8 @@ impl Door {
             width: width,
             on_wall: on_wall,
             position: position,
+            name: "".to_owned(),
+            notes: "".to_owned(),
         }
     }
 

@@ -18,6 +18,8 @@ pub enum StateCommand {
     DeleteRoom(RoomId),
     AddDoor(Door),
     SelectDoor(Option<DoorId>),
+    ChangeDoorName(RoomId, String),
+    ChangeDoorNotes(RoomId, String),
 }
 
 impl StateCommand {
@@ -83,11 +85,19 @@ impl StateCommand {
                 events
             }
             StateCommand::AddDoor(door) => {
-                let door_id = state.dungeon.add_door(*door);
+                let door_id = state.dungeon.add_door(door.clone());
                 vec![
                     StateEvent::RoomModified(door.part_of),
                     StateEvent::DoorAdded(door_id),
                 ]
+            }
+            StateCommand::ChangeDoorName(door_id, name) => {
+                state.dungeon.door_mut(*door_id).unwrap().name = name.clone();
+                vec![StateEvent::DoorModified(*door_id)]
+            }
+            StateCommand::ChangeDoorNotes(door_id, notes) => {
+                state.dungeon.door_mut(*door_id).unwrap().notes = notes.clone();
+                vec![StateEvent::DoorModified(*door_id)]
             }
         }
     }

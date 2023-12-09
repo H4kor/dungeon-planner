@@ -20,6 +20,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use view::buttons::{AddRoomButton, EditModeButton};
 use view::canvas::Canvas;
+use view::door_edit::DoorEdit;
 use view::door_list::DoorList;
 use view::room_edit::RoomEdit;
 use view::room_list::RoomList;
@@ -113,9 +114,9 @@ fn build_ui(app: &Application) {
     let door_tab_label = Label::new(Some("Doors"));
     object_tabs.append_page(&door_tab, Some(&door_tab_label));
     let door_list = DoorList::new(control.clone());
-    // let door_edit = DoorEdit::new(control.clone());
+    let door_edit = DoorEdit::new(control.clone());
     door_tab.append(&door_list.borrow().scrolled_window);
-    // door_tab.append(&door_edit.borrow().widget);
+    door_tab.append(&door_edit.borrow().widget);
 
     let main_box = gtk::Paned::builder()
         .start_child(&side_box)

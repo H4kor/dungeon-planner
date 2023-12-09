@@ -86,6 +86,20 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["position"].as_f64().unwrap(),
                 )))
             }
+            "ChangeDoorName" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeDoorName(
+                    v["door_id"].as_u64().unwrap() as RoomId,
+                    v["name"].as_str().unwrap().to_owned(),
+                ))
+            }
+            "ChangeDoorNotes" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeDoorNotes(
+                    v["door_id"].as_u64().unwrap() as RoomId,
+                    v["notes"].as_str().unwrap().to_owned(),
+                ))
+            }
             _ => None,
         },
     }
@@ -136,6 +150,8 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::SplitWall(_, _, _) => "SplitWall".to_owned(),
             StateCommand::DeleteRoom(_) => "DeleteRoom".to_owned(),
             StateCommand::AddDoor(_) => "AddDoor".to_owned(),
+            StateCommand::ChangeDoorName(_, _) => "ChangeDoorName".to_owned(),
+            StateCommand::ChangeDoorNotes(_, _) => "ChangeDoorNotes".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -169,6 +185,14 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "width": door.width,
                 "on_wall": door.on_wall,
                 "position": door.position,
+            }),
+            StateCommand::ChangeDoorName(door_id, name) => json!({
+                "door_id": door_id,
+                "name": name,
+            }),
+            StateCommand::ChangeDoorNotes(door_id, notes) => json!({
+                "door_id": door_id,
+                "notes": notes,
             }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();

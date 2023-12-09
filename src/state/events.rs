@@ -12,6 +12,7 @@ pub enum StateEvent {
     ActiveDoorChanged(Option<DoorId>),
     EditModeChanged(EditMode),
     DoorAdded(DoorId),
+    DoorModified(DoorId),
     Reset,
 }
 
