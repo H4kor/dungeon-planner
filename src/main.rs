@@ -12,7 +12,7 @@ mod storage;
 mod view;
 
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, Application, ApplicationWindow};
+use gtk::{glib, Application, ApplicationWindow, Label, Notebook, NotebookPage};
 use gtk::{prelude::*, PopoverMenuBar};
 use observers::{DebugObserver, HistoryObserver};
 use state::StateController;
@@ -20,6 +20,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use view::buttons::{AddRoomButton, EditModeButton};
 use view::canvas::Canvas;
+use view::door_list::DoorList;
 use view::room_edit::RoomEdit;
 use view::room_list::RoomList;
 
@@ -85,18 +86,36 @@ fn build_ui(app: &Application) {
     );
     let add_door_button =
         EditModeButton::new(control.clone(), state::EditMode::AddDoor, "insert-link");
-    let room_list = RoomList::new(control.clone());
-    let room_edit = RoomEdit::new(control.clone());
 
     tool_box.append(&add_room_button.widget);
     tool_box.append(&select_room_button.borrow().widget);
     tool_box.append(&split_edge_button.borrow().widget);
     tool_box.append(&append_verts_button.borrow().widget);
     tool_box.append(&add_door_button.borrow().widget);
-
     side_box.append(&tool_box);
-    side_box.append(&room_list.borrow().scrolled_window);
-    side_box.append(&room_edit.borrow().widget);
+
+    let object_tabs = Notebook::builder().build();
+    side_box.append(&object_tabs);
+
+    let room_tab = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+    let room_tab_label = Label::new(Some("Rooms"));
+    object_tabs.append_page(&room_tab, Some(&room_tab_label));
+    let room_list = RoomList::new(control.clone());
+    let room_edit = RoomEdit::new(control.clone());
+    room_tab.append(&room_list.borrow().scrolled_window);
+    room_tab.append(&room_edit.borrow().widget);
+
+    let door_tab = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+    let door_tab_label = Label::new(Some("Doors"));
+    object_tabs.append_page(&door_tab, Some(&door_tab_label));
+    let door_list = DoorList::new(control.clone());
+    // let door_edit = DoorEdit::new(control.clone());
+    door_tab.append(&door_list.borrow().scrolled_window);
+    // door_tab.append(&door_edit.borrow().widget);
 
     let main_box = gtk::Paned::builder()
         .start_child(&side_box)

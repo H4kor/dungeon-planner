@@ -1,5 +1,7 @@
 pub mod buttons;
 pub mod canvas;
+pub mod door_list;
+pub mod door_list_entry;
 pub mod grid;
 pub mod primitives;
 pub mod room_edit;
