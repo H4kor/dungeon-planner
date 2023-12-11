@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gtk::glib;
+use gtk::glib::clone;
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
@@ -22,23 +22,10 @@ impl RoomEdit {
             .left_margin(10)
             .right_margin(10)
             .build();
-        {
-            let control = control.clone();
-            name_i.connect_changed(move |field| {
-                let name = field.text().to_string();
-                if let Ok(mut control) = control.try_borrow_mut() {
-                    match control.state.active_room_id {
-                        None => (),
-                        Some(room_id) => control.apply(StateCommand::ChangeRoomName(room_id, name)),
-                    }
-                }
-            });
-        }
 
-        {
-            let buffer = notes_i.buffer();
-            let control = control.clone();
-            buffer.connect_changed(move |buffer| {
+        notes_i
+            .buffer()
+            .connect_changed(clone!(@strong control => move |buffer| {
                 let (start, end) = buffer.bounds();
                 let notes = buffer.text(&start, &end, true).to_string();
                 let mut control = control.borrow_mut();
@@ -52,9 +39,7 @@ impl RoomEdit {
                         }
                     }
                 }
-            });
-            // notes_i.buffer().connect_end_user_action();
-        }
+            }));
 
         let b = Box::builder()
             .orientation(gtk::Orientation::Vertical)

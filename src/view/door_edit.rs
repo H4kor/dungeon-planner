@@ -1,17 +1,22 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gtk::glib;
+use gtk::glib::clone;
+use gtk::{gio, glib, DropDown, Expression, ListItem, SignalListItemFactory};
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
+use super::room_list_object::RoomObject;
+
 pub struct DoorEdit {
     pub widget: Box,
     name_input: Entry,
     notes_input: TextView,
+    leads_to_input: DropDown,
+    rooms_model: gio::ListStore,
 }
 
 impl DoorEdit {
@@ -22,6 +27,65 @@ impl DoorEdit {
             .left_margin(10)
             .right_margin(10)
             .build();
+
+        let mut room_vec: Vec<RoomObject> = vec![RoomObject::new(None, "-- No Room --".to_owned())];
+        // room_vec.append(
+        //     control
+        //         .borrow()
+        //         .dungeon()
+        //         .rooms
+        //         .iter()
+        //         .map(|r| RoomObject::new(r.id, r.name.clone()))
+        //         .collect(),
+        // );
+        let model = gio::ListStore::new::<RoomObject>();
+        model.extend_from_slice(&room_vec);
+        let factory = SignalListItemFactory::new();
+        factory.connect_setup(move |_, list_item| {
+            println!("SETUP");
+            let label = Label::new(None);
+            list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .set_child(Some(&label));
+        });
+        factory.connect_bind(clone!(@strong control => move |_, list_item| {
+            println!("BINDING");
+            // Get `RoomObject` from `ListItem`
+            let room_object = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .item()
+                .and_downcast::<RoomObject>()
+                .expect("The item has to be an `IntegerObject`.");
+
+            // Get `Label` from `ListItem`
+            let label = list_item
+                .downcast_ref::<ListItem>()
+                .expect("Needs to be ListItem")
+                .child()
+                .and_downcast::<Label>()
+                .expect("The child has to be a `Label`.");
+
+            // Set "label" to "room name"
+            label.set_label(&room_object.name().clone());
+        }));
+
+        let leads_to_i = DropDown::builder().build();
+        leads_to_i.set_factory(Some(&factory));
+        leads_to_i.set_model(Some(&model));
+        leads_to_i.set_expression(Expression::NONE);
+
+        name_i.connect_changed(clone!(@strong control => move |field| {
+            let name = field.text().to_string();
+            if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_room_id {
+                    None => (),
+                    Some(room_id) => control.apply(StateCommand::ChangeRoomName(room_id, name)),
+                }
+            }
+        }));
+
         {
             let control = control.clone();
             name_i.connect_changed(move |field| {
@@ -64,6 +128,8 @@ impl DoorEdit {
         b.append(&name_i);
         b.append(&Label::new(Some("Notes")));
         b.append(&notes_i);
+        b.append(&Label::new(Some("Leads to Room:")));
+        b.append(&leads_to_i);
 
         b.set_visible(false);
 
@@ -71,6 +137,8 @@ impl DoorEdit {
             widget: b,
             name_input: name_i,
             notes_input: notes_i,
+            leads_to_input: leads_to_i,
+            rooms_model: model,
         }));
 
         control.borrow_mut().subscribe_any(re.clone());
@@ -94,6 +162,10 @@ impl StateEventSubscriber for DoorEdit {
                 self.widget.set_visible(true);
             }
             StateEvent::Reset => self.widget.set_visible(false),
+            StateEvent::RoomAdded(room_id) => self.rooms_model.append(&RoomObject::new(
+                Some(room_id),
+                state.dungeon.room(room_id).unwrap().name.clone(),
+            )),
             _ => (),
         }
         vec![]

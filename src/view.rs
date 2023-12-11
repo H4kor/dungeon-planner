@@ -8,6 +8,7 @@ pub mod primitives;
 pub mod room_edit;
 pub mod room_list;
 pub mod room_list_entry;
+pub mod room_list_object;
 
 use crate::common::Vec2;
 
