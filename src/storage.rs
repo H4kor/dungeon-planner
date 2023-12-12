@@ -1,5 +1,5 @@
 use crate::common::Vec2;
-use crate::door::Door;
+use crate::door::{Door, DoorId};
 use crate::room::{RoomId, WallId};
 use crate::state::{EditMode, StateCommand, StateController};
 use serde_json::json;
@@ -89,15 +89,25 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
             "ChangeDoorName" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::ChangeDoorName(
-                    v["door_id"].as_u64().unwrap() as RoomId,
+                    v["door_id"].as_u64().unwrap() as DoorId,
                     v["name"].as_str().unwrap().to_owned(),
                 ))
             }
             "ChangeDoorNotes" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::ChangeDoorNotes(
-                    v["door_id"].as_u64().unwrap() as RoomId,
+                    v["door_id"].as_u64().unwrap() as DoorId,
                     v["notes"].as_str().unwrap().to_owned(),
+                ))
+            }
+            "ChangeDoorLeadsTo" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeDoorLeadsTo(
+                    v["door_id"].as_u64().unwrap() as DoorId,
+                    match v["room_id"].as_u64() {
+                        Some(x) => Some(x as RoomId),
+                        None => None,
+                    },
                 ))
             }
             _ => None,
@@ -152,6 +162,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::AddDoor(_) => "AddDoor".to_owned(),
             StateCommand::ChangeDoorName(_, _) => "ChangeDoorName".to_owned(),
             StateCommand::ChangeDoorNotes(_, _) => "ChangeDoorNotes".to_owned(),
+            StateCommand::ChangeDoorLeadsTo(_, _) => "ChangeDoorLeadsTo".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -193,6 +204,10 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeDoorNotes(door_id, notes) => json!({
                 "door_id": door_id,
                 "notes": notes,
+            }),
+            StateCommand::ChangeDoorLeadsTo(door_id, room_id) => json!({
+                "door_id": door_id,
+                "room_id": room_id,
             }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();

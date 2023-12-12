@@ -72,13 +72,13 @@ impl StateEventSubscriber for DoorList {
             StateEvent::DoorAdded(_) => {
                 self.rebuild_list(state);
             }
-            // StateEvent::DoorModified(door_id) => {
-            //     let door = state.dungeon.door_mut(door_id).unwrap();
-            //     self.rows
-            //         .iter_mut()
-            //         .filter(|r| r.door_id() == door_id)
-            //         .for_each(|w| w.update(door));
-            // }
+            StateEvent::DoorModified(door_id) => {
+                let door = state.dungeon.door_mut(door_id).unwrap();
+                self.rows
+                    .iter_mut()
+                    .filter(|r| r.door_id() == door_id)
+                    .for_each(|w| w.update(door));
+            }
             StateEvent::ActiveDoorChanged(door_id) => match door_id {
                 None => self.list_box.unselect_all(),
                 Some(door_id) => self

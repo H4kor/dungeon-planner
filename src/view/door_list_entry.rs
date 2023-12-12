@@ -64,9 +64,13 @@ impl DoorListEntry {
     }
 
     pub fn update(&mut self, door: &Door) {
+        let empty_name = format!("Door {}", door.id.unwrap());
         self.imp()
             .label
             .borrow_mut()
-            .set_label(&format!("Door {}", door.id.unwrap()));
+            .set_label(match door.name.is_empty() {
+                true => &empty_name,
+                false => &door.name,
+            });
     }
 }

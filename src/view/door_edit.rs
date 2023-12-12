@@ -6,6 +6,7 @@ use gtk::{gio, glib, DropDown, Expression, ListItem, SignalListItemFactory};
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
+use crate::room::RoomId;
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
@@ -28,21 +29,11 @@ impl DoorEdit {
             .right_margin(10)
             .build();
 
-        let mut room_vec: Vec<RoomObject> = vec![RoomObject::new(None, "-- No Room --".to_owned())];
-        // room_vec.append(
-        //     control
-        //         .borrow()
-        //         .dungeon()
-        //         .rooms
-        //         .iter()
-        //         .map(|r| RoomObject::new(r.id, r.name.clone()))
-        //         .collect(),
-        // );
+        let room_vec: Vec<RoomObject> = vec![RoomObject::new(None, "-- No Room --".to_owned())];
         let model = gio::ListStore::new::<RoomObject>();
         model.extend_from_slice(&room_vec);
         let factory = SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
-            println!("SETUP");
             let label = Label::new(None);
             list_item
                 .downcast_ref::<ListItem>()
@@ -50,7 +41,6 @@ impl DoorEdit {
                 .set_child(Some(&label));
         });
         factory.connect_bind(clone!(@strong control => move |_, list_item| {
-            println!("BINDING");
             // Get `RoomObject` from `ListItem`
             let room_object = list_item
                 .downcast_ref::<ListItem>()
@@ -76,49 +66,52 @@ impl DoorEdit {
         leads_to_i.set_model(Some(&model));
         leads_to_i.set_expression(Expression::NONE);
 
+        leads_to_i.connect_selected_item_notify(clone!(@weak control => move |drop_down| {
+            let model = drop_down.model().expect("The model has to exist.");
+            let room_object = model
+                .item(drop_down.selected())
+                .and_downcast::<RoomObject>()
+                .expect("The item has to be an `RoomObject`.");
+
+            if let Ok(mut control) = control.try_borrow_mut() {
+                let door_id = control.state.active_door_id.unwrap();
+                control.apply(StateCommand::ChangeDoorLeadsTo(door_id, match room_object.valid() {
+                    true => Some(room_object.room()),
+                    false => None,
+                }));
+            };
+        }));
+
         name_i.connect_changed(clone!(@strong control => move |field| {
             let name = field.text().to_string();
             if let Ok(mut control) = control.try_borrow_mut() {
-                match control.state.active_room_id {
+                match control.state.active_door_id {
                     None => (),
-                    Some(room_id) => control.apply(StateCommand::ChangeRoomName(room_id, name)),
+                    Some(door_id) => {
+                        control.apply(StateCommand::ChangeDoorName(door_id, name))
+                    }
                 }
             }
         }));
 
-        {
-            let control = control.clone();
-            name_i.connect_changed(move |field| {
-                let name = field.text().to_string();
+        notes_i
+            .buffer()
+            .connect_changed(clone!(@strong control => move |buffer| {
+                let (start, end) = buffer.bounds();
+                let notes = buffer.text(&start, &end, true).to_string();
                 if let Ok(mut control) = control.try_borrow_mut() {
                     match control.state.active_door_id {
                         None => (),
-                        Some(door_id) => control.apply(StateCommand::ChangeDoorName(door_id, name)),
-                    }
-                }
-            });
-        }
-
-        {
-            let buffer = notes_i.buffer();
-            let control = control.clone();
-            buffer.connect_changed(move |buffer| {
-                let (start, end) = buffer.bounds();
-                let notes = buffer.text(&start, &end, true).to_string();
-                let mut control = control.borrow_mut();
-                match control.state.active_door_id {
-                    None => (),
-                    Some(door_id) => {
-                        if let Some(door) = control.state.dungeon.door(door_id) {
-                            if door.notes != notes {
-                                control.apply(StateCommand::ChangeDoorNotes(door_id, notes))
-                            };
+                        Some(door_id) => {
+                            if let Some(door) = control.state.dungeon.door(door_id) {
+                                if door.notes != notes {
+                                    control.apply(StateCommand::ChangeDoorNotes(door_id, notes))
+                                };
+                            }
                         }
                     }
                 }
-            });
-            // notes_i.buffer().connect_end_user_action();
-        }
+            }));
 
         let b = Box::builder()
             .orientation(gtk::Orientation::Vertical)
@@ -145,6 +138,20 @@ impl DoorEdit {
 
         re
     }
+
+    fn room_object_pos(&self, id: Option<RoomId>) -> u32 {
+        self.rooms_model
+            .into_iter()
+            .position(|r| {
+                Some(
+                    r.expect("Expected Room Object")
+                        .downcast::<RoomObject>()
+                        .expect("The item has to be an `IntegerObject`.")
+                        .room(),
+                ) == id
+            })
+            .unwrap_or(0) as u32
+    }
 }
 
 impl StateEventSubscriber for DoorEdit {
@@ -159,6 +166,8 @@ impl StateEventSubscriber for DoorEdit {
                 let door = state.dungeon.door_mut(door_id).unwrap();
                 self.name_input.set_text(&door.name);
                 self.notes_input.buffer().set_text(&door.notes);
+                self.leads_to_input
+                    .set_selected(self.room_object_pos(door.leads_to));
                 self.widget.set_visible(true);
             }
             StateEvent::Reset => self.widget.set_visible(false),
@@ -166,6 +175,15 @@ impl StateEventSubscriber for DoorEdit {
                 Some(room_id),
                 state.dungeon.room(room_id).unwrap().name.clone(),
             )),
+            StateEvent::RoomModified(room_id) => {
+                let room_object = self
+                    .rooms_model
+                    .item(self.room_object_pos(Some(room_id)))
+                    .unwrap()
+                    .downcast::<RoomObject>()
+                    .expect("The item has to be an `IntegerObject`.");
+                room_object.set_name(state.dungeon.room(room_id).unwrap().name.clone())
+            }
             _ => (),
         }
         vec![]

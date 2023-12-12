@@ -23,19 +23,30 @@ impl RoomEdit {
             .right_margin(10)
             .build();
 
+        name_i.connect_changed(clone!(@strong control => move |field| {
+            let name = field.text().to_string();
+            if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_room_id {
+                    None => (),
+                    Some(room_id) => control.apply(StateCommand::ChangeRoomName(room_id, name)),
+                }
+            }
+        }));
+
         notes_i
             .buffer()
             .connect_changed(clone!(@strong control => move |buffer| {
                 let (start, end) = buffer.bounds();
                 let notes = buffer.text(&start, &end, true).to_string();
-                let mut control = control.borrow_mut();
-                match control.state.active_room_id {
-                    None => (),
-                    Some(room_id) => {
-                        if let Some(room) = control.state.dungeon.room(room_id) {
-                            if room.notes != notes {
-                                control.apply(StateCommand::ChangeRoomNotes(room_id, notes))
-                            };
+                if let Ok(mut control) = control.try_borrow_mut() {
+                    match control.state.active_room_id {
+                        None => (),
+                        Some(room_id) => {
+                            if let Some(room) = control.state.dungeon.room(room_id) {
+                                if room.notes != notes {
+                                    control.apply(StateCommand::ChangeRoomNotes(room_id, notes))
+                                };
+                            }
                         }
                     }
                 }
