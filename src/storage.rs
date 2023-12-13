@@ -13,8 +13,8 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
     match l.split_once(" >> ") {
         None => None,
         Some((name, data)) => match name {
-            "AddRoomCommand" => Some(StateCommand::AddRoom),
-            "SelectRoomCommand" => {
+            "AddRoom" => Some(StateCommand::AddRoom),
+            "SelectRoom" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::SelectRoom(match v["room_id"].as_u64() {
                     Some(x) => Some(x as RoomId),
@@ -28,7 +28,7 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     None => None,
                 }))
             }
-            "AddVertexToRoomCommand" => {
+            "AddVertexToRoom" => {
                 println!("{}", data);
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::AddVertexToRoom(
@@ -156,10 +156,10 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
     let mut data_str = String::new();
     for cmd in cmds {
         let name = match cmd {
-            StateCommand::AddRoom => "AddRoomCommand".to_owned(),
-            StateCommand::SelectRoom(_) => "SelectRoomCommand".to_owned(),
+            StateCommand::AddRoom => "AddRoom".to_owned(),
+            StateCommand::SelectRoom(_) => "SelectRoom".to_owned(),
             StateCommand::SelectDoor(_) => "SelectDoor".to_owned(),
-            StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoomCommand".to_owned(),
+            StateCommand::AddVertexToRoom(_, _) => "AddVertexToRoom".to_owned(),
             StateCommand::ChangeRoomName(_, _) => "ChangeRoomName".to_owned(),
             StateCommand::ChangeRoomNotes(_, _) => "ChangeRoomNotes".to_owned(),
             StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),

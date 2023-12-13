@@ -86,6 +86,7 @@ fn open_dialog(
                     let file = dialog.file().unwrap();
                     let path = file.parse_name().to_string();
                     control.borrow_mut().reset();
+                    history.borrow_mut().reset();
                     history.borrow_mut().change_file(path.clone());
                     storage::load_dungeon(control.clone(), path.clone());
                     history.borrow_mut().activate();
