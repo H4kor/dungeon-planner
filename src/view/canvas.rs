@@ -1,13 +1,13 @@
 use crate::common::{Rgb, Vec2};
 use crate::config::ACTIVE_ROOM_COLOR;
 use crate::door::{Door, DoorDrawOptions};
-use crate::room::{NextVert, Wall, WallId};
+use crate::room::{NextVert, WallId};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
-use cairo::glib::{clone, Closure};
+use cairo::glib::clone;
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
 use gtk::{glib, prelude::*, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use super::primitives::{Line, Primitive};

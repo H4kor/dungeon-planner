@@ -12,7 +12,7 @@ mod storage;
 mod view;
 
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, Application, ApplicationWindow, Label, Notebook, NotebookPage};
+use gtk::{glib, Application, ApplicationWindow, Label, Notebook};
 use gtk::{prelude::*, PopoverMenuBar};
 use observers::{DebugObserver, HistoryObserver};
 use state::StateController;

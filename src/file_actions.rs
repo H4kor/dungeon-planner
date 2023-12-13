@@ -2,7 +2,7 @@ use crate::export::to_pdf;
 use crate::observers::HistoryObserver;
 use crate::state::StateController;
 use crate::storage;
-use cairo::glib::{clone, Closure};
+use cairo::glib::clone;
 use gtk::gio::{ActionEntry, SimpleActionGroup};
 use gtk::{glib, ApplicationWindow, FileFilter, MessageDialog};
 use gtk::{prelude::*, FileChooserDialog};

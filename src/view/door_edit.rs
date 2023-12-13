@@ -14,6 +14,7 @@ use super::room_list_object::RoomObject;
 
 pub struct DoorEdit {
     pub widget: Box,
+    part_of_label: Label,
     name_input: Entry,
     notes_input: TextView,
     leads_to_input: DropDown,
@@ -117,6 +118,8 @@ impl DoorEdit {
             .orientation(gtk::Orientation::Vertical)
             .build();
 
+        let part_of_label = Label::new(Some("Part of:"));
+        b.append(&part_of_label);
         b.append(&Label::new(Some("Name")));
         b.append(&name_i);
         b.append(&Label::new(Some("Notes")));
@@ -128,6 +131,7 @@ impl DoorEdit {
 
         let re = Rc::new(RefCell::new(DoorEdit {
             widget: b,
+            part_of_label: part_of_label,
             name_input: name_i,
             notes_input: notes_i,
             leads_to_input: leads_to_i,
@@ -163,7 +167,11 @@ impl StateEventSubscriber for DoorEdit {
         match event {
             StateEvent::ActiveDoorChanged(None) => self.widget.set_visible(false),
             StateEvent::ActiveDoorChanged(Some(door_id)) => {
-                let door = state.dungeon.door_mut(door_id).unwrap();
+                let door = state.dungeon.door(door_id).unwrap();
+                let room = state.dungeon.room(door.part_of).unwrap();
+                self.part_of_label
+                    .set_text(&format!("Part of: {}", room.name));
+
                 self.name_input.set_text(&door.name);
                 self.notes_input.buffer().set_text(&door.notes);
                 self.leads_to_input
