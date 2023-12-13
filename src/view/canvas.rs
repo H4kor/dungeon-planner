@@ -1,7 +1,7 @@
+use crate::chamber::{NextVert, WallId};
 use crate::common::{Rgb, Vec2};
-use crate::config::ACTIVE_ROOM_COLOR;
+use crate::config::ACTIVE_CHAMBER_COLOR;
 use crate::door::{Door, DoorDrawOptions};
-use crate::room::{NextVert, WallId};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
 use cairo::glib::clone;
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
@@ -56,15 +56,15 @@ impl Canvas {
                     prim.draw(ctx)
                 }
 
-                // draw rooms
+                // draw chambers
                 let cp = control.state.cursor.pos + control.state.view.world_min().into();
                 let next_vert = control.state.grid.snap(cp.into());
 
-                for room in control.dungeon().rooms.iter() {
-                    let active = control.state.active_room_id == room.id;
+                for chamber in control.dungeon().chambers.iter() {
+                    let active = control.state.active_chamber_id == chamber.id;
                     let vert_opt = match active {
                         true => match control.state.mode {
-                            EditMode::AppendRoom => Some(NextVert {
+                            EditMode::AppendChamber => Some(NextVert {
                                 in_wall_id: None,
                                 pos: next_vert,
                             }),
@@ -81,7 +81,7 @@ impl Canvas {
                         },
                         false => None,
                     };
-                    let prims = room.draw(vert_opt, active, None);
+                    let prims = chamber.draw(vert_opt, active, None);
                     for prim in prims {
                         prim.draw(ctx)
                     }
@@ -91,14 +91,14 @@ impl Canvas {
                 for door in control.dungeon().doors.iter() {
                     let options = match control.state.active_door_id == door.id {
                         true => DoorDrawOptions{
-                            color: Some(ACTIVE_ROOM_COLOR),
+                            color: Some(ACTIVE_CHAMBER_COLOR),
                         },
                         false => DoorDrawOptions::empty(),
                     };
                     let prims = door.draw(
                         control
                             .dungeon()
-                            .room(door.part_of)
+                            .chamber(door.part_of)
                             .unwrap()
                             .wall(door.on_wall)
                             .unwrap(),
@@ -114,7 +114,7 @@ impl Canvas {
                  */
                 match control.state.mode {
                     EditMode::Select => {}
-                    EditMode::AppendRoom => {}
+                    EditMode::AppendChamber => {}
                     EditMode::SplitEdge => {
                         // Highlight nearest wall
                         let canvas = canvas.borrow();
@@ -128,12 +128,12 @@ impl Canvas {
                         match canvas.selected_wall() {
                             None => canvas.highlighted_nearest_wall(&control.state, cp, ctx),
                             Some(wall_id) => {
-                                if let Some(room) = control.state.active_room() {
-                                    let wall = room.wall(wall_id).unwrap();
+                                if let Some(chamber) = control.state.active_chamber() {
+                                    let wall = chamber.wall(wall_id).unwrap();
                                     let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
 
                                     let door = Door::new(
-                                        room.id.unwrap(), None,
+                                        chamber.id.unwrap(), None,
                                         50.0, // TODO: adjustable
                                         wall.id,
                                         door_pos
@@ -174,16 +174,16 @@ impl Canvas {
                     if let Some(id) = door_id {
                         control.apply(StateCommand::SelectDoor(Some(id)));
                     } else {
-                        let room_id = control.state.dungeon.room_at(control.state.cursor.pos);
-                        control.apply(StateCommand::SelectRoom(room_id));
+                        let chamber_id = control.state.dungeon.chamber_at(control.state.cursor.pos);
+                        control.apply(StateCommand::SelectChamber(chamber_id));
                     }
                 }
-                EditMode::AppendRoom => {
-                    if let Some(active_room_id) = control.state.active_room_id {
-                        if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
-                            let room_id = room.id.unwrap();
-                            control.apply(StateCommand::AddVertexToRoom(
-                                room_id,
+                EditMode::AppendChamber => {
+                    if let Some(active_chamber_id) = control.state.active_chamber_id {
+                        if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
+                            let chamber_id = chamber.id.unwrap();
+                            control.apply(StateCommand::AddVertexToChamber(
+                                chamber_id,
                                 control.state.grid.snap(
                                     (control.state.cursor.pos
                                         + control.state.view.world_min().into())
@@ -197,11 +197,11 @@ impl Canvas {
                     let selected_wall = canvas.borrow().selected_wall();
                     match selected_wall {
                         Some(wall_id) => {
-                            if let Some(active_room_id) = control.state.active_room_id {
-                                if let Some(room) = control.state.dungeon.room_mut(active_room_id) {
-                                    let room_id = room.id.unwrap();
+                            if let Some(active_chamber_id) = control.state.active_chamber_id {
+                                if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
+                                    let chamber_id = chamber.id.unwrap();
                                     control.apply(StateCommand::SplitWall(
-                                        room_id,
+                                        chamber_id,
                                         wall_id,
                                         control.state.grid.snap(
                                             (control.state.cursor.pos
@@ -224,12 +224,12 @@ impl Canvas {
                             canvas.borrow_mut().select_nearest_wall(&control.state);
                         }
                         Some(wall_id) => {
-                                if let Some(room) = control.state.active_room() {
-                                    let wall = room.wall(wall_id).unwrap();
+                                if let Some(chamber) = control.state.active_chamber() {
+                                    let wall = chamber.wall(wall_id).unwrap();
                                     let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
 
                                     let door = Door::new(
-                                        room.id.unwrap(), None,
+                                        chamber.id.unwrap(), None,
                                         50.0, // TODO: adjustable
                                         wall.id,
                                         door_pos
@@ -284,10 +284,10 @@ impl Canvas {
     }
 
     pub fn select_nearest_wall(&mut self, state: &State) {
-        if let Some(active_room_id) = state.active_room_id {
-            if let Some(room) = state.dungeon.room(active_room_id) {
+        if let Some(active_chamber_id) = state.active_chamber_id {
+            if let Some(chamber) = state.dungeon.chamber(active_chamber_id) {
                 if let Some(wall) =
-                    room.nearest_wall(state.cursor.pos + state.view.world_min().into())
+                    chamber.nearest_wall(state.cursor.pos + state.view.world_min().into())
                 {
                     self.set_selected_wall(Some(wall.id))
                 }
@@ -304,9 +304,9 @@ impl Canvas {
     }
 
     pub fn highlighted_nearest_wall(&self, state: &State, pos: Vec2<f64>, ctx: &cairo::Context) {
-        if let Some(active_room_id) = state.active_room_id {
-            if let Some(room) = state.dungeon.room(active_room_id) {
-                match room.nearest_wall(pos) {
+        if let Some(active_chamber_id) = state.active_chamber_id {
+            if let Some(chamber) = state.dungeon.chamber(active_chamber_id) {
+                match chamber.nearest_wall(pos) {
                     None => (),
                     Some(wall) => Line {
                         from: wall.p1.into(),

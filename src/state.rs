@@ -3,10 +3,10 @@ mod edit_mode;
 pub mod events;
 
 use crate::{
+    chamber::{Chamber, ChamberId},
     common::Vec2,
     door::DoorId,
     dungeon::Dungeon,
-    room::{Room, RoomId},
     view::{grid::Grid, View},
 };
 pub use commands::StateCommand;
@@ -25,7 +25,7 @@ pub struct State {
     pub view: View,
     pub cursor: CursorState,
     pub mode: EditMode,
-    pub active_room_id: Option<RoomId>,
+    pub active_chamber_id: Option<ChamberId>,
     pub active_door_id: Option<DoorId>,
 }
 pub struct StateController {
@@ -46,7 +46,7 @@ pub trait StateCommandSubscriber {
 impl State {
     pub fn new() -> Self {
         State {
-            active_room_id: None,
+            active_chamber_id: None,
             active_door_id: None,
             dungeon: Dungeon::new(),
             grid: Grid::new(),
@@ -58,9 +58,9 @@ impl State {
         }
     }
 
-    pub fn active_room(&self) -> Option<&Room> {
-        match self.active_room_id {
-            Some(room_id) => self.dungeon.room(room_id),
+    pub fn active_chamber(&self) -> Option<&Chamber> {
+        match self.active_chamber_id {
+            Some(chamber_id) => self.dungeon.chamber(chamber_id),
             None => None,
         }
     }

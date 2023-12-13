@@ -1,14 +1,14 @@
 pub mod buttons;
 pub mod canvas;
+pub mod chamber_edit;
+pub mod chamber_list;
+pub mod chamber_list_entry;
+pub mod chamber_list_object;
 pub mod door_edit;
 pub mod door_list;
 pub mod door_list_entry;
 pub mod grid;
 pub mod primitives;
-pub mod room_edit;
-pub mod room_list;
-pub mod room_list_entry;
-pub mod room_list_object;
 
 use crate::common::Vec2;
 

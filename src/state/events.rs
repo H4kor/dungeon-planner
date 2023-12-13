@@ -1,14 +1,14 @@
-use crate::{door::DoorId, room::RoomId};
+use crate::{chamber::ChamberId, door::DoorId};
 use std::hash::Hash;
 
 use super::EditMode;
 
 #[derive(Clone, Debug)]
 pub enum StateEvent {
-    RoomAdded(RoomId),
-    RoomModified(RoomId),
-    RoomDeleted(RoomId),
-    ActiveRoomChanged(Option<RoomId>),
+    ChamberAdded(ChamberId),
+    ChamberModified(ChamberId),
+    ChamberDeleted(ChamberId),
+    ActiveChamberChanged(Option<ChamberId>),
     ActiveDoorChanged(Option<DoorId>),
     EditModeChanged(EditMode),
     DoorAdded(DoorId),
@@ -36,9 +36,12 @@ mod tests {
 
     #[test]
     fn event_eq() {
-        assert_eq!(StateEvent::RoomAdded(10) == StateEvent::RoomAdded(11), true);
         assert_eq!(
-            StateEvent::RoomAdded(10) == StateEvent::RoomModified(10),
+            StateEvent::ChamberAdded(10) == StateEvent::ChamberAdded(11),
+            true
+        );
+        assert_eq!(
+            StateEvent::ChamberAdded(10) == StateEvent::ChamberModified(10),
             false
         );
     }

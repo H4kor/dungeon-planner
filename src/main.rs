@@ -1,3 +1,4 @@
+mod chamber;
 mod common;
 mod config;
 mod door;
@@ -6,7 +7,6 @@ mod edit_actions;
 mod export;
 mod file_actions;
 pub mod observers;
-mod room;
 mod state;
 mod storage;
 mod view;
@@ -18,12 +18,12 @@ use observers::{DebugObserver, HistoryObserver};
 use state::StateController;
 use std::cell::RefCell;
 use std::rc::Rc;
-use view::buttons::{AddRoomButton, EditModeButton};
+use view::buttons::{AddChamberButton, EditModeButton};
 use view::canvas::Canvas;
+use view::chamber_edit::ChamberEdit;
+use view::chamber_list::ChamberList;
 use view::door_edit::DoorEdit;
 use view::door_list::DoorList;
-use view::room_edit::RoomEdit;
-use view::room_list::RoomList;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -59,7 +59,7 @@ fn build_ui(app: &Application) {
      * |--------|-----------------------|
      * |  Tools |                       |
      * |--------|                       |
-     * |  Room  |          Canvas       |
+     * |chamber |          Canvas       |
      * |  List  |                       |
      * |--------|                       |
      * |Context |                       |
@@ -75,21 +75,21 @@ fn build_ui(app: &Application) {
         .build();
 
     let canvas = Canvas::new(control.clone());
-    let add_room_button = AddRoomButton::new(control.clone());
-    let select_room_button =
+    let add_chamber_button = AddChamberButton::new(control.clone());
+    let select_chamber_button =
         EditModeButton::new(control.clone(), state::EditMode::Select, "edit-find");
     let split_edge_button =
         EditModeButton::new(control.clone(), state::EditMode::SplitEdge, "edit-cut");
     let append_verts_button = EditModeButton::new(
         control.clone(),
-        state::EditMode::AppendRoom,
+        state::EditMode::AppendChamber,
         "document-edit",
     );
     let add_door_button =
         EditModeButton::new(control.clone(), state::EditMode::AddDoor, "insert-link");
 
-    tool_box.append(&add_room_button.widget);
-    tool_box.append(&select_room_button.borrow().widget);
+    tool_box.append(&add_chamber_button.widget);
+    tool_box.append(&select_chamber_button.borrow().widget);
     tool_box.append(&split_edge_button.borrow().widget);
     tool_box.append(&append_verts_button.borrow().widget);
     tool_box.append(&add_door_button.borrow().widget);
@@ -98,15 +98,15 @@ fn build_ui(app: &Application) {
     let object_tabs = Notebook::builder().build();
     side_box.append(&object_tabs);
 
-    let room_tab = gtk::Box::builder()
+    let chamber_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
         .build();
-    let room_tab_label = Label::new(Some("Rooms"));
-    object_tabs.append_page(&room_tab, Some(&room_tab_label));
-    let room_list = RoomList::new(control.clone());
-    let room_edit = RoomEdit::new(control.clone());
-    room_tab.append(&room_list.borrow().scrolled_window);
-    room_tab.append(&room_edit.borrow().widget);
+    let chamber_tab_label = Label::new(Some("Chambers"));
+    object_tabs.append_page(&chamber_tab, Some(&chamber_tab_label));
+    let chamber_list = ChamberList::new(control.clone());
+    let chamber_edit = ChamberEdit::new(control.clone());
+    chamber_tab.append(&chamber_list.borrow().scrolled_window);
+    chamber_tab.append(&chamber_edit.borrow().widget);
 
     let door_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
