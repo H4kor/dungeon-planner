@@ -1,6 +1,6 @@
 use crate::{
+    chamber::{ChamberId, Wall, WallId},
     common::{Rgb, Vec2},
-    room::{RoomId, Wall, WallId},
     view::primitives::{Line, Primitive},
 };
 
@@ -19,8 +19,8 @@ impl DoorDrawOptions {
 #[derive(Clone, Debug)]
 pub struct Door {
     pub id: Option<DoorId>,
-    pub part_of: RoomId,
-    pub leads_to: Option<RoomId>,
+    pub part_of: ChamberId,
+    pub leads_to: Option<ChamberId>,
     pub width: f64,
     pub on_wall: WallId,
     pub position: f64,
@@ -30,8 +30,8 @@ pub struct Door {
 
 impl Door {
     pub fn new(
-        part_of: RoomId,
-        leads_to: Option<RoomId>,
+        part_of: ChamberId,
+        leads_to: Option<ChamberId>,
         width: f64,
         on_wall: WallId,
         position: f64,

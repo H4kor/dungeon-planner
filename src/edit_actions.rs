@@ -15,7 +15,7 @@ pub fn edit_actions(
     let edit_action_unselect = ActionEntry::builder("unselect")
         .activate(
             clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
-                control.borrow_mut().apply(StateCommand::SelectRoom(None));
+                control.borrow_mut().apply(StateCommand::SelectChamber(None));
                 control.borrow_mut().apply(StateCommand::ChangeMode(EditMode::Select))
             }),
         )
@@ -39,12 +39,12 @@ pub fn edit_actions(
         )
         .build();
 
-    let edit_action_delete_room = ActionEntry::builder("delete_selected")
+    let edit_action_delete = ActionEntry::builder("delete_selected")
         .activate(
             clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
-                let active_room_id = control.borrow().state.active_room_id;
-                if let Some(room_id) = active_room_id {
-                    control.borrow_mut().apply(StateCommand::DeleteRoom(room_id))
+                let active_chamber_id = control.borrow().state.active_chamber_id;
+                if let Some(chamber_id) = active_chamber_id {
+                    control.borrow_mut().apply(StateCommand::DeleteChamber(chamber_id))
                 } else {
                     let active_door_id = control.borrow().state.active_door_id;
                     if let Some(door_id) = active_door_id {
@@ -55,11 +55,7 @@ pub fn edit_actions(
         )
         .build();
 
-    edit_actions.add_action_entries([
-        edit_action_unselect,
-        edit_action_undo,
-        edit_action_delete_room,
-    ]);
+    edit_actions.add_action_entries([edit_action_unselect, edit_action_undo, edit_action_delete]);
 
     edit_actions
 }

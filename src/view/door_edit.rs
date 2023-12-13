@@ -6,11 +6,11 @@ use gtk::{gio, glib, DropDown, Expression, ListItem, SignalListItemFactory};
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
-use crate::room::RoomId;
+use crate::chamber::ChamberId;
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
-use super::room_list_object::RoomObject;
+use super::chamber_list_object::ChamberObject;
 
 pub struct DoorEdit {
     pub widget: Box,
@@ -18,7 +18,7 @@ pub struct DoorEdit {
     name_input: Entry,
     notes_input: TextView,
     leads_to_input: DropDown,
-    rooms_model: gio::ListStore,
+    chambers_model: gio::ListStore,
 }
 
 impl DoorEdit {
@@ -30,9 +30,10 @@ impl DoorEdit {
             .right_margin(10)
             .build();
 
-        let room_vec: Vec<RoomObject> = vec![RoomObject::new(None, "-- No Room --".to_owned())];
-        let model = gio::ListStore::new::<RoomObject>();
-        model.extend_from_slice(&room_vec);
+        let chamber_vec: Vec<ChamberObject> =
+            vec![ChamberObject::new(None, "-- No Chamber --".to_owned())];
+        let model = gio::ListStore::new::<ChamberObject>();
+        model.extend_from_slice(&chamber_vec);
         let factory = SignalListItemFactory::new();
         factory.connect_setup(move |_, list_item| {
             let label = Label::new(None);
@@ -42,12 +43,12 @@ impl DoorEdit {
                 .set_child(Some(&label));
         });
         factory.connect_bind(clone!(@strong control => move |_, list_item| {
-            // Get `RoomObject` from `ListItem`
-            let room_object = list_item
+            // Get `ChamberObject` from `ListItem`
+            let chamber_object = list_item
                 .downcast_ref::<ListItem>()
                 .expect("Needs to be ListItem")
                 .item()
-                .and_downcast::<RoomObject>()
+                .and_downcast::<ChamberObject>()
                 .expect("The item has to be an `IntegerObject`.");
 
             // Get `Label` from `ListItem`
@@ -58,8 +59,8 @@ impl DoorEdit {
                 .and_downcast::<Label>()
                 .expect("The child has to be a `Label`.");
 
-            // Set "label" to "room name"
-            label.set_label(&room_object.name().clone());
+            // Set "label" to "chamber name"
+            label.set_label(&chamber_object.name().clone());
         }));
 
         let leads_to_i = DropDown::builder().build();
@@ -69,15 +70,15 @@ impl DoorEdit {
 
         leads_to_i.connect_selected_item_notify(clone!(@weak control => move |drop_down| {
             let model = drop_down.model().expect("The model has to exist.");
-            let room_object = model
+            let chamber_object = model
                 .item(drop_down.selected())
-                .and_downcast::<RoomObject>()
-                .expect("The item has to be an `RoomObject`.");
+                .and_downcast::<ChamberObject>()
+                .expect("The item has to be an `ChamberObject`.");
 
             if let Ok(mut control) = control.try_borrow_mut() {
                 let door_id = control.state.active_door_id.unwrap();
-                control.apply(StateCommand::ChangeDoorLeadsTo(door_id, match room_object.valid() {
-                    true => Some(room_object.room()),
+                control.apply(StateCommand::ChangeDoorLeadsTo(door_id, match chamber_object.valid() {
+                    true => Some(chamber_object.chamber()),
                     false => None,
                 }));
             };
@@ -124,7 +125,7 @@ impl DoorEdit {
         b.append(&name_i);
         b.append(&Label::new(Some("Notes")));
         b.append(&notes_i);
-        b.append(&Label::new(Some("Leads to Room:")));
+        b.append(&Label::new(Some("Leads to Chamber:")));
         b.append(&leads_to_i);
 
         b.set_visible(false);
@@ -135,7 +136,7 @@ impl DoorEdit {
             name_input: name_i,
             notes_input: notes_i,
             leads_to_input: leads_to_i,
-            rooms_model: model,
+            chambers_model: model,
         }));
 
         control.borrow_mut().subscribe_any(re.clone());
@@ -143,15 +144,15 @@ impl DoorEdit {
         re
     }
 
-    fn room_object_pos(&self, id: Option<RoomId>) -> u32 {
-        self.rooms_model
+    fn chamber_object_pos(&self, id: Option<ChamberId>) -> u32 {
+        self.chambers_model
             .into_iter()
             .position(|r| {
                 Some(
-                    r.expect("Expected Room Object")
-                        .downcast::<RoomObject>()
+                    r.expect("Expected Chamber Object")
+                        .downcast::<ChamberObject>()
                         .expect("The item has to be an `IntegerObject`.")
-                        .room(),
+                        .chamber(),
                 ) == id
             })
             .unwrap_or(0) as u32
@@ -168,29 +169,31 @@ impl StateEventSubscriber for DoorEdit {
             StateEvent::ActiveDoorChanged(None) => self.widget.set_visible(false),
             StateEvent::ActiveDoorChanged(Some(door_id)) => {
                 let door = state.dungeon.door(door_id).unwrap();
-                let room = state.dungeon.room(door.part_of).unwrap();
+                let chamber = state.dungeon.chamber(door.part_of).unwrap();
                 self.part_of_label
-                    .set_text(&format!("Part of: {}", room.name));
+                    .set_text(&format!("Part of: {}", chamber.name));
 
                 self.name_input.set_text(&door.name);
                 self.notes_input.buffer().set_text(&door.notes);
                 self.leads_to_input
-                    .set_selected(self.room_object_pos(door.leads_to));
+                    .set_selected(self.chamber_object_pos(door.leads_to));
                 self.widget.set_visible(true);
             }
             StateEvent::Reset => self.widget.set_visible(false),
-            StateEvent::RoomAdded(room_id) => self.rooms_model.append(&RoomObject::new(
-                Some(room_id),
-                state.dungeon.room(room_id).unwrap().name.clone(),
-            )),
-            StateEvent::RoomModified(room_id) => {
-                let room_object = self
-                    .rooms_model
-                    .item(self.room_object_pos(Some(room_id)))
+            StateEvent::ChamberAdded(chamber_id) => {
+                self.chambers_model.append(&ChamberObject::new(
+                    Some(chamber_id),
+                    state.dungeon.chamber(chamber_id).unwrap().name.clone(),
+                ))
+            }
+            StateEvent::ChamberModified(chamber_id) => {
+                let chamber_object = self
+                    .chambers_model
+                    .item(self.chamber_object_pos(Some(chamber_id)))
                     .unwrap()
-                    .downcast::<RoomObject>()
+                    .downcast::<ChamberObject>()
                     .expect("The item has to be an `IntegerObject`.");
-                room_object.set_name(state.dungeon.room(room_id).unwrap().name.clone())
+                chamber_object.set_name(state.dungeon.chamber(chamber_id).unwrap().name.clone())
             }
             _ => (),
         }

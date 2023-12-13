@@ -2,10 +2,10 @@ use cairo::Context;
 use pango::ffi::PANGO_SCALE;
 
 use crate::{
+    chamber::ChamberDrawOptions,
     common::{BBox, Rgb, Vec2},
     door::DoorDrawOptions,
     dungeon::Dungeon,
-    room::RoomDrawOptions,
     view::grid::Grid,
 };
 
@@ -85,11 +85,11 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             },
         };
         let mut all_prims = vec![];
-        for room in dungeon.rooms() {
-            let mut prims = room.draw(
+        for chamber in dungeon.chambers() {
+            let mut prims = chamber.draw(
                 None,
                 false,
-                Some(RoomDrawOptions {
+                Some(ChamberDrawOptions {
                     color: Some(Rgb {
                         r: 0.0,
                         g: 0.0,
@@ -108,7 +108,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         for door in dungeon.doors.iter() {
             let mut prims = door.draw(
                 dungeon
-                    .room(door.part_of)
+                    .chamber(door.part_of)
                     .unwrap()
                     .wall(door.on_wall)
                     .unwrap(),
@@ -159,7 +159,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         }
         ctx.set_dash(&vec![], 0.0);
 
-        // draw room
+        // draw chamber
         for prim in all_prims.iter() {
             prim.draw(&ctx)
         }
@@ -169,17 +169,17 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         ctx.show_page().unwrap();
     }
 
-    for room in dungeon.rooms() {
-        // TODO: take care of large rooms and split over multiple pages.
+    for chamber in dungeon.chambers() {
+        // TODO: take care of large chambers and split over multiple pages.
 
         // prepare elements
         let (_, hl) = layout_headline();
-        match room.id {
-            Some(room_id) => hl.set_text(&format!("{}: {}", room_id, &room.name)),
-            None => hl.set_text(&room.name),
+        match chamber.id {
+            Some(chamber_id) => hl.set_text(&format!("{}: {}", chamber_id, &chamber.name)),
+            None => hl.set_text(&chamber.name),
         }
         let (_, tl) = layout_text();
-        tl.set_text(&room.notes);
+        tl.set_text(&chamber.notes);
 
         // calculate total height
         let (h_extent, _) = hl.extents();
@@ -209,10 +209,10 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         // Render Image
         {
             cur_h += HEADLINE_IMAGE_SPACING;
-            let mut prims = room.draw(
+            let mut prims = chamber.draw(
                 None,
                 false,
-                Some(RoomDrawOptions {
+                Some(ChamberDrawOptions {
                     color: Some(Rgb {
                         r: 0.0,
                         g: 0.0,
@@ -223,10 +223,10 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             );
 
             // draw doors
-            for door in dungeon.room_doors(room.id.unwrap()).iter() {
+            for door in dungeon.chamber_doors(chamber.id.unwrap()).iter() {
                 let mut door_prims = door.draw(
                     dungeon
-                        .room(door.part_of)
+                        .chamber(door.part_of)
                         .unwrap()
                         .wall(door.on_wall)
                         .unwrap(),
@@ -277,7 +277,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
                 }
                 ctx.set_dash(&vec![], 0.0);
 
-                // draw room
+                // draw chamber
                 for prim in prims.iter() {
                     prim.draw(&ctx)
                 }

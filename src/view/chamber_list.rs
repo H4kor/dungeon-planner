@@ -1,23 +1,23 @@
 use crate::state::{
     events::StateEvent, State, StateCommand, StateController, StateEventSubscriber,
 };
-use crate::view::room_list_entry::RoomListEntry;
+use crate::view::chamber_list_entry::ChamberListEntry;
 use gtk::prelude::*;
 use gtk::{ListBox, PolicyType, ScrolledWindow};
 use std::{cell::RefCell, rc::Rc};
 
-pub struct RoomList {
+pub struct ChamberList {
     pub list_box: ListBox,
     pub scrolled_window: ScrolledWindow,
-    pub rows: Vec<RoomListEntry>,
+    pub rows: Vec<ChamberListEntry>,
 }
 
-impl RoomList {
+impl ChamberList {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
         let list_box = ListBox::builder()
             .selection_mode(gtk::SelectionMode::Single)
             .build();
-        let room_list = Rc::new(RefCell::new(RoomList {
+        let chamber_list = Rc::new(RefCell::new(ChamberList {
             list_box: list_box.clone(),
             scrolled_window: ScrolledWindow::builder()
                 .hscrollbar_policy(PolicyType::Never) // Disable horizontal scrolling
@@ -31,20 +31,20 @@ impl RoomList {
         {
             let control = control.clone();
             list_box.connect_row_activated(move |_, row| {
-                let room_id = row
+                let chamber_id = row
                     .clone()
-                    .dynamic_cast::<RoomListEntry>()
+                    .dynamic_cast::<ChamberListEntry>()
                     .unwrap()
-                    .room_id();
+                    .chamber_id();
                 control
                     .borrow_mut()
-                    .apply(StateCommand::SelectRoom(Some(room_id)));
+                    .apply(StateCommand::SelectChamber(Some(chamber_id)));
             });
         }
 
         let mut state = control.borrow_mut();
-        state.subscribe_any(room_list.clone());
-        room_list
+        state.subscribe_any(chamber_list.clone());
+        chamber_list
     }
 
     fn rebuild_list(&mut self, state: &State) {
@@ -52,41 +52,41 @@ impl RoomList {
             self.list_box.remove(row)
         }
         self.rows = vec![];
-        for room in &state.dungeon.rooms {
-            let room_label = RoomListEntry::new(&room.clone());
-            self.rows.push(room_label);
+        for chamber in &state.dungeon.chambers {
+            let chamber_label = ChamberListEntry::new(&chamber.clone());
+            self.rows.push(chamber_label);
             self.list_box.append(self.rows.last().unwrap());
         }
-        match state.active_room_id {
+        match state.active_chamber_id {
             None => self.list_box.unselect_all(),
-            Some(room_id) => self
+            Some(chamber_id) => self
                 .list_box
-                .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
+                .select_row(self.rows.iter().find(|r| r.chamber_id() == chamber_id)),
         }
     }
 }
 
-impl StateEventSubscriber for RoomList {
+impl StateEventSubscriber for ChamberList {
     fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
         match event {
-            StateEvent::RoomAdded(_) => {
+            StateEvent::ChamberAdded(_) => {
                 self.rebuild_list(state);
             }
-            StateEvent::RoomModified(room_id) => {
-                let room = state.dungeon.room_mut(room_id).unwrap();
+            StateEvent::ChamberModified(chamber_id) => {
+                let chamber = state.dungeon.chamber_mut(chamber_id).unwrap();
                 self.rows
                     .iter_mut()
-                    .filter(|r| r.room_id() == room_id)
-                    .for_each(|w| w.update(room));
+                    .filter(|r| r.chamber_id() == chamber_id)
+                    .for_each(|w| w.update(chamber));
             }
-            StateEvent::ActiveRoomChanged(room_id) => match room_id {
+            StateEvent::ActiveChamberChanged(chamber_id) => match chamber_id {
                 None => self.list_box.unselect_all(),
-                Some(room_id) => self
+                Some(chamber_id) => self
                     .list_box
-                    .select_row(self.rows.iter().find(|r| r.room_id() == room_id)),
+                    .select_row(self.rows.iter().find(|r| r.chamber_id() == chamber_id)),
             },
             StateEvent::Reset => self.rebuild_list(state),
-            StateEvent::RoomDeleted(_) => self.rebuild_list(state),
+            StateEvent::ChamberDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
         vec![]

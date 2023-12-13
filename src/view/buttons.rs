@@ -9,7 +9,7 @@ use cairo::glib::clone;
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::{Button, ToggleButton};
-pub struct AddRoomButton {
+pub struct AddChamberButton {
     pub widget: Button,
 }
 pub struct EditModeButton {
@@ -17,17 +17,17 @@ pub struct EditModeButton {
     mode: EditMode,
 }
 
-impl AddRoomButton {
+impl AddChamberButton {
     pub fn new(control: Rc<RefCell<StateController>>) -> Self {
         let button = Button::builder().icon_name("document-new").build();
         button.set_size_request(48, 48);
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();
-            control.apply(StateCommand::AddRoom);
+            control.apply(StateCommand::AddChamber);
         });
 
-        AddRoomButton { widget: button }
+        AddChamberButton { widget: button }
     }
 }
 

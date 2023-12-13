@@ -1,19 +1,19 @@
 use crate::{
     common::{Line, Rgb, Vec2},
-    config::{ACTIVE_ROOM_COLOR, DEFAULT_ROOM_COLOR, WALL_WIDTH},
+    config::{ACTIVE_CHAMBER_COLOR, DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
     view::primitives::{Polygon, Primitive, Text},
 };
-pub type RoomId = u32;
+pub type ChamberId = u32;
 pub type WallId = u32;
 
-/// One wall of a room
+/// One wall of a Chamber
 /// Has an id and two points defining its shape
-/// The id is only unique within a room. RoomIds are persistent and not ordered
-/// RoomIds are reused
-/// Not meant to be stored, as these are derived from a Room
+/// The id is only unique within a Chamber. ChamberIds are persistent and not ordered
+/// ChamberIds are reused
+/// Not meant to be stored, as these are derived from a Chamber
 #[derive(Clone, Copy, Debug)]
 pub struct Wall {
-    pub id: RoomId,
+    pub id: ChamberId,
     pub p1: Vec2<i32>,
     pub p2: Vec2<i32>,
 }
@@ -23,32 +23,32 @@ pub struct NextVert {
     pub pos: Vec2<i32>,
 }
 
-pub struct RoomDrawOptions {
+pub struct ChamberDrawOptions {
     pub color: Option<Rgb>,
     pub fill: Option<bool>,
 }
 
-/// A Room is part of a Dungeon
+/// A Chamber is part of a Dungeon
 /// It has a shape and further information, such as name and notes
 #[derive(Clone)]
-pub struct Room {
-    pub id: Option<RoomId>,
+pub struct Chamber {
+    pub id: Option<ChamberId>,
     walls: Vec<Wall>,
     first_vert: Option<Vec2<i32>>,
     pub name: String,
     pub notes: String,
-    room_color: Rgb,
+    color: Rgb,
 }
 
-impl Room {
-    pub fn new(id: Option<RoomId>) -> Self {
+impl Chamber {
+    pub fn new(id: Option<ChamberId>) -> Self {
         Self {
             id: id,
             walls: vec![],
             first_vert: None,
-            name: "New Room".to_owned(),
+            name: "New Chamber".to_owned(),
             notes: String::new(),
-            room_color: DEFAULT_ROOM_COLOR,
+            color: DEFAULT_CHAMBER_COLOR,
         }
     }
 
@@ -56,10 +56,10 @@ impl Room {
         &self,
         next_vert: Option<NextVert>,
         active: bool,
-        options: Option<RoomDrawOptions>,
+        options: Option<ChamberDrawOptions>,
     ) -> Vec<Box<dyn Primitive>> {
         let mut walls = self.walls.clone();
-        let mut show_room_number = true;
+        let mut show_chamber_number = true;
         match next_vert {
             Some(v) => match v.in_wall_id {
                 Some(wall_id) => {
@@ -68,7 +68,7 @@ impl Room {
                     let (w1, w2) = wall.split(v.pos);
                     walls[idx] = w1;
                     walls.insert(idx + 1, w2);
-                    show_room_number = false;
+                    show_chamber_number = false;
                 }
                 None => {
                     if walls.len() > 0 {
@@ -77,7 +77,7 @@ impl Room {
                         let (w1, w2) = wall.split(v.pos);
                         walls[idx] = w1;
                         walls.insert(idx + 1, w2);
-                        show_room_number = false;
+                        show_chamber_number = false;
                     }
                 }
             },
@@ -86,13 +86,13 @@ impl Room {
 
         let color = match active {
             false => match options {
-                Some(RoomDrawOptions {
+                Some(ChamberDrawOptions {
                     color: Some(c),
                     fill: _,
                 }) => c,
-                _ => self.room_color,
+                _ => self.color,
             },
-            true => ACTIVE_ROOM_COLOR,
+            true => ACTIVE_CHAMBER_COLOR,
         };
 
         let mut prims = Vec::<Box<dyn Primitive>>::new();
@@ -103,7 +103,7 @@ impl Room {
                 .collect(),
             fill_color: color,
             fill_opacity: match options {
-                Some(RoomDrawOptions {
+                Some(ChamberDrawOptions {
                     color: _,
                     fill: Some(false),
                 }) => 0.0,
@@ -115,7 +115,7 @@ impl Room {
         let bbox = poly.bbox();
         prims.push(poly);
 
-        if show_room_number {
+        if show_chamber_number {
             // get bbox of polygon
             // iterate over each cell in BBox
             // if in polygon
@@ -319,18 +319,18 @@ impl Wall {
 mod tests {
     use crate::common::Vec2;
 
-    use super::{Room, Wall};
+    use super::{Chamber, Wall};
 
     #[test]
     fn test_walls_now_verts() {
-        let r = Room::new(None);
+        let r = Chamber::new(None);
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
     }
 
     #[test]
     fn test_walls_one_verts() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         r.append(Vec2 { x: 1, y: 1 });
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn test_walls_two_verts() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         let walls = r.walls();
@@ -353,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_walls_three_verts() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         r.append(Vec2 { x: 3, y: 3 });
@@ -386,7 +386,7 @@ mod tests {
 
     #[test]
     fn contains_1() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         r.append(Vec2 { x: 0, y: 0 });
         r.append(Vec2 { x: 0, y: 10 });
         r.append(Vec2 { x: 10, y: 10 });
@@ -399,7 +399,7 @@ mod tests {
 
     #[test]
     fn contains_2() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         // U shape 150 - 250   350 - 450
         // Y 350 - 650
         r.append(Vec2 { x: 150, y: 350 });
@@ -419,7 +419,7 @@ mod tests {
 
     #[test]
     fn contains_3() {
-        let mut r = Room::new(None);
+        let mut r = Chamber::new(None);
         // triangle
         r.append(Vec2 { x: 100, y: 0 });
         r.append(Vec2 { x: 50, y: 100 });
