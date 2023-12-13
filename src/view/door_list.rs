@@ -86,7 +86,7 @@ impl StateEventSubscriber for DoorList {
                     .select_row(self.rows.iter().find(|r| r.door_id() == door_id)),
             },
             StateEvent::Reset => self.rebuild_list(state),
-            // StateEvent::DoorDeleted(_) => self.rebuild_list(state),
+            StateEvent::DoorDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
         vec![]

@@ -91,16 +91,30 @@ impl Dungeon {
         &self.rooms
     }
 
-    pub(crate) fn remove_room(&mut self, room_id: u32) {
+    /**
+     * Remeves a room from the dungeon and all doors which are part of this room.
+     * Returns a list of removed DoorIds
+     */
+    pub(crate) fn remove_room(&mut self, room_id: u32) -> Vec<DoorId> {
         let idx = self.rooms.iter().position(|r| r.id == Some(room_id));
         match idx {
             Some(i) => {
+                // remove all doors being part of this room first
+                let door_ids = self
+                    .doors
+                    .iter()
+                    .filter(|d| d.part_of == room_id)
+                    .map(|d| d.id.unwrap())
+                    .collect();
+                self.doors.retain(|d| d.part_of != room_id);
                 self.rooms.remove(i);
+                door_ids
             }
             None => {
-                println!("Room Id not found for deletion")
+                println!("Room Id not found for deletion");
+                vec![]
             }
-        };
+        }
     }
 
     pub fn door(&self, id: DoorId) -> Option<&Door> {
@@ -153,5 +167,17 @@ impl Dungeon {
             .iter()
             .filter(|d| d.part_of == room_id || d.leads_to == Some(room_id))
             .collect()
+    }
+
+    pub(crate) fn remove_door(&mut self, door_id: DoorId) {
+        let idx = self.doors.iter().position(|r| r.id == Some(door_id));
+        match idx {
+            Some(i) => {
+                self.doors.remove(i);
+            }
+            None => {
+                println!("door Id not found for deletion")
+            }
+        };
     }
 }

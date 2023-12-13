@@ -110,6 +110,12 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     },
                 ))
             }
+            "DeleteDoor" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::DeleteDoor(
+                    v["door_id"].as_u64().unwrap() as u32
+                ))
+            }
             _ => None,
         },
     }
@@ -163,6 +169,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeDoorName(_, _) => "ChangeDoorName".to_owned(),
             StateCommand::ChangeDoorNotes(_, _) => "ChangeDoorNotes".to_owned(),
             StateCommand::ChangeDoorLeadsTo(_, _) => "ChangeDoorLeadsTo".to_owned(),
+            StateCommand::DeleteDoor(_) => "DeleteDoor".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddRoom => serde_json::Value::Null,
@@ -209,6 +216,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "door_id": door_id,
                 "room_id": room_id,
             }),
+            StateCommand::DeleteDoor(door_id) => json!({ "door_id": door_id }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
     }

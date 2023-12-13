@@ -1,5 +1,5 @@
 use crate::observers::HistoryObserver;
-use crate::state::{StateCommand, StateController};
+use crate::state::{EditMode, StateCommand, StateController};
 use cairo::glib::clone;
 use gtk::gio::{ActionEntry, SimpleActionGroup};
 use gtk::prelude::*;
@@ -15,7 +15,8 @@ pub fn edit_actions(
     let edit_action_unselect = ActionEntry::builder("unselect")
         .activate(
             clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
-                control.borrow_mut().apply(StateCommand::SelectRoom(None))
+                control.borrow_mut().apply(StateCommand::SelectRoom(None));
+                control.borrow_mut().apply(StateCommand::ChangeMode(EditMode::Select))
             }),
         )
         .build();
@@ -38,12 +39,17 @@ pub fn edit_actions(
         )
         .build();
 
-    let edit_action_delete_room = ActionEntry::builder("delete_room")
+    let edit_action_delete_room = ActionEntry::builder("delete_selected")
         .activate(
             clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
                 let active_room_id = control.borrow().state.active_room_id;
                 if let Some(room_id) = active_room_id {
                     control.borrow_mut().apply(StateCommand::DeleteRoom(room_id))
+                } else {
+                    let active_door_id = control.borrow().state.active_door_id;
+                    if let Some(door_id) = active_door_id {
+                        control.borrow_mut().apply(StateCommand::DeleteDoor(door_id));
+                    }
                 }
             }),
         )

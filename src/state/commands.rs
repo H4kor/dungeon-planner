@@ -21,6 +21,7 @@ pub enum StateCommand {
     ChangeDoorName(DoorId, String),
     ChangeDoorNotes(DoorId, String),
     ChangeDoorLeadsTo(DoorId, Option<RoomId>),
+    DeleteDoor(DoorId),
 }
 
 impl StateCommand {
@@ -77,8 +78,13 @@ impl StateCommand {
                 vec![StateEvent::RoomModified(*room_id)]
             }
             StateCommand::DeleteRoom(room_id) => {
-                state.dungeon.remove_room(*room_id);
-                let mut events = vec![StateEvent::RoomDeleted(*room_id)];
+                let deleted_door_ids = state.dungeon.remove_room(*room_id);
+                let mut events: Vec<StateEvent> = deleted_door_ids
+                    .iter()
+                    .map(|id| StateEvent::DoorDeleted(*id))
+                    .collect();
+                events.push(StateEvent::RoomDeleted(*room_id));
+
                 if state.active_room_id == Some(*room_id) {
                     state.active_room_id = None;
                     events.push(StateEvent::ActiveRoomChanged(None));
@@ -103,6 +109,15 @@ impl StateCommand {
             StateCommand::ChangeDoorLeadsTo(door_id, room_id) => {
                 state.dungeon.door_mut(*door_id).unwrap().leads_to = *room_id;
                 vec![StateEvent::DoorModified(*door_id)]
+            }
+            StateCommand::DeleteDoor(door_id) => {
+                state.dungeon.remove_door(*door_id);
+                let mut events = vec![StateEvent::DoorDeleted(*door_id)];
+                if state.active_door_id == Some(*door_id) {
+                    state.active_door_id = None;
+                    events.push(StateEvent::ActiveDoorChanged(None));
+                }
+                events
             }
         }
     }
