@@ -45,6 +45,13 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("edit.unselect", &["Escape"]);
     app.set_accels_for_action("edit.delete_selected", &["Delete"]);
     app.set_accels_for_action("edit.undo", &["<Ctrl>Z"]);
+    app.set_accels_for_action("edit.add_chamber", &["C"]);
+
+    // modes
+    app.set_accels_for_action("edit.mode_select", &["S"]);
+    app.set_accels_for_action("edit.mode_append_chamber", &["A"]);
+    app.set_accels_for_action("edit.mode_split_edge", &["F"]);
+    app.set_accels_for_action("edit.mode_add_door", &["D"]);
 
     // Run the application
     app.run()
@@ -124,20 +131,39 @@ fn build_ui(app: &Application) {
         .build();
 
     let file_menu = Menu::new();
-    let file_menu_new = MenuItem::new(Some("New Dungeon"), Some("file.new"));
-    let file_menu_open = MenuItem::new(Some("Open ..."), Some("file.open"));
-    let file_menu_save = MenuItem::new(Some("Save ..."), Some("file.save"));
-    let file_menu_save_as = MenuItem::new(Some("Save As ..."), Some("file.save_as"));
-    let file_menu_print = MenuItem::new(Some("Export PDF ..."), Some("file.export_pdf"));
-    file_menu.insert_item(0, &file_menu_new);
-    file_menu.insert_item(5, &file_menu_open);
-    file_menu.insert_item(10, &file_menu_save);
-    file_menu.insert_item(11, &file_menu_save_as);
-    file_menu.insert_item(20, &file_menu_print);
+    file_menu.insert_item(0, &MenuItem::new(Some("New Dungeon"), Some("file.new")));
+    file_menu.insert_item(5, &MenuItem::new(Some("Open ..."), Some("file.open")));
+    file_menu.insert_item(10, &MenuItem::new(Some("Save ..."), Some("file.save")));
+    file_menu.insert_item(
+        11,
+        &MenuItem::new(Some("Save As ..."), Some("file.save_as")),
+    );
+    file_menu.insert_item(
+        20,
+        &MenuItem::new(Some("Export PDF ..."), Some("file.export_pdf")),
+    );
 
     let edit_menu = Menu::new();
-    let edit_menu_undo = MenuItem::new(Some("Undo"), Some("edit.undo"));
-    edit_menu.insert_item(0, &edit_menu_undo);
+    edit_menu.insert_item(0, &MenuItem::new(Some("Undo"), Some("edit.undo")));
+    edit_menu.insert_item(
+        10,
+        &MenuItem::new(Some("Add new Chamber"), Some("edit.add_chamber")),
+    );
+    let mode_menu = Menu::new();
+    mode_menu.insert_item(0, &MenuItem::new(Some("Select"), Some("edit.mode_select")));
+    mode_menu.insert_item(
+        0,
+        &MenuItem::new(Some("Append Chamber"), Some("edit.mode_append_chamber")),
+    );
+    mode_menu.insert_item(
+        0,
+        &MenuItem::new(Some("Split Wall"), Some("edit.mode_split_edge")),
+    );
+    mode_menu.insert_item(
+        0,
+        &MenuItem::new(Some("Add Door"), Some("edit.mode_add_door")),
+    );
+    edit_menu.insert_submenu(20, Some("Change Mode"), &mode_menu);
 
     let menu = Menu::new();
     menu.insert_submenu(0, Some("File"), &file_menu);

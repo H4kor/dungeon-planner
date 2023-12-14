@@ -6,6 +6,20 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+fn change_mode_action(
+    control: Rc<RefCell<StateController>>,
+    mode: EditMode,
+    name: &str,
+) -> ActionEntry<SimpleActionGroup> {
+    ActionEntry::builder(name)
+        .activate(
+            clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
+                control.borrow_mut().apply(StateCommand::ChangeMode(mode));
+            }),
+        )
+        .build()
+}
+
 pub fn edit_actions(
     control: Rc<RefCell<StateController>>,
     history: Rc<RefCell<HistoryObserver>>,
@@ -55,7 +69,28 @@ pub fn edit_actions(
         )
         .build();
 
-    edit_actions.add_action_entries([edit_action_unselect, edit_action_undo, edit_action_delete]);
+    let edit_action_add_chamber = ActionEntry::builder("add_chamber")
+        .activate(
+            clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
+                control.borrow_mut().apply(StateCommand::AddChamber);
+            }),
+        )
+        .build();
+
+    edit_actions.add_action_entries([
+        edit_action_unselect,
+        edit_action_undo,
+        edit_action_delete,
+        edit_action_add_chamber,
+        change_mode_action(control.clone(), EditMode::Select, "mode_select"),
+        change_mode_action(
+            control.clone(),
+            EditMode::AppendChamber,
+            "mode_append_chamber",
+        ),
+        change_mode_action(control.clone(), EditMode::SplitEdge, "mode_split_edge"),
+        change_mode_action(control.clone(), EditMode::AddDoor, "mode_add_door"),
+    ]);
 
     edit_actions
 }
