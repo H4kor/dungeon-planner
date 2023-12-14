@@ -47,10 +47,19 @@ glib::wrapper! {
 }
 
 impl DoorListEntry {
+    fn chamber_to_label(door: &Door) -> String {
+        if door.name.is_empty() {
+            format!("{}) {}", door.id.unwrap(), "Door")
+        } else {
+            format!("{}) {}", door.id.unwrap(), &door.name)
+        }
+    }
+
     pub fn new(door: &Door) -> Self {
         let door_id = door.id.unwrap();
 
-        let label = Label::new(Some(&format!("Door {}", door.id.unwrap())));
+        let label = Label::new(Some(&DoorListEntry::chamber_to_label(door)));
+        label.set_xalign(0.01);
         let o: Self = Object::builder().property("child", label.clone()).build();
         let imp = o.imp();
         imp.door_id.set(door_id);
@@ -64,13 +73,7 @@ impl DoorListEntry {
     }
 
     pub fn update(&mut self, door: &Door) {
-        let empty_name = format!("Door {}", door.id.unwrap());
-        self.imp()
-            .label
-            .borrow_mut()
-            .set_label(match door.name.is_empty() {
-                true => &empty_name,
-                false => &door.name,
-            });
+        let name = DoorListEntry::chamber_to_label(door);
+        self.imp().label.borrow_mut().set_label(&name);
     }
 }

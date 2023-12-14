@@ -45,13 +45,13 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("edit.unselect", &["Escape"]);
     app.set_accels_for_action("edit.delete_selected", &["Delete"]);
     app.set_accels_for_action("edit.undo", &["<Ctrl>Z"]);
-    app.set_accels_for_action("edit.add_chamber", &["C"]);
+    app.set_accels_for_action("edit.add_chamber", &["<Alt>C"]);
 
     // modes
-    app.set_accels_for_action("edit.mode_select", &["S"]);
-    app.set_accels_for_action("edit.mode_append_chamber", &["A"]);
-    app.set_accels_for_action("edit.mode_split_edge", &["F"]);
-    app.set_accels_for_action("edit.mode_add_door", &["D"]);
+    app.set_accels_for_action("edit.mode_select", &["<Alt>S"]);
+    app.set_accels_for_action("edit.mode_append_chamber", &["<Alt>A"]);
+    app.set_accels_for_action("edit.mode_split_edge", &["<Alt>F"]);
+    app.set_accels_for_action("edit.mode_add_door", &["<Alt>D"]);
 
     // Run the application
     app.run()

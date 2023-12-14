@@ -47,9 +47,14 @@ glib::wrapper! {
 }
 
 impl ChamberListEntry {
+    fn chamber_to_label(chamber: &Chamber) -> String {
+        format!("{}) {}", chamber.id.unwrap(), &chamber.name)
+    }
+
     pub fn new(chamber: &Chamber) -> Self {
         let chamber_id = chamber.id.unwrap();
-        let label = Label::new(Some(&chamber.name));
+        let label = Label::new(Some(&ChamberListEntry::chamber_to_label(chamber)));
+        label.set_xalign(0.01);
         let o: Self = Object::builder().property("child", label.clone()).build();
         let imp = o.imp();
         imp.chamber_id.set(chamber_id);
@@ -63,6 +68,9 @@ impl ChamberListEntry {
     }
 
     pub fn update(&mut self, chamber: &Chamber) {
-        self.imp().label.borrow_mut().set_label(&chamber.name);
+        self.imp()
+            .label
+            .borrow_mut()
+            .set_label(&ChamberListEntry::chamber_to_label(chamber));
     }
 }
