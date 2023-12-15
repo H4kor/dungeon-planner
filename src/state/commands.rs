@@ -92,7 +92,33 @@ impl StateCommand {
                 events
             }
             StateCommand::AddDoor(door) => {
+                let mut door = door.clone();
+                let wall = state
+                    .dungeon
+                    .chamber(door.part_of)
+                    .unwrap()
+                    .wall(door.on_wall)
+                    .unwrap();
+                let world_pos = wall.rel_to_world(door.position);
+                // check if a "leads_to" can be uniquely determined
+                // iterate all walls
+                let containing_walls = state
+                    .dungeon
+                    .walls()
+                    .iter()
+                    .filter(|w| {
+                        // skip all wals of chamber containing the door
+                        // check if world pos of door lies on wall
+                        w.chamber_id != door.part_of && w.distance(world_pos) < 1e-6
+                    })
+                    .map(|w| w.chamber_id)
+                    .collect::<std::collections::HashSet<_>>();
+
+                if containing_walls.len() == 1 {
+                    door.leads_to = Some(*containing_walls.iter().next().unwrap());
+                }
                 let door_id = state.dungeon.add_door(door.clone());
+
                 vec![
                     StateEvent::ChamberModified(door.part_of),
                     StateEvent::DoorAdded(door_id),

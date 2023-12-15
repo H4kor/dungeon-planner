@@ -13,7 +13,8 @@ pub type WallId = u32;
 /// Not meant to be stored, as these are derived from a Chamber
 #[derive(Clone, Copy, Debug)]
 pub struct Wall {
-    pub id: ChamberId,
+    pub id: WallId,
+    pub chamber_id: ChamberId,
     pub p1: Vec2<i32>,
     pub p2: Vec2<i32>,
 }
@@ -173,11 +174,13 @@ impl Chamber {
         } else if self.walls.len() == 0 {
             self.walls.push(Wall {
                 id: self.next_wall_id(),
+                chamber_id: self.id.unwrap(),
                 p1: self.first_vert.unwrap(),
                 p2: vert,
             });
             self.walls.push(Wall {
                 id: self.next_wall_id(),
+                chamber_id: self.id.unwrap(),
                 p1: vert,
                 p2: self.first_vert.unwrap(),
             })
@@ -292,11 +295,13 @@ impl Wall {
         (
             Wall {
                 id: self.id,
+                chamber_id: self.chamber_id,
                 p1: self.p1,
                 p2: vert,
             },
             Wall {
                 id: self.id,
+                chamber_id: self.chamber_id,
                 p1: vert,
                 p2: self.p2,
             },
@@ -323,14 +328,14 @@ mod tests {
 
     #[test]
     fn test_walls_now_verts() {
-        let r = Chamber::new(None);
+        let r = Chamber::new(Some(0));
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
     }
 
     #[test]
     fn test_walls_one_verts() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         r.append(Vec2 { x: 1, y: 1 });
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
@@ -338,7 +343,7 @@ mod tests {
 
     #[test]
     fn test_walls_two_verts() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         let walls = r.walls();
@@ -353,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_walls_three_verts() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         r.append(Vec2 { x: 3, y: 3 });
@@ -373,6 +378,7 @@ mod tests {
     fn wall_dist() {
         let w = Wall {
             id: 0,
+            chamber_id: 0,
             p1: Vec2 { x: 0, y: 0 },
             p2: Vec2 { x: 1, y: 0 },
         };
@@ -385,8 +391,24 @@ mod tests {
     }
 
     #[test]
+    fn wall_dist_2() {
+        let w = Wall {
+            id: 0,
+            chamber_id: 0,
+            p1: Vec2 { x: 0, y: 0 },
+            p2: Vec2 { x: 0, y: 1 },
+        };
+
+        assert_eq!(w.distance(Vec2 { x: 0.0, y: 0.0 }), 0.0);
+        assert_eq!(w.distance(Vec2 { x: 0.0, y: 1.0 }), 0.0);
+        assert_eq!(w.distance(Vec2 { x: 1.0, y: 1.0 }), 1.0);
+        assert_eq!(w.distance(Vec2 { x: 0.0, y: 2.0 }), 1.0);
+        assert_eq!(w.distance(Vec2 { x: 0.0, y: -2.0 }), 2.0);
+    }
+
+    #[test]
     fn contains_1() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         r.append(Vec2 { x: 0, y: 0 });
         r.append(Vec2 { x: 0, y: 10 });
         r.append(Vec2 { x: 10, y: 10 });
@@ -399,7 +421,7 @@ mod tests {
 
     #[test]
     fn contains_2() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         // U shape 150 - 250   350 - 450
         // Y 350 - 650
         r.append(Vec2 { x: 150, y: 350 });
@@ -419,7 +441,7 @@ mod tests {
 
     #[test]
     fn contains_3() {
-        let mut r = Chamber::new(None);
+        let mut r = Chamber::new(Some(0));
         // triangle
         r.append(Vec2 { x: 100, y: 0 });
         r.append(Vec2 { x: 50, y: 100 });

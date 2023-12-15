@@ -183,4 +183,14 @@ impl Dungeon {
             }
         };
     }
+
+    pub fn walls(&self) -> Vec<Wall> {
+        let mut all_walls = Vec::<Wall>::new();
+        for chamber in self.chambers.iter() {
+            for wall in chamber.walls() {
+                all_walls.push(wall.clone())
+            }
+        }
+        all_walls
+    }
 }
