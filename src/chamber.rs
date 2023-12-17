@@ -1,7 +1,7 @@
 use crate::{
     common::{Line, Rgb, Vec2},
     config::{ACTIVE_CHAMBER_COLOR, DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
-    view::primitives::{Polygon, Primitive, Text},
+    view::primitives::{self, Polygon, Primitive, Text},
 };
 pub type ChamberId = u32;
 pub type WallId = u32;
@@ -44,7 +44,7 @@ pub struct Chamber {
 impl Chamber {
     pub fn new() -> Self {
         Self {
-            id: 0,
+            id: 1,
             walls: vec![],
             first_vert: None,
             name: "New Chamber".to_owned(),
@@ -61,6 +61,18 @@ impl Chamber {
     ) -> Vec<Box<dyn Primitive>> {
         let mut walls = self.walls.clone();
         let mut show_chamber_number = true;
+
+        let color = match active {
+            false => match options {
+                Some(ChamberDrawOptions {
+                    color: Some(c),
+                    fill: _,
+                }) => c,
+                _ => self.color,
+            },
+            true => ACTIVE_CHAMBER_COLOR,
+        };
+
         match next_vert {
             Some(v) => match v.in_wall_id {
                 Some(wall_id) => {
@@ -79,22 +91,26 @@ impl Chamber {
                         walls[idx] = w1;
                         walls.insert(idx + 1, w2);
                         show_chamber_number = false;
+                    } else if self.first_vert != None {
+                        // special case where no wall is yet added
+                        // but a first vertex is already defined
+                        return vec![Box::new(primitives::Line {
+                            from: self.first_vert.unwrap().into(),
+                            to: v.pos.into(),
+                            color: color,
+                            width: WALL_WIDTH,
+                        })];
+                    } else if self.first_vert == None {
+                        // special case: placement of first vertex
+                        return vec![Box::new(primitives::Point {
+                            at: v.pos.into(),
+                            color: color,
+                        })];
                     }
                 }
             },
             None => (),
         }
-
-        let color = match active {
-            false => match options {
-                Some(ChamberDrawOptions {
-                    color: Some(c),
-                    fill: _,
-                }) => c,
-                _ => self.color,
-            },
-            true => ACTIVE_CHAMBER_COLOR,
-        };
 
         let mut prims = Vec::<Box<dyn Primitive>>::new();
         let poly = Box::new(Polygon {

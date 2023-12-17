@@ -37,7 +37,7 @@ impl Door {
         position: f64,
     ) -> Self {
         Door {
-            id: 0,
+            id: 1,
             part_of: part_of,
             leads_to: leads_to,
             width: width,

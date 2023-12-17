@@ -7,6 +7,11 @@ pub trait Primitive {
     fn bbox(&self) -> BBox;
 }
 
+pub struct Point {
+    pub at: Vec2<f64>,
+    pub color: Rgb,
+}
+
 pub struct Line {
     pub from: Vec2<f64>,
     pub to: Vec2<f64>,
@@ -28,6 +33,28 @@ pub struct Text {
     pub at: Vec2<f64>,
     pub size: f64,
 }
+
+impl Primitive for Point {
+    fn draw(&self, ctx: &gtk::cairo::Context) {
+        ctx.set_source_rgb(self.color.r, self.color.g, self.color.b);
+        ctx.arc(self.at.x, self.at.y, 10.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
+        ctx.fill().unwrap()
+    }
+
+    fn bbox(&self) -> BBox {
+        BBox {
+            min: Vec2 {
+                x: self.at.x - 5.0,
+                y: self.at.y - 5.0,
+            },
+            max: Vec2 {
+                x: self.at.x + 5.0,
+                y: self.at.y + 5.0,
+            },
+        }
+    }
+}
+
 impl Primitive for Line {
     fn draw(&self, ctx: &gtk::cairo::Context) {
         ctx.set_line_width(self.width);
