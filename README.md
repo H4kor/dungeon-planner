@@ -7,6 +7,10 @@ Dungeons are composed out of chambers and doors, for which notes can be added.
 The application is game system agnostic and can be used for any system.
 Dungeons can be exported as PDF.
 
+<p align="center">
+  <img width="512" height="512" src="assets/DungeonPlanner.svg">
+</p>
+
 ## Tools
 
 - **Add Chamber**: Creates a new chamber to the dungeon. The chamber will appear in the Chamber list
