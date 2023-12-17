@@ -49,14 +49,14 @@ glib::wrapper! {
 impl DoorListEntry {
     fn chamber_to_label(door: &Door) -> String {
         if door.name.is_empty() {
-            format!("{}) {}", door.id.unwrap(), "Door")
+            format!("{}) {}", door.id, "Door")
         } else {
-            format!("{}) {}", door.id.unwrap(), &door.name)
+            format!("{}) {}", door.id, &door.name)
         }
     }
 
     pub fn new(door: &Door) -> Self {
-        let door_id = door.id.unwrap();
+        let door_id = door.id;
 
         let label = Label::new(Some(&DoorListEntry::chamber_to_label(door)));
         label.set_xalign(0.01);

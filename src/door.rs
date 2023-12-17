@@ -18,7 +18,7 @@ impl DoorDrawOptions {
 
 #[derive(Clone, Debug)]
 pub struct Door {
-    pub id: Option<DoorId>,
+    pub id: DoorId,
     pub part_of: ChamberId,
     pub leads_to: Option<ChamberId>,
     pub width: f64,
@@ -37,7 +37,7 @@ impl Door {
         position: f64,
     ) -> Self {
         Door {
-            id: None,
+            id: 0,
             part_of: part_of,
             leads_to: leads_to,
             width: width,

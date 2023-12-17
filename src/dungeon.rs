@@ -99,7 +99,7 @@ impl Dungeon {
                     .doors
                     .iter()
                     .filter(|d| d.part_of == chamber_id)
-                    .map(|d| d.id.unwrap())
+                    .map(|d| d.id)
                     .collect();
                 self.doors.retain(|d| d.part_of != chamber_id);
                 self.chambers.remove(i);
@@ -113,11 +113,11 @@ impl Dungeon {
     }
 
     pub fn door(&self, id: DoorId) -> Option<&Door> {
-        self.doors.iter().find(|d| d.id == Some(id))
+        self.doors.iter().find(|d| d.id == id)
     }
 
     pub fn door_mut(&mut self, id: DoorId) -> Option<&mut Door> {
-        self.doors.iter_mut().find(|d| d.id == Some(id))
+        self.doors.iter_mut().find(|d| d.id == id)
     }
 
     pub(crate) fn door_at(&self, pos: Vec2<f64>) -> Option<DoorId> {
@@ -129,35 +129,25 @@ impl Dungeon {
                     .unwrap(),
                 pos.into(),
             ) {
-                return door.id;
+                return Some(door.id);
             }
         }
         None
     }
 
     pub fn add_door(&mut self, mut door: Door) -> DoorId {
-        let door_id = match door.id {
-            None => self.next_door_id(),
-            Some(x) => {
-                // if Id is already used, generate a new one.
-                match self.door(x) {
-                    Some(_) => self.next_door_id(),
-                    None => x,
-                }
-            }
+        // if Id is already used, generate a new one.
+        let door_id = match self.door(door.id) {
+            Some(_) => self.next_door_id(),
+            None => door.id,
         };
-        door.id = Some(door_id);
+        door.id = door_id;
         self.doors.push(door);
         door_id
     }
 
     fn next_door_id(&self) -> DoorId {
-        self.doors
-            .iter()
-            .map(|r| r.id.unwrap_or(0))
-            .max()
-            .unwrap_or(0)
-            + 1
+        self.doors.iter().map(|r| r.id).max().unwrap_or(0) + 1
     }
 
     pub(crate) fn chamber_doors(&self, chamber_id: ChamberId) -> Vec<&Door> {
@@ -168,7 +158,7 @@ impl Dungeon {
     }
 
     pub(crate) fn remove_door(&mut self, door_id: DoorId) {
-        let idx = self.doors.iter().position(|r| r.id == Some(door_id));
+        let idx = self.doors.iter().position(|r| r.id == door_id);
         match idx {
             Some(i) => {
                 self.doors.remove(i);

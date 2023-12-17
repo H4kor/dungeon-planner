@@ -89,7 +89,7 @@ impl Canvas {
 
                 // draw doors
                 for door in control.dungeon().doors.iter() {
-                    let options = match control.state.active_door_id == door.id {
+                    let options = match control.state.active_door_id == Some(door.id) {
                         true => DoorDrawOptions{
                             color: Some(ACTIVE_CHAMBER_COLOR),
                         },
