@@ -56,21 +56,17 @@ impl Chamber {
     pub fn draw(
         &self,
         next_vert: Option<NextVert>,
-        active: bool,
         options: Option<ChamberDrawOptions>,
     ) -> Vec<Box<dyn Primitive>> {
         let mut walls = self.walls.clone();
         let mut show_chamber_number = true;
 
-        let color = match active {
-            false => match options {
-                Some(ChamberDrawOptions {
-                    color: Some(c),
-                    fill: _,
-                }) => c,
-                _ => self.color,
-            },
-            true => ACTIVE_CHAMBER_COLOR,
+        let color = match options {
+            Some(ChamberDrawOptions {
+                color: Some(c),
+                fill: _,
+            }) => c,
+            _ => self.color,
         };
 
         match next_vert {

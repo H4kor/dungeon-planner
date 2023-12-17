@@ -1,4 +1,4 @@
-use crate::chamber::{NextVert, WallId};
+use crate::chamber::{ChamberDrawOptions, NextVert, WallId};
 use crate::common::{Rgb, Vec2};
 use crate::config::ACTIVE_CHAMBER_COLOR;
 use crate::door::{Door, DoorDrawOptions};
@@ -34,7 +34,6 @@ impl Canvas {
             selected_wall: None,
             last_pos: None,
         }));
-        // let selected_wall: Rc<Cell<Option<WallId>>> = Rc::new(Cell::new(None));
 
         drawing_area.set_draw_func(
             clone!( @strong canvas, @weak control => move |_area, ctx, w, h| {
@@ -81,7 +80,13 @@ impl Canvas {
                         },
                         false => None,
                     };
-                    let prims = chamber.draw(vert_opt, active, None);
+                    let prims = chamber.draw(vert_opt, match active {
+                        false => None,
+                        true => Some(ChamberDrawOptions{
+                            color: Some(ACTIVE_CHAMBER_COLOR),
+                            fill: None,
+                        })
+                    });
                     for prim in prims {
                         prim.draw(ctx)
                     }
@@ -148,11 +153,6 @@ impl Canvas {
                         }
                     }
                 }
-
-                // debug circle
-                // ctx.set_source_rgb(1.0, 0.0, 0.0);
-                // ctx.arc(200.0, 200.0, 20.0, 0.0, 2.0 * std::f64::consts::PI); // full circle
-                // ctx.fill().unwrap()
             }),
         );
 

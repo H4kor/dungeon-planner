@@ -88,7 +88,6 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         for chamber in dungeon.chambers() {
             let mut prims = chamber.draw(
                 None,
-                false,
                 Some(ChamberDrawOptions {
                     color: Some(Rgb {
                         r: 0.0,
@@ -208,7 +207,6 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             cur_h += HEADLINE_IMAGE_SPACING;
             let mut prims = chamber.draw(
                 None,
-                false,
                 Some(ChamberDrawOptions {
                     color: Some(Rgb {
                         r: 0.0,
