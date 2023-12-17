@@ -61,7 +61,7 @@ impl Canvas {
                 let next_vert = control.state.grid.snap(cp.into());
 
                 for chamber in control.dungeon().chambers.iter() {
-                    let active = control.state.active_chamber_id == chamber.id;
+                    let active = control.state.active_chamber_id == Some(chamber.id);
                     let vert_opt = match active {
                         true => match control.state.mode {
                             EditMode::AppendChamber => Some(NextVert {
@@ -133,7 +133,7 @@ impl Canvas {
                                     let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
 
                                     let door = Door::new(
-                                        chamber.id.unwrap(), None,
+                                        chamber.id, None,
                                         50.0, // TODO: adjustable
                                         wall.id,
                                         door_pos
@@ -181,7 +181,7 @@ impl Canvas {
                 EditMode::AppendChamber => {
                     if let Some(active_chamber_id) = control.state.active_chamber_id {
                         if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
-                            let chamber_id = chamber.id.unwrap();
+                            let chamber_id = chamber.id;
                             control.apply(StateCommand::AddVertexToChamber(
                                 chamber_id,
                                 control.state.grid.snap(
@@ -199,7 +199,7 @@ impl Canvas {
                         Some(wall_id) => {
                             if let Some(active_chamber_id) = control.state.active_chamber_id {
                                 if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
-                                    let chamber_id = chamber.id.unwrap();
+                                    let chamber_id = chamber.id;
                                     control.apply(StateCommand::SplitWall(
                                         chamber_id,
                                         wall_id,
@@ -229,7 +229,7 @@ impl Canvas {
                                     let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
 
                                     let door = Door::new(
-                                        chamber.id.unwrap(), None,
+                                        chamber.id, None,
                                         50.0, // TODO: adjustable
                                         wall.id,
                                         door_pos

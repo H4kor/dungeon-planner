@@ -28,7 +28,7 @@ impl StateCommand {
     pub fn execute(&self, state: &mut State) -> Vec<StateEvent> {
         match self {
             StateCommand::AddChamber => {
-                let chamber_id = state.dungeon.add_chamber(Chamber::new(None));
+                let chamber_id = state.dungeon.add_chamber(Chamber::new());
                 state.active_chamber_id = Some(chamber_id);
                 state.mode = EditMode::AppendChamber;
                 vec![

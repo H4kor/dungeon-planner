@@ -24,24 +24,19 @@ impl Dungeon {
     ///
     /// Returns the `ChamberId`
     pub fn add_chamber(&mut self, mut chamber: Chamber) -> ChamberId {
-        let chamber_id = match chamber.id {
-            None => self.next_chamber_id(),
-            Some(x) => {
-                // if Id is already used, generate a new one.
-                match self.chamber_mut(x) {
-                    Some(_) => self.next_chamber_id(),
-                    None => x,
-                }
-            }
+        // if Id is already used, generate a new one.
+        let chamber_id = match self.chamber_mut(chamber.id) {
+            Some(_) => self.next_chamber_id(),
+            None => chamber.id,
         };
-        chamber.id = Some(chamber_id);
+        chamber.id = chamber_id;
         self.chambers.push(chamber);
         chamber_id
     }
 
     /// generates an unused `ChamberId`.
     fn next_chamber_id(&self) -> ChamberId {
-        let max_id = self.chambers.iter().map(|r| r.id.unwrap_or(0)).max();
+        let max_id = self.chambers.iter().map(|r| r.id).max();
         match max_id {
             None => 1,
             Some(x) => x + 1,
@@ -50,10 +45,10 @@ impl Dungeon {
 
     /// get a chamber by its id
     pub fn chamber_mut(&mut self, chamber_id: ChamberId) -> Option<&mut Chamber> {
-        self.chambers.iter_mut().find(|r| r.id == Some(chamber_id))
+        self.chambers.iter_mut().find(|r| r.id == chamber_id)
     }
     pub fn chamber(&self, chamber_id: ChamberId) -> Option<&Chamber> {
-        self.chambers.iter().find(|r| r.id == Some(chamber_id))
+        self.chambers.iter().find(|r| r.id == chamber_id)
     }
 
     /// get the nearest wall to a given point
@@ -66,7 +61,7 @@ impl Dungeon {
             if let Some(wall) = chamber.nearest_wall(pos) {
                 let d = wall.distance(pos);
                 if d < min_d {
-                    min_chamber_id = chamber.id;
+                    min_chamber_id = Some(chamber.id);
                     min_wall = Some(wall);
                     min_d = d;
                 }
@@ -81,7 +76,7 @@ impl Dungeon {
     pub(crate) fn chamber_at(&self, pos: Vec2<f64>) -> Option<ChamberId> {
         for chamber in &self.chambers {
             if chamber.contains_point(pos.into()) {
-                return chamber.id;
+                return Some(chamber.id);
             }
         }
         None
@@ -96,7 +91,7 @@ impl Dungeon {
      * Returns a list of removed DoorIds
      */
     pub(crate) fn remove_chamber(&mut self, chamber_id: u32) -> Vec<DoorId> {
-        let idx = self.chambers.iter().position(|r| r.id == Some(chamber_id));
+        let idx = self.chambers.iter().position(|r| r.id == chamber_id);
         match idx {
             Some(i) => {
                 // remove all doors being part of this chamber first

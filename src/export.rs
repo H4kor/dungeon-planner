@@ -174,10 +174,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 
         // prepare elements
         let (_, hl) = layout_headline();
-        match chamber.id {
-            Some(chamber_id) => hl.set_text(&format!("{}: {}", chamber_id, &chamber.name)),
-            None => hl.set_text(&chamber.name),
-        }
+        hl.set_text(&format!("{}: {}", chamber.id, &chamber.name));
         let (_, tl) = layout_text();
         tl.set_text(&chamber.notes);
 
@@ -223,7 +220,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             );
 
             // draw doors
-            for door in dungeon.chamber_doors(chamber.id.unwrap()).iter() {
+            for door in dungeon.chamber_doors(chamber.id).iter() {
                 let mut door_prims = door.draw(
                     dungeon
                         .chamber(door.part_of)

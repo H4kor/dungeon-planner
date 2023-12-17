@@ -33,7 +33,7 @@ pub struct ChamberDrawOptions {
 /// It has a shape and further information, such as name and notes
 #[derive(Clone)]
 pub struct Chamber {
-    pub id: Option<ChamberId>,
+    pub id: ChamberId,
     walls: Vec<Wall>,
     first_vert: Option<Vec2<i32>>,
     pub name: String,
@@ -42,9 +42,9 @@ pub struct Chamber {
 }
 
 impl Chamber {
-    pub fn new(id: Option<ChamberId>) -> Self {
+    pub fn new() -> Self {
         Self {
-            id: id,
+            id: 0,
             walls: vec![],
             first_vert: None,
             name: "New Chamber".to_owned(),
@@ -153,7 +153,7 @@ impl Chamber {
             if let Some(p) = best_p {
                 prims.push(Box::new(Text {
                     at: Into::<Vec2<f64>>::into(p),
-                    text: self.id.unwrap_or(0).to_string(),
+                    text: self.id.to_string(),
                     color: color,
                     size: 25.0,
                 }));
@@ -174,13 +174,13 @@ impl Chamber {
         } else if self.walls.len() == 0 {
             self.walls.push(Wall {
                 id: self.next_wall_id(),
-                chamber_id: self.id.unwrap(),
+                chamber_id: self.id,
                 p1: self.first_vert.unwrap(),
                 p2: vert,
             });
             self.walls.push(Wall {
                 id: self.next_wall_id(),
-                chamber_id: self.id.unwrap(),
+                chamber_id: self.id,
                 p1: vert,
                 p2: self.first_vert.unwrap(),
             })
@@ -328,14 +328,14 @@ mod tests {
 
     #[test]
     fn test_walls_now_verts() {
-        let r = Chamber::new(Some(0));
+        let r = Chamber::new();
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
     }
 
     #[test]
     fn test_walls_one_verts() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         r.append(Vec2 { x: 1, y: 1 });
         let walls = r.walls();
         assert_eq!(walls.len(), 0);
@@ -343,7 +343,7 @@ mod tests {
 
     #[test]
     fn test_walls_two_verts() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         let walls = r.walls();
@@ -358,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_walls_three_verts() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         r.append(Vec2 { x: 1, y: 1 });
         r.append(Vec2 { x: 2, y: 2 });
         r.append(Vec2 { x: 3, y: 3 });
@@ -408,7 +408,7 @@ mod tests {
 
     #[test]
     fn contains_1() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         r.append(Vec2 { x: 0, y: 0 });
         r.append(Vec2 { x: 0, y: 10 });
         r.append(Vec2 { x: 10, y: 10 });
@@ -421,7 +421,7 @@ mod tests {
 
     #[test]
     fn contains_2() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         // U shape 150 - 250   350 - 450
         // Y 350 - 650
         r.append(Vec2 { x: 150, y: 350 });
@@ -441,7 +441,7 @@ mod tests {
 
     #[test]
     fn contains_3() {
-        let mut r = Chamber::new(Some(0));
+        let mut r = Chamber::new();
         // triangle
         r.append(Vec2 { x: 100, y: 0 });
         r.append(Vec2 { x: 50, y: 100 });

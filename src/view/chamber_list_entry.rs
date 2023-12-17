@@ -48,11 +48,11 @@ glib::wrapper! {
 
 impl ChamberListEntry {
     fn chamber_to_label(chamber: &Chamber) -> String {
-        format!("{}) {}", chamber.id.unwrap(), &chamber.name)
+        format!("{}) {}", chamber.id, &chamber.name)
     }
 
     pub fn new(chamber: &Chamber) -> Self {
-        let chamber_id = chamber.id.unwrap();
+        let chamber_id = chamber.id;
         let label = Label::new(Some(&ChamberListEntry::chamber_to_label(chamber)));
         label.set_xalign(0.01);
         let o: Self = Object::builder().property("child", label.clone()).build();
