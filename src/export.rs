@@ -2,10 +2,10 @@ use cairo::Context;
 use pango::ffi::PANGO_SCALE;
 
 use crate::{
-    chamber::ChamberDrawOptions,
+    chamber::{Chamber, ChamberDrawOptions},
     common::{BBox, Rgb, Vec2},
     door::DoorDrawOptions,
-    dungeon::Dungeon,
+    dungeon::{self, Dungeon},
     view::grid::Grid,
 };
 
@@ -65,13 +65,7 @@ fn layout_headline() -> (pango::Context, pango::Layout) {
     (p_ctx, layout)
 }
 
-pub fn to_pdf(dungeon: &Dungeon, path: String) {
-    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
-    let ctx = Context::new(pdf).unwrap();
-
-    let mut cur_h = START_H;
-
-    // Draw entire dungeon
+fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context) {
     {
         // determine size of dungeon
         let mut bbox = BBox {
@@ -167,44 +161,32 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         ctx.identity_matrix();
         ctx.show_page().unwrap();
     }
+}
 
-    for chamber in dungeon.chambers() {
-        // TODO: take care of large chambers and split over multiple pages.
+struct PdfElement {
+    pub height: f64,
+    pub draw: Box<dyn Fn(&Context, f64, &Dungeon, &Chamber)>,
+}
 
-        // prepare elements
-        let (_, hl) = layout_headline();
-        hl.set_text(&format!("{}: {}", chamber.id, &chamber.name));
-        let (_, tl) = layout_text();
-        tl.set_text(&chamber.notes);
-
-        // calculate total height
-        let (h_extent, _) = hl.extents();
-        let (t_extent, _) = tl.extents();
-        let total_h = h_extent.height() as f64 / PANGO_SCALE as f64
-            + HEADLINE_IMAGE_SPACING
-            + IMAGE_SIZE
-            + IMAGE_NOTES_SPACEING
-            + t_extent.height() as f64 / PANGO_SCALE as f64
-            + 25.0;
-
-        if total_h + cur_h > END_H {
-            ctx.show_page().unwrap();
-            cur_h = START_H;
-        }
-
-        // add headline
-        {
+fn chamber_headline(chamber: &Chamber) -> PdfElement {
+    let (_, hl) = layout_headline();
+    hl.set_text(&format!("{}: {}", chamber.id, &chamber.name));
+    PdfElement {
+        height: (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING,
+        draw: Box::new(move |ctx, start_h, _, _| {
             ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
-            ctx.move_to(LEFT_SPACE, cur_h);
+            ctx.move_to(LEFT_SPACE, start_h);
             pangocairo::show_layout(&ctx, &hl);
-            let (extent, _) = hl.extents();
-            // move cursor down
-            cur_h += extent.height() as f64 / PANGO_SCALE as f64;
-        }
+        }),
+    }
+}
 
-        // Render Image
-        {
-            cur_h += HEADLINE_IMAGE_SPACING;
+fn chamber_image(chamber: &Chamber) -> PdfElement {
+    let h = IMAGE_SIZE + IMAGE_NOTES_SPACEING;
+
+    PdfElement {
+        height: h,
+        draw: Box::new(move |ctx, cur_h, dungeon, chamber| {
             let mut prims = chamber.draw(
                 None,
                 Some(ChamberDrawOptions {
@@ -279,30 +261,76 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 
                 ctx.reset_clip();
                 ctx.identity_matrix();
-                cur_h += size.y * scale;
             }
-            cur_h += IMAGE_NOTES_SPACEING;
-        }
+        }),
+    }
+}
 
-        // add notes
-        {
+fn chamber_notes(chamber: &Chamber) -> PdfElement {
+    let (_, tl) = layout_text();
+    tl.set_text(&chamber.notes);
+    PdfElement {
+        height: (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING,
+        draw: Box::new(move |ctx, start_h, _, _| {
             ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
-            ctx.move_to(LEFT_SPACE, cur_h);
+            ctx.move_to(LEFT_SPACE, start_h);
             pangocairo::show_layout(&ctx, &tl);
-            let (extent, _) = tl.extents();
-            // move cursor down
-            cur_h += extent.height() as f64 / PANGO_SCALE as f64;
-        }
+        }),
+    }
+}
 
-        // add horizontal line
-        {
+fn chamber_separator(_chamber: &Chamber) -> PdfElement {
+    PdfElement {
+        height: 42.0,
+        draw: Box::new(|ctx, start_h, _, _| {
+            let mut cur_h = start_h;
             cur_h += 20.0;
             ctx.move_to(LEFT_SPACE, cur_h);
             ctx.set_line_width(2.0);
             ctx.line_to(RIGHT_END, cur_h);
             ctx.stroke().unwrap();
-            cur_h += 20.0
+        }),
+    }
+}
+
+fn chamber_elems(chamber: &Chamber) -> Vec<PdfElement> {
+    vec![
+        chamber_headline(chamber),
+        chamber_image(chamber),
+        chamber_notes(chamber),
+        chamber_separator(chamber),
+    ]
+}
+
+pub fn to_pdf(dungeon: &Dungeon, path: String) {
+    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
+    let ctx = Context::new(pdf).unwrap();
+
+    let mut cur_h = START_H;
+
+    // Draw entire dungeon
+    draw_full_dungeon(dungeon, &ctx);
+
+    for chamber in dungeon.chambers() {
+        // TODO: take care of large chambers and split over multiple pages.
+
+        // for each chamber
+        // emit list of unseparable elements
+        // each element has an associated height
+        // if element no longer fits on page: start new page
+        let elems = chamber_elems(chamber);
+        for e in elems {
+            println!(
+                "START: {}, CUR: {} + {}, END: {}",
+                START_H, cur_h, e.height, END_H
+            );
+            let next_h = cur_h + (e.height);
+            if next_h > END_H {
+                ctx.show_page().unwrap();
+                cur_h = START_H;
+            }
+            (e.draw)(&ctx, cur_h, dungeon, chamber);
+            cur_h = cur_h + (e.height);
         }
-        // ctx.show_page().unwrap();
     }
 }
