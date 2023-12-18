@@ -1,4 +1,4 @@
-***This project is still an in early stage. I've started to use it for my own games and will try not to break project files. But no guarantees yet!***
+***This project is still in an early stage. I've started to use it for my own games and will try not to break project files. However, if required, newer versions might be not be able to open older project files.***
 
 [![Rust](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml/badge.svg)](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml)
 
@@ -15,9 +15,9 @@ Dungeons can be exported as PDF.
 
 ## Tools
 
-- **Add Chamber**: Creates a new chamber to the dungeon. The chamber will appear in the Chamber list
+- **Add Chamber**: Creates a new chamber to the dungeon. The chamber will appear in the Chamber list.
 - **Selection**: Select chambers or doors by clicking on them in the canvas. Some tools only work with an active chamber or door.
-- **Cut Tool**: Used to split a chamber wall in half, adding a new corner to the room
+- **Cut Tool**: Used to split a chamber wall in half, adding a new corner to the chamber.
 - **Draw Tool**: Used to draw a chamber. This tool will always continue from the last corner of the chamber.
 - **Add Door**: Allows adding a door to the selected chamber. Door are always placed on walls.
 - **Chamber List**: Lists all chambers. Allows selection of chambers.
