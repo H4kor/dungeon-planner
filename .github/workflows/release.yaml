@@ -1,8 +1,9 @@
-name: Build Binary
+name: Release
 
 on:
   push:
-    branches: [ "build_setup" ]
+    tags:
+      - "v*.*.*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -28,5 +29,6 @@ jobs:
         retention-days: 14
     - name: Release
       uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: dungeon_planner_x86_64
