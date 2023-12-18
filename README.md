@@ -1,6 +1,6 @@
 ***This project is still in an early stage. I've started to use it for my own games and will try not to break project files. However, if required, newer versions might be not be able to open older project files.***
 
-[![Rust](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml/badge.svg)](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml)
+[![Run Tests](https://github.com/H4kor/dungeon-planner/actions/workflows/test.yml/badge.svg)](https://github.com/H4kor/dungeon-planner/actions/workflows/test.yml)
 
 # Dungeon Planner
 
