@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install GTK
+      run: sudo apt-get install -y libgtk-4-dev build-essential
+    - name: Build
+      run: |
+        cargo build --release --target x86_64-unknown-linux-gnu
+        mv target/x86_64-unknown-linux-gnu/release/dungeon_planner dungeon_planner_x86_64
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: dungeon_planner
+        path: dungeon_planner_x86_64
+        retention-days: 14
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: dungeon_planner_x86_64

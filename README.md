@@ -1,5 +1,7 @@
 ***This project is still an in early stage. I've started to use it for my own games and will try not to break project files. But no guarantees yet!***
 
+[![Rust](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml/badge.svg)](https://github.com/H4kor/dungeon-planner/actions/workflows/rust.yml)
+
 # Dungeon Planner
 
 Dungeon Planner is a small and simple tool to plan and organize dungeons for tabletop games.
@@ -27,13 +29,42 @@ Dungeons can be exported as PDF.
 
 - [x] Grid
 - [x] Drawing chambers using straight edges
-    - [x] Grid Snapping
-- [ ] Placing object markers (stairs, chests)
+- [x] Grid Snapping
 - [x] Assign doors/properties to edges
-    - [ ] hidden doors
+    - [ ] hidden doors and chambers
 - [x] GM Notes on chambers
 - [ ] Prints
     - [x] Full map with numbers assigned to chambers
         - [x] GM Notes
     - [ ] Chambers seperated to cut out
-        - [ ] Labels to show neigboring chambers (not on hidden chambers)
+    - [ ] Player Map
+- [ ] Placing object markers (stairs, chests)
+
+
+## Developmnet
+
+### Setup
+
+[Install GTK dependencies](https://gtk-rs.org/gtk4-rs/stable/latest/book/installation.html). This project requires at least GTK 4.6 (standard for Ubuntu 22.04).
+
+
+### Tests
+
+```
+cargo test
+```
+
+### Run Development Version
+
+```
+cargo run
+```
+
+### Build Release Version
+
+```
+cargo build --release
+```
+
+
+
