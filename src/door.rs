@@ -60,12 +60,30 @@ impl Door {
             b: 1.0,
         });
 
-        vec![Box::new(Line {
-            color: color,
-            from: world_pos - (self.width / 2.0) * tangent,
-            to: world_pos + (self.width / 2.0) * tangent,
-            width: 20.0,
-        })]
+        // TODO: better door visuals
+        if self.hidden {
+            vec![
+                Box::new(Line {
+                    color: color,
+                    from: world_pos - (self.width / 2.0) * tangent,
+                    to: world_pos + (self.width / 2.0) * tangent,
+                    width: 10.0,
+                }),
+                Box::new(Line {
+                    color: color,
+                    from: world_pos - (self.width / 4.0) * tangent,
+                    to: world_pos + (self.width / 4.0) * tangent,
+                    width: 20.0,
+                }),
+            ]
+        } else {
+            vec![Box::new(Line {
+                color: color,
+                from: world_pos - (self.width / 2.0) * tangent,
+                to: world_pos + (self.width / 2.0) * tangent,
+                width: 20.0,
+            })]
+        }
     }
 
     pub(crate) fn contains_point(&self, wall: &Wall, pos: Vec2<f64>) -> bool {

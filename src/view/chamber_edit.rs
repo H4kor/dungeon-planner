@@ -12,6 +12,7 @@ pub struct ChamberEdit {
     pub widget: Box,
     name_input: Entry,
     notes_input: TextView,
+    hidden_input: CheckButton,
 }
 
 impl ChamberEdit {
@@ -78,6 +79,7 @@ impl ChamberEdit {
             widget: b,
             name_input: name_i,
             notes_input: notes_i,
+            hidden_input: hidden_i,
         }));
 
         control.borrow_mut().subscribe_any(re.clone());
@@ -98,6 +100,7 @@ impl StateEventSubscriber for ChamberEdit {
                 let chamber = state.dungeon.chamber_mut(chamber_id).unwrap();
                 self.name_input.set_text(&chamber.name);
                 self.notes_input.buffer().set_text(&chamber.notes);
+                self.hidden_input.set_active(chamber.hidden);
                 self.widget.set_visible(true);
             }
             StateEvent::Reset => self.widget.set_visible(false),
