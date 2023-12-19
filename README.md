@@ -36,8 +36,8 @@ Dungeons can be exported as PDF.
 - [ ] Prints
     - [x] Full map with numbers assigned to chambers
         - [x] GM Notes
-    - [ ] Chambers seperated to cut out
-    - [ ] Player Map
+    - [ ] Chambers seperated to cut out ( [#11](https://github.com/H4kor/dungeon-planner/issues/11) )
+    - [ ] Player Map ( [#10](https://github.com/H4kor/dungeon-planner/issues/10) )
 - [ ] Placing object markers (stairs, chests)
 
 
