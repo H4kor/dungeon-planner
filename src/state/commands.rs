@@ -22,6 +22,7 @@ pub enum StateCommand {
     ChangeDoorName(DoorId, String),
     ChangeDoorNotes(DoorId, String),
     ChangeDoorLeadsTo(DoorId, Option<ChamberId>),
+    ChangeDoorHidden(DoorId, bool),
     DeleteDoor(DoorId),
 }
 
@@ -139,6 +140,10 @@ impl StateCommand {
             }
             StateCommand::ChangeDoorLeadsTo(door_id, chamber_id) => {
                 state.dungeon.door_mut(*door_id).unwrap().leads_to = *chamber_id;
+                vec![StateEvent::DoorModified(*door_id)]
+            }
+            StateCommand::ChangeDoorHidden(door_id, hidden) => {
+                state.dungeon.door_mut(*door_id).unwrap().hidden = *hidden;
                 vec![StateEvent::DoorModified(*door_id)]
             }
             StateCommand::DeleteDoor(door_id) => {
