@@ -25,13 +25,13 @@ Dungeons can be exported as PDF.
 - **Door List**: Lists all doors. Allows selection of doors.
 - **Door Details**: Change name and notes of a door. You can also define to which chamber a door leads.
 
-## Roadmap / Feature List
+## Roadmap / Feature List to Version 0.1.0
 
 - [x] Grid
 - [x] Drawing chambers using straight edges
 - [x] Grid Snapping
 - [x] Assign doors/properties to edges
-    - [ ] hidden doors and chambers
+    - [x] hidden doors and chambers
 - [x] GM Notes on chambers
 - [ ] Prints
     - [x] Full map with numbers assigned to chambers
