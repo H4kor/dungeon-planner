@@ -14,6 +14,7 @@ pub enum StateCommand {
     AddVertexToChamber(ChamberId, Vec2<i32>),
     ChangeChamberName(ChamberId, String),
     ChangeChamberNotes(ChamberId, String),
+    ChangeChamberHidden(ChamberId, bool),
     SplitWall(ChamberId, WallId, Vec2<i32>),
     DeleteChamber(ChamberId),
     AddDoor(Door),
@@ -67,6 +68,10 @@ impl StateCommand {
             }
             StateCommand::ChangeChamberNotes(chamber_id, notes) => {
                 state.dungeon.chamber_mut(*chamber_id).unwrap().notes = notes.clone();
+                vec![StateEvent::ChamberModified(*chamber_id)]
+            }
+            StateCommand::ChangeChamberHidden(chamber_id, hidden) => {
+                state.dungeon.chamber_mut(*chamber_id).unwrap().hidden = *hidden;
                 vec![StateEvent::ChamberModified(*chamber_id)]
             }
             StateCommand::SplitWall(chamber_id, wall_id, pos) => {

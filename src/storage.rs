@@ -55,6 +55,13 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["notes"].as_str().unwrap().to_owned(),
                 ))
             }
+            "ChangeChamberHidden" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeChamberHidden(
+                    v["chamber_id"].as_u64().unwrap() as ChamberId,
+                    v["hidden"].as_bool().unwrap(),
+                ))
+            }
             "ChangeMode" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::ChangeMode(EditMode::from_str(
@@ -164,6 +171,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::AddVertexToChamber(_, _) => "AddVertexToChamber".to_owned(),
             StateCommand::ChangeChamberName(_, _) => "ChangeChamberName".to_owned(),
             StateCommand::ChangeChamberNotes(_, _) => "ChangeChamberNotes".to_owned(),
+            StateCommand::ChangeChamberHidden(_, _) => "ChangeChamberHidden".to_owned(),
             StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),
             StateCommand::SplitWall(_, _, _) => "SplitWall".to_owned(),
             StateCommand::DeleteChamber(_) => "DeleteChamber".to_owned(),
@@ -189,6 +197,10 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeChamberNotes(chamber_id, notes) => json!({
                 "chamber_id": chamber_id,
                 "notes": notes,
+            }),
+            StateCommand::ChangeChamberHidden(chamber_id, hidden) => json!({
+                "chamber_id": chamber_id,
+                "hidden": hidden,
             }),
             StateCommand::ChangeMode(mode) => json!({
                 "mode": mode.to_str()

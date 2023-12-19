@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gtk::glib::clone;
-use gtk::{prelude::*, Label, TextView};
+use gtk::{prelude::*, CheckButton, Label, TextView};
 use gtk::{Box, Entry};
 
 use crate::state::events::StateEvent;
@@ -22,6 +22,7 @@ impl ChamberEdit {
             .left_margin(10)
             .right_margin(10)
             .build();
+        let hidden_i = CheckButton::builder().label("Hidden").build();
 
         name_i.connect_changed(clone!(@strong control => move |field| {
             let name = field.text().to_string();
@@ -52,12 +53,22 @@ impl ChamberEdit {
                 }
             }));
 
+        hidden_i.connect_toggled(
+            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_chamber_id {
+                    None => (),
+                    Some(chamber_id) => control.apply(StateCommand::ChangeChamberHidden(chamber_id, w.is_active())),
+                }
+            }),
+        );
+
         let b = Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
 
         b.append(&Label::new(Some("Name")));
         b.append(&name_i);
+        b.append(&hidden_i);
         b.append(&Label::new(Some("Notes")));
         b.append(&notes_i);
 

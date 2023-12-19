@@ -25,6 +25,7 @@ pub struct Polygon {
     pub fill_opacity: f64,
     pub stroke_color: Rgb,
     pub stroke_width: f64,
+    pub dashed: bool,
 }
 
 pub struct Text {
@@ -89,6 +90,11 @@ impl Primitive for Polygon {
             self.fill_color.b,
             self.fill_opacity,
         );
+        if self.dashed {
+            ctx.set_dash(&vec![20.0, 10.0], 0.0);
+        } else {
+            ctx.set_dash(&vec![], 0.0);
+        }
         ctx.move_to(self.points[0].x, self.points[0].y);
         for p in self.points[1..].iter() {
             ctx.line_to(p.x, p.y);
@@ -103,6 +109,7 @@ impl Primitive for Polygon {
             self.stroke_color.b,
         );
         ctx.stroke().unwrap();
+        ctx.set_dash(&vec![], 0.0);
     }
 
     fn bbox(&self) -> BBox {

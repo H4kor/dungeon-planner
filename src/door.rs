@@ -19,13 +19,14 @@ impl DoorDrawOptions {
 #[derive(Clone, Debug)]
 pub struct Door {
     pub id: DoorId,
+    pub name: String,
+    pub notes: String,
+    pub hidden: bool,
     pub part_of: ChamberId,
     pub leads_to: Option<ChamberId>,
     pub width: f64,
     pub on_wall: WallId,
     pub position: f64,
-    pub name: String,
-    pub notes: String,
 }
 
 impl Door {
@@ -38,13 +39,14 @@ impl Door {
     ) -> Self {
         Door {
             id: 1,
+            name: "".to_owned(),
+            notes: "".to_owned(),
+            hidden: false,
             part_of: part_of,
             leads_to: leads_to,
             width: width,
             on_wall: on_wall,
             position: position,
-            name: "".to_owned(),
-            notes: "".to_owned(),
         }
     }
 
