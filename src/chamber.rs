@@ -1,6 +1,6 @@
 use crate::{
     common::{Line, Rgb, Vec2},
-    config::{ACTIVE_CHAMBER_COLOR, DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
+    config::{DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
     view::primitives::{self, Polygon, Primitive, Text},
 };
 pub type ChamberId = u32;
@@ -34,10 +34,11 @@ pub struct ChamberDrawOptions {
 #[derive(Clone)]
 pub struct Chamber {
     pub id: ChamberId,
-    walls: Vec<Wall>,
-    first_vert: Option<Vec2<i32>>,
     pub name: String,
     pub notes: String,
+    pub hidden: bool,
+    walls: Vec<Wall>,
+    first_vert: Option<Vec2<i32>>,
     color: Rgb,
 }
 
@@ -45,10 +46,11 @@ impl Chamber {
     pub fn new() -> Self {
         Self {
             id: 1,
-            walls: vec![],
-            first_vert: None,
             name: "New Chamber".to_owned(),
             notes: String::new(),
+            hidden: false,
+            walls: vec![],
+            first_vert: None,
             color: DEFAULT_CHAMBER_COLOR,
         }
     }
@@ -124,6 +126,7 @@ impl Chamber {
             },
             stroke_color: color,
             stroke_width: WALL_WIDTH,
+            dashed: self.hidden,
         });
         let bbox = poly.bbox();
         prims.push(poly);
