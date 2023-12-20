@@ -1,6 +1,8 @@
 use crate::chamber::{ChamberDrawOptions, NextVert, WallId};
 use crate::common::{Rgb, Vec2};
-use crate::config::ACTIVE_CHAMBER_COLOR;
+use crate::config::{
+    BACKGROUND_COLOR, PRIMARY_CHAMBER_COLOR, SECONDARY_ACTIVE_COLOR, TERTIARY_ACTIVE_COLOR,
+};
 use crate::door::{Door, DoorDrawOptions};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
 use cairo::glib::clone;
@@ -39,7 +41,7 @@ impl Canvas {
             clone!( @strong canvas, @weak control => move |_area, ctx, w, h| {
                 let control = control.borrow();
                 // fill with background color
-                ctx.set_source_rgb(0.1411764705882353, 0.28627450980392155, 0.49411764705882355);
+                ctx.set_source_rgb(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
                 ctx.paint().unwrap();
 
                 // apply "camera"
@@ -81,9 +83,27 @@ impl Canvas {
                         false => None,
                     };
                     let prims = chamber.draw(vert_opt, match active {
-                        false => None,
+                        false => {
+                            if let Some(door) = control.state.active_door() {
+                                if door.part_of == chamber.id {
+                                    Some(ChamberDrawOptions{
+                                        color: Some(SECONDARY_ACTIVE_COLOR),
+                                        fill: None,
+                                    })
+                                } else if door.leads_to == Some(chamber.id) {
+                                    Some(ChamberDrawOptions{
+                                        color: Some(TERTIARY_ACTIVE_COLOR),
+                                        fill: None,
+                                    })
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        },
                         true => Some(ChamberDrawOptions{
-                            color: Some(ACTIVE_CHAMBER_COLOR),
+                            color: Some(PRIMARY_CHAMBER_COLOR),
                             fill: None,
                         })
                     });
@@ -96,7 +116,7 @@ impl Canvas {
                 for door in control.dungeon().doors.iter() {
                     let options = match control.state.active_door_id == Some(door.id) {
                         true => DoorDrawOptions{
-                            color: Some(ACTIVE_CHAMBER_COLOR),
+                            color: Some(PRIMARY_CHAMBER_COLOR),
                         },
                         false => DoorDrawOptions::empty(),
                     };

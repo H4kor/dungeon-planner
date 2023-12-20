@@ -5,7 +5,7 @@ pub mod events;
 use crate::{
     chamber::{Chamber, ChamberId},
     common::Vec2,
-    door::DoorId,
+    door::{Door, DoorId},
     dungeon::Dungeon,
     view::{grid::Grid, View},
 };
@@ -61,6 +61,13 @@ impl State {
     pub fn active_chamber(&self) -> Option<&Chamber> {
         match self.active_chamber_id {
             Some(chamber_id) => self.dungeon.chamber(chamber_id),
+            None => None,
+        }
+    }
+
+    pub fn active_door(&self) -> Option<&Door> {
+        match self.active_door_id {
+            Some(door_id) => self.dungeon.door(door_id),
             None => None,
         }
     }
