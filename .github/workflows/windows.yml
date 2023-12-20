@@ -31,7 +31,6 @@ jobs:
       run: |
         choco install msys2
         choco install visualstudio2022-workload-vctools
-        choco install python
         python -m pip install --user pipx
         python -m pipx ensurepath
         pipx install gvsbuild
