@@ -58,7 +58,7 @@ impl Canvas {
                 }
 
                 // draw chambers
-                let cp = control.state.cursor.pos + control.state.view.world_min().into();
+                let cp = control.state.cursor_world_pos();
                 let next_vert = control.state.grid.snap(cp.into());
 
                 for chamber in control.dungeon().chambers.iter() {
@@ -155,7 +155,7 @@ impl Canvas {
                             Some(wall_id) => {
                                 if let Some(chamber) = control.state.active_chamber() {
                                     let wall = chamber.wall(wall_id).unwrap();
-                                    let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
+                                    let door_pos = wall.nearest_relative_pos(control.state.cursor_world_pos());
 
                                     let door = Door::new(
                                         chamber.id, None,
@@ -190,11 +190,11 @@ impl Canvas {
             let control = &mut *control.borrow_mut();
             match control.state.mode {
                 EditMode::Select => {
-                    let door_id = control.state.dungeon.door_at(control.state.cursor.pos);
+                    let door_id = control.state.dungeon.door_at(control.state.cursor_world_pos());
                     if let Some(id) = door_id {
                         control.apply(StateCommand::SelectDoor(Some(id)));
                     } else {
-                        let chamber_id = control.state.dungeon.chamber_at(control.state.cursor.pos);
+                        let chamber_id = control.state.dungeon.chamber_at(control.state.cursor_world_pos());
                         control.apply(StateCommand::SelectChamber(chamber_id));
                     }
                 }
@@ -205,8 +205,7 @@ impl Canvas {
                             control.apply(StateCommand::AddVertexToChamber(
                                 chamber_id,
                                 control.state.grid.snap(
-                                    (control.state.cursor.pos
-                                        + control.state.view.world_min().into())
+                                    (control.state.cursor_world_pos())
                                     .into(),
                                 ),
                             ));
@@ -224,9 +223,7 @@ impl Canvas {
                                         chamber_id,
                                         wall_id,
                                         control.state.grid.snap(
-                                            (control.state.cursor.pos
-                                                + control.state.view.world_min().into())
-                                            .into(),
+                                            control.state.cursor_world_pos().into(),
                                         ),
                                     ));
                                     canvas.borrow_mut().set_selected_wall(None);
@@ -246,7 +243,7 @@ impl Canvas {
                         Some(wall_id) => {
                                 if let Some(chamber) = control.state.active_chamber() {
                                     let wall = chamber.wall(wall_id).unwrap();
-                                    let door_pos = wall.nearest_relative_pos(control.state.cursor.pos);
+                                    let door_pos = wall.nearest_relative_pos(control.state.cursor_world_pos());
 
                                     let door = Door::new(
                                         chamber.id, None,
@@ -306,9 +303,7 @@ impl Canvas {
     pub fn select_nearest_wall(&mut self, state: &State) {
         if let Some(active_chamber_id) = state.active_chamber_id {
             if let Some(chamber) = state.dungeon.chamber(active_chamber_id) {
-                if let Some(wall) =
-                    chamber.nearest_wall(state.cursor.pos + state.view.world_min().into())
-                {
+                if let Some(wall) = chamber.nearest_wall(state.cursor_world_pos()) {
                     self.set_selected_wall(Some(wall.id))
                 }
             }

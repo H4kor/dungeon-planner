@@ -71,6 +71,10 @@ impl State {
             None => None,
         }
     }
+
+    pub fn cursor_world_pos(&self) -> Vec2<f64> {
+        self.cursor.pos + self.view.world_min().into()
+    }
 }
 
 impl StateController {
