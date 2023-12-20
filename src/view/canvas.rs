@@ -269,88 +269,95 @@ impl Canvas {
         self.update();
     }
 
-    fn click(&mut self, control: Rc<RefCell<StateController>>) -> Vec<StateCommand> {
-        let mut commands = vec![];
-        let control = &mut *control.borrow_mut();
-        match control.state.mode {
-            EditMode::Select => {
-                let door_id = control
-                    .state
-                    .dungeon
-                    .door_at(control.state.cursor_world_pos());
-                if let Some(id) = door_id {
-                    commands.push(StateCommand::SelectDoor(Some(id)));
-                } else {
-                    let chamber_id = control
+    fn click_select(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        let door_id = control
+            .state
+            .dungeon
+            .door_at(control.state.cursor_world_pos());
+        if let Some(id) = door_id {
+            vec![StateCommand::SelectDoor(Some(id))]
+        } else {
+            let chamber_id = control
+                .state
+                .dungeon
+                .chamber_at(control.state.cursor_world_pos());
+            vec![StateCommand::SelectChamber(chamber_id)]
+        }
+    }
+
+    fn click_append_chamber(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        if let Some(active_chamber_id) = control.state.active_chamber_id {
+            if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
+                let chamber_id = chamber.id;
+                return vec![StateCommand::AddVertexToChamber(
+                    chamber_id,
+                    control
                         .state
-                        .dungeon
-                        .chamber_at(control.state.cursor_world_pos());
-                    commands.push(StateCommand::SelectChamber(chamber_id));
-                }
+                        .grid
+                        .snap((control.state.cursor_world_pos()).into()),
+                )];
             }
-            EditMode::AppendChamber => {
+        }
+        vec![]
+    }
+
+    fn click_split_edge(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        let selected_wall = self.selected_wall();
+        match selected_wall {
+            Some(wall_id) => {
                 if let Some(active_chamber_id) = control.state.active_chamber_id {
                     if let Some(chamber) = control.state.dungeon.chamber_mut(active_chamber_id) {
                         let chamber_id = chamber.id;
-                        commands.push(StateCommand::AddVertexToChamber(
+                        self.set_selected_wall(None);
+                        return vec![StateCommand::SplitWall(
                             chamber_id,
+                            wall_id,
                             control
                                 .state
                                 .grid
-                                .snap((control.state.cursor_world_pos()).into()),
-                        ));
+                                .snap(control.state.cursor_world_pos().into()),
+                        )];
                     }
                 }
             }
-            EditMode::SplitEdge => {
-                let selected_wall = self.selected_wall();
-                match selected_wall {
-                    Some(wall_id) => {
-                        if let Some(active_chamber_id) = control.state.active_chamber_id {
-                            if let Some(chamber) =
-                                control.state.dungeon.chamber_mut(active_chamber_id)
-                            {
-                                let chamber_id = chamber.id;
-                                commands.push(StateCommand::SplitWall(
-                                    chamber_id,
-                                    wall_id,
-                                    control
-                                        .state
-                                        .grid
-                                        .snap(control.state.cursor_world_pos().into()),
-                                ));
-                                self.set_selected_wall(None);
-                            }
-                        }
-                    }
-                    None => {
-                        self.select_nearest_wall(&control.state);
-                    }
-                }
+            None => {
+                self.select_nearest_wall(&control.state);
             }
-            EditMode::AddDoor => {
-                let selected_wall = self.selected_wall();
-                match selected_wall {
-                    None => {
-                        self.select_nearest_wall(&control.state);
-                    }
-                    Some(wall_id) => {
-                        if let Some(chamber) = control.state.active_chamber() {
-                            let wall = chamber.wall(wall_id).unwrap();
-                            let door_pos =
-                                wall.nearest_relative_pos(control.state.cursor_world_pos());
+        }
+        return vec![];
+    }
 
-                            let door = Door::new(
-                                chamber.id, None, 50.0, // TODO: adjustable
-                                wall.id, door_pos,
-                            );
-                            self.set_selected_wall(None);
-                            commands.push(StateCommand::AddDoor(door));
-                        }
-                    }
+    fn click_add_door(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        let selected_wall = self.selected_wall();
+        match selected_wall {
+            None => {
+                self.select_nearest_wall(&control.state);
+            }
+            Some(wall_id) => {
+                if let Some(chamber) = control.state.active_chamber() {
+                    let wall = chamber.wall(wall_id).unwrap();
+                    let door_pos = wall.nearest_relative_pos(control.state.cursor_world_pos());
+
+                    let door = Door::new(
+                        chamber.id, None, 50.0, // TODO: adjustable
+                        wall.id, door_pos,
+                    );
+                    self.set_selected_wall(None);
+                    return vec![StateCommand::AddDoor(door)];
                 }
             }
         }
+        return vec![];
+    }
+
+    fn click(&mut self, control: Rc<RefCell<StateController>>) -> Vec<StateCommand> {
+        let control = &mut *control.borrow_mut();
+        let commands = match control.state.mode {
+            EditMode::Select => self.click_select(control),
+            EditMode::AppendChamber => self.click_append_chamber(control),
+            EditMode::SplitEdge => self.click_split_edge(control),
+            EditMode::AddDoor => self.click_add_door(control),
+        };
         self.update();
         commands
     }
