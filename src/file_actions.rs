@@ -272,7 +272,7 @@ pub fn file_actions(
     let action_file_export_player_map_pdf = ActionEntry::builder("player_map_pdf")
         .activate(clone!( @weak control, @weak history => move |_group: &SimpleActionGroup, _, _| {
             let file_dialog = FileChooserDialog::builder()
-                .title("Export Dungeon ...")
+                .title("Export Player Map ...")
                 .action(gtk::FileChooserAction::Save)
                 .select_multiple(false)
                 .create_folders(true)
