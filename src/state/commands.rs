@@ -16,6 +16,7 @@ pub enum StateCommand {
     ChangeChamberNotes(ChamberId, String),
     ChangeChamberHidden(ChamberId, bool),
     SplitWall(ChamberId, WallId, Vec2<i32>),
+    CollapseWall(ChamberId, WallId),
     DeleteChamber(ChamberId),
     AddDoor(Door),
     SelectDoor(Option<DoorId>),
@@ -82,6 +83,26 @@ impl StateCommand {
                     .unwrap()
                     .split(*wall_id, *pos);
                 vec![StateEvent::ChamberModified(*chamber_id)]
+            }
+            StateCommand::CollapseWall(chamber_id, wall_id) => {
+                let removed_wall_id = state
+                    .dungeon
+                    .chamber_mut(*chamber_id)
+                    .unwrap()
+                    .collapse(*wall_id);
+                // remove doors on the removed wall
+                let mut events: Vec<StateEvent> = state
+                    .dungeon
+                    .doors
+                    .iter()
+                    .filter(|d| d.on_wall == removed_wall_id)
+                    .map(|d| StateEvent::DoorDeleted(d.id))
+                    .collect();
+                state.dungeon.doors.retain(|d| d.on_wall != removed_wall_id);
+
+                events.push(StateEvent::ChamberModified(*chamber_id));
+
+                events
             }
             StateCommand::DeleteChamber(chamber_id) => {
                 let deleted_door_ids = state.dungeon.remove_chamber(*chamber_id);

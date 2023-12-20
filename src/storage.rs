@@ -79,6 +79,13 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     },
                 ))
             }
+            "CollapseWall" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::CollapseWall(
+                    v["chamber_id"].as_u64().unwrap() as ChamberId,
+                    v["wall_id"].as_u64().unwrap() as WallId,
+                ))
+            }
             "DeleteChamber" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::DeleteChamber(
@@ -181,6 +188,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeChamberHidden(_, _) => "ChangeChamberHidden".to_owned(),
             StateCommand::ChangeMode(_) => "ChangeMode".to_owned(),
             StateCommand::SplitWall(_, _, _) => "SplitWall".to_owned(),
+            StateCommand::CollapseWall(_, _) => "CollapseWall".to_owned(),
             StateCommand::DeleteChamber(_) => "DeleteChamber".to_owned(),
             StateCommand::AddDoor(_) => "AddDoor".to_owned(),
             StateCommand::ChangeDoorName(_, _) => "ChangeDoorName".to_owned(),
@@ -218,6 +226,10 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "wall_id": wall_id,
                 "x": pos.x,
                 "y": pos.y
+            }),
+            StateCommand::CollapseWall(chamber_id, wall_id) => json!({
+                "chamber_id": chamber_id,
+                "wall_id": wall_id,
             }),
             StateCommand::DeleteChamber(chamber_id) => json!({ "chamber_id": chamber_id }),
             StateCommand::AddDoor(door) => json!({

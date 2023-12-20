@@ -29,9 +29,11 @@ impl<T: Mul<T, Output = T> + Add<T, Output = T> + Into<f64> + Copy> Vec2<T> {
     pub fn sqr_len(&self) -> f64 {
         ((self.x * self.x) + (self.y * self.y)).into()
     }
+
     pub fn len(&self) -> f64 {
         f64::sqrt(self.sqr_len())
     }
+
     pub fn dot(&self, other: Vec2<T>) -> T {
         (self.x * other.x) + (self.y * other.y)
     }

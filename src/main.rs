@@ -93,13 +93,20 @@ fn build_ui(app: &Application) {
         state::EditMode::AppendChamber,
         "document-edit",
     );
+    let delete_corner_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::RemoveVertex,
+        "list-remove",
+    );
+
     let add_door_button =
         EditModeButton::new(control.clone(), state::EditMode::AddDoor, "insert-link");
 
     tool_box.append(&add_chamber_button.widget);
     tool_box.append(&select_chamber_button.borrow().widget);
-    tool_box.append(&split_edge_button.borrow().widget);
     tool_box.append(&append_verts_button.borrow().widget);
+    tool_box.append(&split_edge_button.borrow().widget);
+    tool_box.append(&delete_corner_button.borrow().widget);
     tool_box.append(&add_door_button.borrow().widget);
     side_box.append(&tool_box);
 

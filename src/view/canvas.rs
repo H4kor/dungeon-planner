@@ -13,7 +13,7 @@ use gtk::{DrawingArea, EventControllerMotion};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::primitives::{Line, Primitive};
+use super::primitives::{Line, Point, Primitive};
 
 pub struct Canvas {
     pub widget: DrawingArea,
@@ -260,6 +260,39 @@ impl Canvas {
                     }
                 }
             }
+            EditMode::RemoveVertex => {
+                if let Some(chamber) = control.state.active_chamber() {
+                    match chamber.nearest_corner(control.state.cursor_world_pos()) {
+                        Some((w1, w2)) => {
+                            let color = Rgb {
+                                r: 1.0,
+                                g: 0.0,
+                                b: 0.0,
+                            };
+                            Line {
+                                from: w1.p1.into(),
+                                to: w1.p2.into(),
+                                color: color,
+                                width: 3.0,
+                            }
+                            .draw(ctx);
+                            Line {
+                                from: w2.p1.into(),
+                                to: w2.p2.into(),
+                                color: color,
+                                width: 3.0,
+                            }
+                            .draw(ctx);
+                            Point {
+                                at: w1.p2.into(),
+                                color: color,
+                            }
+                            .draw(ctx)
+                        }
+                        None => {}
+                    }
+                }
+            }
         }
     }
 
@@ -350,6 +383,16 @@ impl Canvas {
         return vec![];
     }
 
+    fn click_remove_vertex(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        if let Some(chamber) = control.state.active_chamber() {
+            match chamber.nearest_corner(control.state.cursor_world_pos()) {
+                Some((w1, _)) => return vec![StateCommand::CollapseWall(chamber.id, w1.id)],
+                None => {}
+            };
+        }
+        return vec![];
+    }
+
     fn click(&mut self, control: Rc<RefCell<StateController>>) -> Vec<StateCommand> {
         let control = &mut *control.borrow_mut();
         let commands = match control.state.mode {
@@ -357,6 +400,7 @@ impl Canvas {
             EditMode::AppendChamber => self.click_append_chamber(control),
             EditMode::SplitEdge => self.click_split_edge(control),
             EditMode::AddDoor => self.click_add_door(control),
+            EditMode::RemoveVertex => self.click_remove_vertex(control),
         };
         self.update();
         commands

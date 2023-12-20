@@ -261,7 +261,32 @@ impl Chamber {
         min_wall
     }
 
-    pub(crate) fn split(&mut self, wall_id: u32, pos: Vec2<i32>) {
+    /// get nearest corner of a room
+    /// returns a tuple of walls. The tuple will always be neighboring.
+    /// The common point of the walls is the nearest corner
+    /// The corner will always be wall_1.p2 == wall_2.p1
+    pub fn nearest_corner(&self, pos: Vec2<f64>) -> Option<(Wall, Wall)> {
+        // get the first wall
+        let wall_1 = self.walls.iter().min_by(|a, b| {
+            (a.p2 - pos.into())
+                .sqr_len()
+                .total_cmp(&(b.p2 - pos.into()).sqr_len())
+        });
+        match wall_1 {
+            Some(wall_1) => {
+                let p = self.walls.iter().position(|w| w.id == wall_1.id).unwrap();
+                let wall_2 = if p != self.walls.len() - 1 {
+                    self.walls[p + 1]
+                } else {
+                    self.walls[0]
+                };
+                Some((*wall_1, wall_2))
+            }
+            None => None,
+        }
+    }
+
+    pub(crate) fn split(&mut self, wall_id: WallId, pos: Vec2<i32>) {
         let idx = self
             .walls
             .iter()
@@ -274,6 +299,27 @@ impl Chamber {
 
         self.walls[idx] = w1;
         self.walls.insert(idx + 1, w2);
+    }
+
+    pub(crate) fn collapse(&mut self, wall_id: WallId) -> WallId {
+        let idx = self
+            .walls
+            .iter()
+            .position(|w| w.id == wall_id)
+            .unwrap()
+            .clone();
+        let next_idx = if idx == self.walls.len() - 1 {
+            0
+        } else {
+            idx + 1
+        };
+        let removed_id = self.walls[next_idx].id;
+        let mut n_wall = self.walls[idx];
+        n_wall.p2 = self.walls[next_idx].p2;
+        self.walls[idx] = n_wall;
+        self.walls.remove(next_idx);
+
+        removed_id
     }
 }
 
