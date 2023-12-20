@@ -1,0 +1,41 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-windows:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      # Run build
+    - name: Install Rustup using win.rustup.rs
+      run: |
+        # Disable the download progress bar which can cause perf issues
+        $ProgressPreference = "SilentlyContinue"
+        Invoke-WebRequest https://win.rustup.rs/ -OutFile rustup-init.exe
+        .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --default-toolchain=none
+        del rustup-init.exe
+        rustup target add x86_64-pc-windows-gnu
+      shell: powershell
+    - name: Add mingw64 to path for x86_64-gnu
+      run: echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Build and Test
+      shell: cmd
+      run: |
+        set "RUSTFMT_CI=1"
+
+        :: Print version information
+        rustc -Vv || exit /b 1
+        cargo -V || exit /b 1
+        cargo build --release
