@@ -6,7 +6,7 @@ use crate::{
     common::{BBox, Rgb, Vec2},
     door::{Door, DoorDrawOptions},
     dungeon::Dungeon,
-    view::grid::Grid,
+    view::{grid::Grid, primitives::Primitive},
 };
 
 const PAGE_W: f64 = 595.0;
@@ -83,110 +83,118 @@ fn layout_secondary_headline() -> (pango::Context, pango::Layout) {
     (p_ctx, layout)
 }
 
-fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
-    {
-        // determine size of dungeon
-        let mut bbox = BBox {
-            min: Vec2 {
-                x: f64::INFINITY,
-                y: f64::INFINITY,
-            },
-            max: Vec2 {
-                x: f64::NEG_INFINITY,
-                y: f64::NEG_INFINITY,
-            },
-        };
-        let mut all_prims = vec![];
-        for chamber in dungeon.chambers() {
-            if include_hidden == false && chamber.hidden {
-                continue;
-            }
+fn dungeon_to_primitives(dungeon: &Dungeon, include_hidden: bool) -> Vec<Box<dyn Primitive>> {
+    let mut all_prims = vec![];
+    for chamber in dungeon.chambers() {
+        if include_hidden == false && chamber.hidden {
+            continue;
+        }
 
-            let mut prims = chamber.draw(
-                None,
-                Some(ChamberDrawOptions {
-                    color: Some(Rgb {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 0.0,
-                    }),
-                    fill: Some(true),
+        let mut prims = chamber.draw(
+            None,
+            Some(ChamberDrawOptions {
+                color: Some(Rgb {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
                 }),
-            );
-            for p in prims.iter() {
-                bbox &= p.bbox()
-            }
-            all_prims.append(&mut prims)
-        }
-
-        // draw doors
-        for door in dungeon.doors.iter() {
-            if include_hidden == false && door.hidden {
-                continue;
-            }
-
-            let mut prims = door.draw(
-                dungeon
-                    .chamber(door.part_of)
-                    .unwrap()
-                    .wall(door.on_wall)
-                    .unwrap(),
-                DoorDrawOptions {
-                    color: Some(Rgb {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 0.0,
-                    }),
-                },
-            );
-            for p in prims.iter() {
-                bbox &= p.bbox()
-            }
-            all_prims.append(&mut prims)
-        }
-
-        bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
-        bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
-
-        let size = bbox.max - bbox.min;
-        let max_scale_x = (RIGHT_END - LEFT_SPACE) / size.x;
-        let max_scale_y = (END_H - START_H) / size.y;
-        let scale = f64::min(max_scale_x, max_scale_y);
-        ctx.translate(
-            -bbox.min.x * scale + LEFT_SPACE,
-            -bbox.min.y * scale + (((END_H - START_H) - (size.y * scale)) / 2.0),
+                fill: Some(true),
+            }),
         );
-        ctx.scale(scale, scale);
-
-        let mut grid = Grid::new();
-        grid.color = Rgb {
-            r: 0.5,
-            g: 0.5,
-            b: 0.5,
-        };
-        grid.width = 1.0;
-
-        // set clipping
-        ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
-        ctx.clip();
-        ctx.new_path();
-
-        // draw grid
-        ctx.set_dash(&vec![10.0, 10.0], 0.0);
-        for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
-            prim.draw(&ctx)
-        }
-        ctx.set_dash(&vec![], 0.0);
-
-        // draw chamber
-        for prim in all_prims.iter() {
-            prim.draw(&ctx)
-        }
-
-        ctx.reset_clip();
-        ctx.identity_matrix();
-        ctx.show_page().unwrap();
+        all_prims.append(&mut prims)
     }
+
+    // draw doors
+    for door in dungeon.doors.iter() {
+        if include_hidden == false && door.hidden {
+            continue;
+        }
+
+        let mut prims = door.draw(
+            dungeon
+                .chamber(door.part_of)
+                .unwrap()
+                .wall(door.on_wall)
+                .unwrap(),
+            DoorDrawOptions {
+                color: Some(Rgb {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
+                }),
+            },
+        );
+        all_prims.append(&mut prims)
+    }
+
+    all_prims
+}
+
+fn prims_to_bbox(prims: &Vec<Box<dyn Primitive>>) -> BBox {
+    // determine size of dungeon
+    let mut bbox = BBox {
+        min: Vec2 {
+            x: f64::INFINITY,
+            y: f64::INFINITY,
+        },
+        max: Vec2 {
+            x: f64::NEG_INFINITY,
+            y: f64::NEG_INFINITY,
+        },
+    };
+
+    // determine bounding box
+    for p in prims.iter() {
+        bbox &= p.bbox()
+    }
+    bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
+    bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
+
+    bbox
+}
+
+fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
+    let all_prims = dungeon_to_primitives(dungeon, include_hidden);
+    let bbox = prims_to_bbox(&all_prims);
+
+    let size = bbox.max - bbox.min;
+    let max_scale_x = (RIGHT_END - LEFT_SPACE) / size.x;
+    let max_scale_y = (END_H - START_H) / size.y;
+    let scale = f64::min(max_scale_x, max_scale_y);
+    ctx.translate(
+        -bbox.min.x * scale + LEFT_SPACE,
+        -bbox.min.y * scale + (((END_H - START_H) - (size.y * scale)) / 2.0),
+    );
+    ctx.scale(scale, scale);
+
+    let mut grid = Grid::new();
+    grid.color = Rgb {
+        r: 0.5,
+        g: 0.5,
+        b: 0.5,
+    };
+    grid.width = 1.0;
+
+    // set clipping
+    ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
+    ctx.clip();
+    ctx.new_path();
+
+    // draw grid
+    ctx.set_dash(&vec![10.0, 10.0], 0.0);
+    for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
+        prim.draw(&ctx)
+    }
+    ctx.set_dash(&vec![], 0.0);
+
+    // draw chamber
+    for prim in all_prims.iter() {
+        prim.draw(&ctx)
+    }
+
+    ctx.reset_clip();
+    ctx.identity_matrix();
+    ctx.show_page().unwrap();
 }
 
 struct PdfElement {
@@ -401,8 +409,63 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 }
 
 pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
-    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
-    let ctx = Context::new(pdf).unwrap();
     // Draw entire dungeon
-    draw_full_dungeon(dungeon, &ctx, false);
+    let all_prims = dungeon_to_primitives(dungeon, false);
+    let bbox = prims_to_bbox(&all_prims);
+
+    let size = bbox.max - bbox.min;
+    // determine if page should be horizontal or vertical
+    let vertical = size.y > size.x;
+    let (pdf, max_scale_x, max_scale_y) = if vertical {
+        (
+            gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap(),
+            PAGE_W / size.x,
+            PAGE_H / size.y,
+        )
+    } else {
+        (
+            gtk::cairo::PdfSurface::new(PAGE_H, PAGE_W, path).unwrap(),
+            PAGE_H / size.x,
+            PAGE_W / size.y,
+        )
+    };
+    let scale = f64::min(max_scale_x, max_scale_y);
+
+    let ctx = Context::new(pdf).unwrap();
+
+    if vertical {
+        ctx.translate(-bbox.min.x * scale, -bbox.min.y * scale);
+    } else {
+        ctx.translate(-bbox.min.x * scale, -bbox.min.y * scale);
+    }
+    ctx.scale(scale, scale);
+
+    let mut grid = Grid::new();
+    grid.color = Rgb {
+        r: 0.5,
+        g: 0.5,
+        b: 0.5,
+    };
+    grid.width = 1.0;
+
+    // set clipping
+    ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
+    ctx.clip();
+    ctx.new_path();
+
+    // draw grid
+    ctx.set_dash(&vec![10.0, 10.0], 0.0);
+    for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
+        prim.draw(&ctx)
+    }
+    ctx.set_dash(&vec![], 0.0);
+
+    // draw chamber
+    for prim in all_prims.iter() {
+        prim.draw(&ctx)
+    }
+
+    ctx.reset_clip();
+    ctx.identity_matrix();
+    ctx.show_page().unwrap();
 }
