@@ -29,8 +29,6 @@ jobs:
     - name: Setup GTK
       shell: powershell
       run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-        Set-ExecutionPolicy RemoteSigned
         choco install msys2
         choco install visualstudio2022-workload-vctools
         choco install python
