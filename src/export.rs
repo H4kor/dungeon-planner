@@ -83,7 +83,7 @@ fn layout_secondary_headline() -> (pango::Context, pango::Layout) {
     (p_ctx, layout)
 }
 
-fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context) {
+fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
     {
         // determine size of dungeon
         let mut bbox = BBox {
@@ -98,6 +98,10 @@ fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context) {
         };
         let mut all_prims = vec![];
         for chamber in dungeon.chambers() {
+            if include_hidden == false && chamber.hidden {
+                continue;
+            }
+
             let mut prims = chamber.draw(
                 None,
                 Some(ChamberDrawOptions {
@@ -117,6 +121,10 @@ fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context) {
 
         // draw doors
         for door in dungeon.doors.iter() {
+            if include_hidden == false && door.hidden {
+                continue;
+            }
+
             let mut prims = door.draw(
                 dungeon
                     .chamber(door.part_of)
@@ -370,7 +378,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
     let mut cur_h = START_H;
 
     // Draw entire dungeon
-    draw_full_dungeon(dungeon, &ctx);
+    draw_full_dungeon(dungeon, &ctx, true);
 
     for chamber in dungeon.chambers() {
         // TODO: take care of large chambers and split over multiple pages.
@@ -390,4 +398,11 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
             cur_h = cur_h + (e.height);
         }
     }
+}
+
+pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
+    let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
+    let ctx = Context::new(pdf).unwrap();
+    // Draw entire dungeon
+    draw_full_dungeon(dungeon, &ctx, false);
 }

@@ -142,6 +142,10 @@ fn build_ui(app: &Application) {
         20,
         &MenuItem::new(Some("Export PDF ..."), Some("file.export_pdf")),
     );
+    file_menu.insert_item(
+        20,
+        &MenuItem::new(Some("Export Player Map ..."), Some("file.player_map_pdf")),
+    );
 
     let edit_menu = Menu::new();
     edit_menu.insert_item(0, &MenuItem::new(Some("Undo"), Some("edit.undo")));
