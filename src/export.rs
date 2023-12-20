@@ -11,10 +11,11 @@ use crate::{
 
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
-const START_H: f64 = 20.0;
-const END_H: f64 = PAGE_H - 20.0;
-const LEFT_SPACE: f64 = 20.0;
-const RIGHT_END: f64 = PAGE_W - 20.0;
+const EDGE_SPACEING: f64 = 15.0;
+const START_H: f64 = EDGE_SPACEING;
+const END_H: f64 = PAGE_H - EDGE_SPACEING;
+const LEFT_SPACE: f64 = EDGE_SPACEING;
+const RIGHT_END: f64 = PAGE_W - EDGE_SPACEING;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
 const HEADLINE_IMAGE_SPACING: f64 = 12.0;
 const IMAGE_NOTES_SPACEING: f64 = 12.0;
@@ -419,14 +420,14 @@ pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
     let (pdf, max_scale_x, max_scale_y) = if vertical {
         (
             gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap(),
-            PAGE_W / size.x,
-            PAGE_H / size.y,
+            (PAGE_W - (2. * EDGE_SPACEING)) / size.x,
+            (PAGE_H - (2. * EDGE_SPACEING)) / size.y,
         )
     } else {
         (
             gtk::cairo::PdfSurface::new(PAGE_H, PAGE_W, path).unwrap(),
-            PAGE_H / size.x,
-            PAGE_W / size.y,
+            (PAGE_H - (2. * EDGE_SPACEING)) / size.x,
+            (PAGE_W - (2. * EDGE_SPACEING)) / size.y,
         )
     };
     let scale = f64::min(max_scale_x, max_scale_y);
@@ -434,9 +435,15 @@ pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
     let ctx = Context::new(pdf).unwrap();
 
     if vertical {
-        ctx.translate(-bbox.min.x * scale, -bbox.min.y * scale);
+        ctx.translate(
+            -bbox.min.x * scale + EDGE_SPACEING,
+            -bbox.min.y * scale + EDGE_SPACEING,
+        );
     } else {
-        ctx.translate(-bbox.min.x * scale, -bbox.min.y * scale);
+        ctx.translate(
+            -bbox.min.x * scale + EDGE_SPACEING,
+            -bbox.min.y * scale + EDGE_SPACEING,
+        );
     }
     ctx.scale(scale, scale);
 
