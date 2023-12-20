@@ -11,11 +11,11 @@ use crate::{
 
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
-const EDGE_SPACEING: f64 = 15.0;
-const START_H: f64 = EDGE_SPACEING;
-const END_H: f64 = PAGE_H - EDGE_SPACEING;
-const LEFT_SPACE: f64 = EDGE_SPACEING;
-const RIGHT_END: f64 = PAGE_W - EDGE_SPACEING;
+const EDGE_SPACING: f64 = 15.0;
+const START_H: f64 = EDGE_SPACING;
+const END_H: f64 = PAGE_H - EDGE_SPACING;
+const LEFT_SPACE: f64 = EDGE_SPACING;
+const RIGHT_END: f64 = PAGE_W - EDGE_SPACING;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
 const HEADLINE_IMAGE_SPACING: f64 = 12.0;
 const IMAGE_NOTES_SPACEING: f64 = 12.0;
@@ -420,14 +420,14 @@ pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
     let (pdf, max_scale_x, max_scale_y) = if vertical {
         (
             gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap(),
-            (PAGE_W - (2. * EDGE_SPACEING)) / size.x,
-            (PAGE_H - (2. * EDGE_SPACEING)) / size.y,
+            (PAGE_W - (2. * EDGE_SPACING)) / size.x,
+            (PAGE_H - (2. * EDGE_SPACING)) / size.y,
         )
     } else {
         (
             gtk::cairo::PdfSurface::new(PAGE_H, PAGE_W, path).unwrap(),
-            (PAGE_H - (2. * EDGE_SPACEING)) / size.x,
-            (PAGE_W - (2. * EDGE_SPACEING)) / size.y,
+            (PAGE_H - (2. * EDGE_SPACING)) / size.x,
+            (PAGE_W - (2. * EDGE_SPACING)) / size.y,
         )
     };
     let scale = f64::min(max_scale_x, max_scale_y);
@@ -436,13 +436,13 @@ pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
 
     if vertical {
         ctx.translate(
-            -bbox.min.x * scale + EDGE_SPACEING,
-            -bbox.min.y * scale + EDGE_SPACEING,
+            -bbox.min.x * scale + EDGE_SPACING,
+            -bbox.min.y * scale + EDGE_SPACING,
         );
     } else {
         ctx.translate(
-            -bbox.min.x * scale + EDGE_SPACEING,
-            -bbox.min.y * scale + EDGE_SPACEING,
+            -bbox.min.x * scale + EDGE_SPACING,
+            -bbox.min.y * scale + EDGE_SPACING,
         );
     }
     ctx.scale(scale, scale);
