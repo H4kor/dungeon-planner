@@ -44,7 +44,7 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("file.player_map_pdf", &["<Ctrl><Shift>P"]);
 
     app.set_accels_for_action("edit.unselect", &["Escape"]);
-    app.set_accels_for_action("edit.delete_selected", &["Delete"]);
+    app.set_accels_for_action("edit.delete_selected", &["<Ctrl><Alt>X"]);
     app.set_accels_for_action("edit.undo", &["<Ctrl>Z"]);
     app.set_accels_for_action("edit.add_chamber", &["<Alt>C"]);
 
