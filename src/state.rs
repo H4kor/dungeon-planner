@@ -36,7 +36,7 @@ pub struct StateController {
 }
 
 pub trait StateEventSubscriber {
-    fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand>;
+    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand>;
 }
 
 pub trait StateCommandSubscriber {

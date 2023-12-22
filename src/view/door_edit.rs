@@ -188,7 +188,7 @@ impl DoorEdit {
         }
     }
 
-    fn show_door(&mut self, state: &mut crate::state::State) {
+    fn show_door(&mut self, state: &crate::state::State) {
         if let Some(door) = state.active_door() {
             let door = state.dungeon.door(door.id).unwrap();
             let chamber = state.dungeon.chamber(door.part_of).unwrap();
@@ -206,7 +206,7 @@ impl DoorEdit {
         }
     }
 
-    fn rebuild_chamber_list(&mut self, state: &mut crate::state::State) {
+    fn rebuild_chamber_list(&mut self, state: &crate::state::State) {
         for chamber in state.dungeon.chambers() {
             match self.chamber_object_pos(Some(chamber.id)) {
                 Some(pos) => {
@@ -230,7 +230,7 @@ impl DoorEdit {
 impl StateEventSubscriber for DoorEdit {
     fn on_state_event(
         &mut self,
-        state: &mut crate::state::State,
+        state: &crate::state::State,
         event: StateEvent,
     ) -> Vec<StateCommand> {
         match event {

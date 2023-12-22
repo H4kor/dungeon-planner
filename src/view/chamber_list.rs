@@ -90,13 +90,13 @@ impl ChamberList {
 }
 
 impl StateEventSubscriber for ChamberList {
-    fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand> {
         match event {
             StateEvent::ChamberAdded(_) => {
                 self.rebuild_list(state);
             }
             StateEvent::ChamberModified(chamber_id) => {
-                let chamber = state.dungeon.chamber_mut(chamber_id).unwrap();
+                let chamber = state.dungeon.chamber(chamber_id).unwrap();
                 self.rows
                     .iter_mut()
                     .filter(|r| r.chamber_id() == chamber_id)

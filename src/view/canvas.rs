@@ -452,7 +452,7 @@ impl Canvas {
 impl StateEventSubscriber for Canvas {
     fn on_state_event(
         &mut self,
-        _state: &mut crate::state::State,
+        _state: &crate::state::State,
         _event: crate::state::events::StateEvent,
     ) -> Vec<StateCommand> {
         self.widget.queue_draw();

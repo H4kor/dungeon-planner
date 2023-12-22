@@ -88,13 +88,13 @@ impl DoorList {
 }
 
 impl StateEventSubscriber for DoorList {
-    fn on_state_event(&mut self, state: &mut State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand> {
         match event {
             StateEvent::DoorAdded(_) => {
                 self.rebuild_list(state);
             }
             StateEvent::DoorModified(door_id) => {
-                let door = state.dungeon.door_mut(door_id).unwrap();
+                let door = state.dungeon.door(door_id).unwrap();
                 self.rows
                     .iter_mut()
                     .filter(|r| r.door_id() == door_id)

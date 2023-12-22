@@ -63,7 +63,7 @@ impl EditModeButton {
 impl StateEventSubscriber for EditModeButton {
     fn on_state_event(
         &mut self,
-        state: &mut crate::state::State,
+        state: &crate::state::State,
         event: StateEvent,
     ) -> Vec<StateCommand> {
         match event {
