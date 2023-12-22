@@ -5,10 +5,10 @@ use crate::config::{
 };
 use crate::door::{Door, DoorDrawOptions};
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
-use cairo::glib::clone;
+use cairo::glib::{clone, Propagation};
 use cairo::Context;
 use gtk::gdk::ffi::{GDK_BUTTON_PRIMARY, GDK_BUTTON_SECONDARY};
-use gtk::{glib, prelude::*, GestureClick, GestureDrag};
+use gtk::{gdk, glib, prelude::*, EventControllerKey, GestureClick, GestureDrag};
 use gtk::{DrawingArea, EventControllerMotion};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -28,6 +28,9 @@ impl Canvas {
             .height_request(600)
             .hexpand(true)
             .vexpand(true)
+            .can_focus(true)
+            .focus_on_click(true)
+            .focusable(true)
             .valign(gtk::Align::Fill)
             .halign(gtk::Align::Fill)
             .build();
@@ -53,12 +56,15 @@ impl Canvas {
             .button(GDK_BUTTON_PRIMARY as u32)
             .build();
 
-        gesture_click.connect_pressed(clone!( @strong canvas, @weak control => move |_, _, _, _| {
-            let cmds = canvas.borrow_mut().click(control.clone());
-            for cmd in cmds {
-                control.borrow_mut().apply(cmd)
-            }
-        }));
+        gesture_click.connect_pressed(
+            clone!( @strong canvas, @weak control, @weak drawing_area => move |_, _, _, _| {
+                drawing_area.grab_focus();
+                let cmds = canvas.borrow_mut().click(control.clone());
+                for cmd in cmds {
+                    control.borrow_mut().apply(cmd)
+                }
+            }),
+        );
 
         let gesture_drag = GestureDrag::builder()
             .button(GDK_BUTTON_SECONDARY as u32)
@@ -69,6 +75,25 @@ impl Canvas {
             canvas.borrow_mut().drag_update(control, x, y);
         }));
 
+        let key_controller = EventControllerKey::new();
+        key_controller.connect_key_pressed(clone!(@strong control => move |_, key, _, _| {
+            let mut control = control.borrow_mut();
+            match key {
+                gdk::Key::Delete => {
+                    if let Some(door_id) = control.state.active_door_id {
+                        control
+                            .apply(StateCommand::DeleteDoor(door_id))
+                    }
+                    if let Some(chamber_id) = control.state.active_chamber_id {
+                        control
+                            .apply(StateCommand::DeleteChamber(chamber_id))
+                    }
+                },
+                _ => (),
+            }
+            Propagation::Proceed
+        }));
+        drawing_area.add_controller(key_controller);
         drawing_area.add_controller(gesture_drag);
         drawing_area.add_controller(gesture_click);
         drawing_area.add_controller(pos_controller);

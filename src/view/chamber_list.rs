@@ -2,7 +2,8 @@ use crate::state::{
     events::StateEvent, State, StateCommand, StateController, StateEventSubscriber,
 };
 use crate::view::chamber_list_entry::ChamberListEntry;
-use gtk::prelude::*;
+use cairo::glib::{clone, Propagation};
+use gtk::{gdk, prelude::*, EventControllerKey};
 use gtk::{ListBox, PolicyType, ScrolledWindow};
 use std::{cell::RefCell, rc::Rc};
 
@@ -16,6 +17,8 @@ impl ChamberList {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
         let list_box = ListBox::builder()
             .selection_mode(gtk::SelectionMode::Single)
+            .focusable(true)
+            .focus_on_click(true)
             .build();
         let chamber_list = Rc::new(RefCell::new(ChamberList {
             list_box: list_box.clone(),
@@ -28,19 +31,39 @@ impl ChamberList {
             rows: vec![],
         }));
 
-        {
-            let control = control.clone();
-            list_box.connect_row_activated(move |_, row| {
-                let chamber_id = row
-                    .clone()
-                    .dynamic_cast::<ChamberListEntry>()
-                    .unwrap()
-                    .chamber_id();
-                control
-                    .borrow_mut()
-                    .apply(StateCommand::SelectChamber(Some(chamber_id)));
-            });
-        }
+        list_box.connect_row_activated(clone!(@strong control => move |_, row| {
+            let chamber_id = row
+                .clone()
+                .dynamic_cast::<ChamberListEntry>()
+                .unwrap()
+                .chamber_id();
+            control
+                .borrow_mut()
+                .apply(StateCommand::SelectChamber(Some(chamber_id)));
+        }));
+
+        let key_controller = EventControllerKey::new();
+        key_controller.connect_key_pressed(
+            clone!(@strong control, @strong list_box => move |_, key, _, _| {
+                match key {
+                    gdk::Key::Delete => {
+                        if let Some(row) = list_box.selected_row() {
+                            let chamber_id = row
+                                .clone()
+                                .dynamic_cast::<ChamberListEntry>()
+                                .unwrap()
+                                .chamber_id();
+                            control
+                                .borrow_mut()
+                                .apply(StateCommand::DeleteChamber(chamber_id))
+                        }
+                    },
+                    _ => (),
+                }
+                Propagation::Proceed
+            }),
+        );
+        list_box.add_controller(key_controller);
 
         let mut state = control.borrow_mut();
         state.subscribe_any(chamber_list.clone());

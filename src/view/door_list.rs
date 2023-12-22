@@ -2,7 +2,8 @@ use crate::state::{
     events::StateEvent, State, StateCommand, StateController, StateEventSubscriber,
 };
 use crate::view::door_list_entry::DoorListEntry;
-use gtk::prelude::*;
+use cairo::glib::{clone, Propagation};
+use gtk::{gdk, prelude::*, EventControllerKey};
 use gtk::{ListBox, PolicyType, ScrolledWindow};
 use std::{cell::RefCell, rc::Rc};
 
@@ -28,19 +29,39 @@ impl DoorList {
             rows: vec![],
         }));
 
-        {
-            let control = control.clone();
-            list_box.connect_row_activated(move |_, row| {
-                let door_id = row
-                    .clone()
-                    .dynamic_cast::<DoorListEntry>()
-                    .unwrap()
-                    .door_id();
-                control
-                    .borrow_mut()
-                    .apply(StateCommand::SelectDoor(Some(door_id)));
-            });
-        }
+        list_box.connect_row_activated(clone!(@strong control => move |_, row| {
+            let door_id = row
+                .clone()
+                .dynamic_cast::<DoorListEntry>()
+                .unwrap()
+                .door_id();
+            control
+                .borrow_mut()
+                .apply(StateCommand::SelectDoor(Some(door_id)));
+        }));
+
+        let key_controller = EventControllerKey::new();
+        key_controller.connect_key_pressed(
+            clone!(@strong control, @strong list_box => move |_, key, _, _| {
+                match key {
+                    gdk::Key::Delete => {
+                        if let Some(row) = list_box.selected_row() {
+                            let door_id = row
+                                .clone()
+                                .dynamic_cast::<DoorListEntry>()
+                                .unwrap()
+                                .door_id();
+                            control
+                                .borrow_mut()
+                                .apply(StateCommand::DeleteDoor(door_id))
+                        }
+                    },
+                    _ => (),
+                }
+                Propagation::Proceed
+            }),
+        );
+        list_box.add_controller(key_controller);
 
         let mut state = control.borrow_mut();
         state.subscribe_any(door_list.clone());
