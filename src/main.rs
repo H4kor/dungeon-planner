@@ -25,6 +25,7 @@ use view::chamber_edit::ChamberEdit;
 use view::chamber_list::ChamberList;
 use view::door_edit::DoorEdit;
 use view::door_list::DoorList;
+use view::dungeon_edit::DungeonEdit;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -128,6 +129,14 @@ fn build_ui(app: &adw::Application) {
 
     let object_tabs = Notebook::builder().build();
     side_box.append(&object_tabs);
+
+    let dungeon_tab = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+    let dungeon_tab_label = Label::new(Some("Dungeon"));
+    object_tabs.append_page(&dungeon_tab, Some(&dungeon_tab_label));
+    let dungeon_edit = DungeonEdit::new(control.clone());
+    dungeon_tab.append(&dungeon_edit.borrow().widget);
 
     let chamber_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)

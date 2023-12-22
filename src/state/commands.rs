@@ -25,6 +25,8 @@ pub enum StateCommand {
     ChangeDoorLeadsTo(DoorId, Option<ChamberId>),
     ChangeDoorHidden(DoorId, bool),
     DeleteDoor(DoorId),
+    ChangeDungeonName(String),
+    ChangeDungeonNotes(String),
 }
 
 impl StateCommand {
@@ -175,6 +177,14 @@ impl StateCommand {
                     events.push(StateEvent::ActiveDoorChanged(None));
                 }
                 events
+            }
+            StateCommand::ChangeDungeonName(name) => {
+                state.dungeon.name = name.clone();
+                vec![StateEvent::DungeonModified]
+            }
+            StateCommand::ChangeDungeonNotes(notes) => {
+                state.dungeon.notes = notes.clone();
+                vec![StateEvent::DungeonModified]
             }
         }
     }

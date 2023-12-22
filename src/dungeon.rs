@@ -9,6 +9,8 @@ use crate::{
 pub struct Dungeon {
     pub chambers: Vec<Chamber>,
     pub doors: Vec<Door>,
+    pub name: String,
+    pub notes: String,
 }
 
 impl Dungeon {
@@ -16,6 +18,8 @@ impl Dungeon {
         Dungeon {
             chambers: vec![],
             doors: vec![],
+            name: "".to_owned(),
+            notes: "".to_owned(),
         }
     }
 
