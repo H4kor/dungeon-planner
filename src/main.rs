@@ -11,8 +11,9 @@ mod state;
 mod storage;
 mod view;
 
+use gtk::gdk::Display;
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, Application, ApplicationWindow, Label, Notebook};
+use gtk::{glib, Application, ApplicationWindow, CssProvider, Label, Notebook};
 use gtk::{prelude::*, PopoverMenuBar};
 use observers::{DebugObserver, HistoryObserver};
 use state::StateController;
@@ -29,7 +30,7 @@ const APP_ID: &str = "org.rerere.DungeonPlanner";
 
 fn main() -> glib::ExitCode {
     // Create a new application
-    let app = Application::builder().application_id(APP_ID).build();
+    let app = adw::Application::builder().application_id(APP_ID).build();
 
     // Connect to "activate" signal of `app`
     app.connect_activate(build_ui);
@@ -54,11 +55,26 @@ fn main() -> glib::ExitCode {
     app.set_accels_for_action("edit.mode_split_edge", &["<Alt>F"]);
     app.set_accels_for_action("edit.mode_add_door", &["<Alt>D"]);
 
+    app.connect_startup(|_| load_css());
+
     // Run the application
     app.run()
 }
 
-fn build_ui(app: &Application) {
+fn load_css() {
+    // Load the CSS file and add it to the provider
+    let provider = CssProvider::new();
+    provider.load_from_data(include_str!("style.css"));
+
+    // Add the provider to the default screen
+    gtk::style_context_add_provider_for_display(
+        &Display::default().expect("Could not connect to a display."),
+        &provider,
+        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+}
+
+fn build_ui(app: &adw::Application) {
     let control = Rc::new(RefCell::new(StateController::new()));
 
     let history = HistoryObserver::new(control.clone(), None);

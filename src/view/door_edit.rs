@@ -2,7 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gtk::glib::clone;
-use gtk::{gio, glib, CheckButton, DropDown, Expression, ListItem, SignalListItemFactory};
+use gtk::{
+    gio, glib, CheckButton, DropDown, Expression, ListItem, PolicyType, ScrolledWindow,
+    SignalListItemFactory,
+};
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
@@ -24,13 +27,16 @@ pub struct DoorEdit {
 
 impl DoorEdit {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        let name_i = Entry::builder().build();
+        let name_i = Entry::builder().css_classes(vec!["form-input"]).build();
         let notes_i = TextView::builder()
             .wrap_mode(gtk::WrapMode::WordChar)
             .left_margin(10)
             .right_margin(10)
             .build();
-        let hidden_i = CheckButton::builder().label("Hidden").build();
+        let hidden_i = CheckButton::builder()
+            .css_classes(vec!["form-input"])
+            .label("Hidden")
+            .build();
 
         let chamber_vec: Vec<ChamberObject> =
             vec![ChamberObject::new(None, "-- No Chamber --".to_owned())];
@@ -65,7 +71,7 @@ impl DoorEdit {
             label.set_label(&chamber_object.name().clone());
         }));
 
-        let leads_to_i = DropDown::builder().build();
+        let leads_to_i = DropDown::builder().css_classes(vec!["form-input"]).build();
         leads_to_i.set_factory(Some(&factory));
         leads_to_i.set_model(Some(&model));
         leads_to_i.set_expression(Expression::NONE);
@@ -130,15 +136,26 @@ impl DoorEdit {
             .orientation(gtk::Orientation::Vertical)
             .build();
 
-        let part_of_label = Label::new(Some("Part of:"));
+        let part_of_label = Label::builder()
+            .label("Part of:")
+            .css_classes(vec!["form-input"])
+            .build();
         b.append(&part_of_label);
         b.append(&Label::new(Some("Name")));
         b.append(&name_i);
         b.append(&hidden_i);
-        b.append(&Label::new(Some("Notes")));
-        b.append(&notes_i);
         b.append(&Label::new(Some("Leads to Chamber:")));
         b.append(&leads_to_i);
+        b.append(&Label::new(Some("Notes")));
+        b.append(
+            &ScrolledWindow::builder()
+                .hscrollbar_policy(PolicyType::Never) // Disable horizontal scrolling
+                .min_content_width(360)
+                .height_request(300)
+                .child(&notes_i)
+                .css_classes(vec!["form-input"])
+                .build(),
+        );
 
         b.set_visible(false);
 

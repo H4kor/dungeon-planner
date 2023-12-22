@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gtk::glib::clone;
-use gtk::{prelude::*, CheckButton, Label, TextView};
+use gtk::{prelude::*, CheckButton, Label, PolicyType, ScrolledWindow, TextView};
 use gtk::{Box, Entry};
 
 use crate::state::events::StateEvent;
@@ -17,13 +17,17 @@ pub struct ChamberEdit {
 
 impl ChamberEdit {
     pub fn new(control: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
-        let name_i = Entry::builder().build();
+        let name_i = Entry::builder().css_classes(vec!["form-input"]).build();
         let notes_i = TextView::builder()
             .wrap_mode(gtk::WrapMode::WordChar)
+            .editable(true)
             .left_margin(10)
             .right_margin(10)
             .build();
-        let hidden_i = CheckButton::builder().label("Hidden").build();
+        let hidden_i = CheckButton::builder()
+            .label("Hidden")
+            .css_classes(vec!["form-input"])
+            .build();
 
         name_i.connect_changed(clone!(@strong control => move |field| {
             let name = field.text().to_string();
@@ -71,8 +75,15 @@ impl ChamberEdit {
         b.append(&name_i);
         b.append(&hidden_i);
         b.append(&Label::new(Some("Notes")));
-        b.append(&notes_i);
-
+        b.append(
+            &ScrolledWindow::builder()
+                .hscrollbar_policy(PolicyType::Never) // Disable horizontal scrolling
+                .min_content_width(360)
+                .height_request(300)
+                .child(&notes_i)
+                .css_classes(vec!["form-input"])
+                .build(),
+        );
         b.set_visible(false);
 
         let re = Rc::new(RefCell::new(ChamberEdit {

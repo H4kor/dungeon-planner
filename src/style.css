@@ -1,0 +1,7 @@
+textview text {
+    background-color: @theme_bg_color;
+}
+
+.form-input {
+    margin-bottom: 1em;
+}
