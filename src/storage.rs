@@ -139,6 +139,19 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["door_id"].as_u64().unwrap() as u32
                 ))
             }
+            "ChangeDungeonName" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeDungeonName(
+                    v["name"].as_str().unwrap().to_owned(),
+                ))
+            }
+            "ChangeDungeonNotes" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeDungeonNotes(
+                    v["notes"].as_str().unwrap().to_owned(),
+                ))
+            }
+
             _ => None,
         },
     }
@@ -196,6 +209,8 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeDoorLeadsTo(_, _) => "ChangeDoorLeadsTo".to_owned(),
             StateCommand::ChangeDoorHidden(_, _) => "ChangeDoorHidden".to_owned(),
             StateCommand::DeleteDoor(_) => "DeleteDoor".to_owned(),
+            StateCommand::ChangeDungeonName(_) => "ChangeDungeonName".to_owned(),
+            StateCommand::ChangeDungeonNotes(_) => "ChangeDungeonNotes".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddChamber => serde_json::Value::Null,
@@ -255,6 +270,12 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "hidden": hidden,
             }),
             StateCommand::DeleteDoor(door_id) => json!({ "door_id": door_id }),
+            StateCommand::ChangeDungeonName(name) => json!({
+                "name": name,
+            }),
+            StateCommand::ChangeDungeonNotes(notes) => json!({
+                "notes": notes,
+            }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
     }
