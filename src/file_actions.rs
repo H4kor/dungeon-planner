@@ -88,8 +88,12 @@ fn open_dialog(
                     control.borrow_mut().reset();
                     history.borrow_mut().reset();
                     history.borrow_mut().change_file(path.clone());
-                    storage::load_dungeon(control.clone(), path.clone());
-                    history.borrow_mut().activate();
+                    let cmds = storage::load_dungeon(path.clone());
+                    history.borrow_mut().set_history(cmds.clone());
+                    for cmd in cmds {
+                        control.borrow_mut().apply_silent(cmd);    
+                    }
+                    control.borrow_mut().reload();
                     let title = format!("Dungeon Planner - {path}");
                     window.set_title(Some(&title));
                     dialog.close();

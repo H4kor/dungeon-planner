@@ -174,18 +174,56 @@ impl DoorEdit {
         re
     }
 
-    fn chamber_object_pos(&self, id: Option<ChamberId>) -> u32 {
-        self.chambers_model
-            .into_iter()
-            .position(|r| {
-                Some(
-                    r.expect("Expected Chamber Object")
+    fn chamber_object_pos(&self, id: Option<ChamberId>) -> Option<u32> {
+        match self.chambers_model.into_iter().position(|r| {
+            Some(
+                r.expect("Expected Chamber Object")
+                    .downcast::<ChamberObject>()
+                    .expect("The item has to be an `IntegerObject`.")
+                    .chamber(),
+            ) == id
+        }) {
+            Some(x) => Some(x as u32),
+            None => None,
+        }
+    }
+
+    fn show_door(&mut self, state: &mut crate::state::State) {
+        if let Some(door) = state.active_door() {
+            let door = state.dungeon.door(door.id).unwrap();
+            let chamber = state.dungeon.chamber(door.part_of).unwrap();
+            self.part_of_label
+                .set_text(&format!("Part of: {}", chamber.name));
+
+            self.name_input.set_text(&door.name);
+            self.notes_input.buffer().set_text(&door.notes);
+            self.leads_to_input
+                .set_selected(self.chamber_object_pos(door.leads_to).unwrap_or(0));
+            self.hidden_input.set_active(door.hidden);
+            self.widget.set_visible(true);
+        } else {
+            self.widget.set_visible(false);
+        }
+    }
+
+    fn rebuild_chamber_list(&mut self, state: &mut crate::state::State) {
+        for chamber in state.dungeon.chambers() {
+            match self.chamber_object_pos(Some(chamber.id)) {
+                Some(pos) => {
+                    let chamber_object = self
+                        .chambers_model
+                        .item(pos)
+                        .unwrap()
                         .downcast::<ChamberObject>()
-                        .expect("The item has to be an `IntegerObject`.")
-                        .chamber(),
-                ) == id
-            })
-            .unwrap_or(0) as u32
+                        .expect("The item has to be an `ChamberObject`.");
+                    chamber_object.set_name(state.dungeon.chamber(chamber.id).unwrap().name.clone())
+                }
+                None => self.chambers_model.append(&ChamberObject::new(
+                    Some(chamber.id),
+                    state.dungeon.chamber(chamber.id).unwrap().name.clone(),
+                )),
+            }
+        }
     }
 }
 
@@ -196,21 +234,13 @@ impl StateEventSubscriber for DoorEdit {
         event: StateEvent,
     ) -> Vec<StateCommand> {
         match event {
-            StateEvent::ActiveDoorChanged(None) => self.widget.set_visible(false),
-            StateEvent::ActiveDoorChanged(Some(door_id)) => {
-                let door = state.dungeon.door(door_id).unwrap();
-                let chamber = state.dungeon.chamber(door.part_of).unwrap();
-                self.part_of_label
-                    .set_text(&format!("Part of: {}", chamber.name));
-
-                self.name_input.set_text(&door.name);
-                self.notes_input.buffer().set_text(&door.notes);
-                self.leads_to_input
-                    .set_selected(self.chamber_object_pos(door.leads_to));
-                self.hidden_input.set_active(door.hidden);
-                self.widget.set_visible(true);
-            }
+            StateEvent::ActiveDoorChanged(None) => self.show_door(state),
+            StateEvent::ActiveDoorChanged(Some(_)) => self.show_door(state),
             StateEvent::Reset => self.widget.set_visible(false),
+            StateEvent::Reload => {
+                self.rebuild_chamber_list(state);
+                self.show_door(state)
+            }
             StateEvent::ChamberAdded(chamber_id) => {
                 self.chambers_model.append(&ChamberObject::new(
                     Some(chamber_id),
@@ -220,10 +250,10 @@ impl StateEventSubscriber for DoorEdit {
             StateEvent::ChamberModified(chamber_id) => {
                 let chamber_object = self
                     .chambers_model
-                    .item(self.chamber_object_pos(Some(chamber_id)))
+                    .item(self.chamber_object_pos(Some(chamber_id)).unwrap())
                     .unwrap()
                     .downcast::<ChamberObject>()
-                    .expect("The item has to be an `IntegerObject`.");
+                    .expect("The item has to be an `ChamberObject`.");
                 chamber_object.set_name(state.dungeon.chamber(chamber_id).unwrap().name.clone())
             }
             _ => (),

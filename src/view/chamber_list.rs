@@ -109,6 +109,7 @@ impl StateEventSubscriber for ChamberList {
                     .select_row(self.rows.iter().find(|r| r.chamber_id() == chamber_id)),
             },
             StateEvent::Reset => self.rebuild_list(state),
+            StateEvent::Reload => self.rebuild_list(state),
             StateEvent::ChamberDeleted(_) => self.rebuild_list(state),
             _ => (),
         }

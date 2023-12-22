@@ -24,16 +24,8 @@ impl StateEventSubscriber for DebugObserver {
     }
 }
 
-#[derive(PartialEq)]
-enum PersistenceMode {
-    Restoring, // initial state <- data being restored from file
-    Record,    // normal mode <- recording all commands
-    Replaying, // during undo <- commands are not added to vector
-}
-
 pub struct HistoryObserver {
     save_file: Option<String>,
-    mode: PersistenceMode,
     cmds: Vec<StateCommand>,
     unsaved_state: bool,
 }
@@ -45,7 +37,6 @@ impl HistoryObserver {
     ) -> Rc<RefCell<Self>> {
         let obs = Rc::new(RefCell::new(HistoryObserver {
             save_file: save_file,
-            mode: PersistenceMode::Restoring,
             cmds: vec![],
             unsaved_state: false,
         }));
@@ -63,22 +54,12 @@ impl HistoryObserver {
         self.cmds = vec![];
     }
 
-    pub fn activate(&mut self) {
-        self.mode = PersistenceMode::Record
-    }
-
     pub fn undo(&mut self) {
         self.cmds.pop();
     }
 
     pub fn get_stack(&self) -> Vec<StateCommand> {
         self.cmds.clone()
-    }
-    pub fn end_restore(&mut self) {
-        self.mode = PersistenceMode::Record
-    }
-    pub fn start_restore(&mut self) {
-        self.mode = PersistenceMode::Replaying
     }
 
     pub fn save_file(&self) -> Option<String> {
@@ -87,6 +68,10 @@ impl HistoryObserver {
 
     pub fn unsaved_state(&self) -> bool {
         self.unsaved_state.clone()
+    }
+
+    pub fn set_history(&mut self, cmds: Vec<StateCommand>) {
+        self.cmds = cmds;
     }
 
     pub fn save_to_file(&mut self) {
@@ -102,9 +87,7 @@ impl HistoryObserver {
 
 impl StateCommandSubscriber for HistoryObserver {
     fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
-        if self.mode == PersistenceMode::Record || self.mode == PersistenceMode::Restoring {
-            self.cmds.push(cmd);
-            self.unsaved_state = true;
-        }
+        self.cmds.push(cmd);
+        self.unsaved_state = true;
     }
 }

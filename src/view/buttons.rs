@@ -53,6 +53,9 @@ impl EditModeButton {
         control
             .borrow_mut()
             .subscribe(StateEvent::EditModeChanged(mode), b.clone());
+        control
+            .borrow_mut()
+            .subscribe(StateEvent::Reload, b.clone());
         b
     }
 }
@@ -60,11 +63,12 @@ impl EditModeButton {
 impl StateEventSubscriber for EditModeButton {
     fn on_state_event(
         &mut self,
-        _state: &mut crate::state::State,
+        state: &mut crate::state::State,
         event: StateEvent,
     ) -> Vec<StateCommand> {
         match event {
             StateEvent::EditModeChanged(mode) => self.widget.set_active(mode == self.mode),
+            StateEvent::Reload => self.widget.set_active(state.mode == self.mode),
             _ => (),
         }
         vec![]

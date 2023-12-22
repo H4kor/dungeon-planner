@@ -104,6 +104,10 @@ impl StateController {
         }
     }
 
+    pub fn apply_silent(&mut self, command: StateCommand) {
+        command.execute(&mut self.state);
+    }
+
     pub fn subscribe(
         &mut self,
         event: StateEvent,
@@ -150,6 +154,10 @@ impl StateController {
     pub fn reset(&mut self) {
         self.state = State::new();
         self.notify(StateEvent::Reset);
+    }
+
+    pub fn reload(&mut self) {
+        self.notify(StateEvent::Reload);
     }
 }
 

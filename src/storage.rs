@@ -1,12 +1,12 @@
 use crate::chamber::{ChamberId, WallId};
 use crate::common::Vec2;
 use crate::door::{Door, DoorId};
-use crate::state::{EditMode, StateCommand, StateController};
+use crate::state::{EditMode, StateCommand};
 use serde_json::json;
 use serde_json::Value;
+use std::fs::File;
 use std::fs::{read_to_string, OpenOptions};
 use std::io::prelude::*;
-use std::{cell::RefCell, fs::File, rc::Rc};
 
 fn line_to_command(l: &String) -> Option<StateCommand> {
     println!("{}", l);
@@ -144,8 +144,9 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
     }
 }
 
-pub fn load_dungeon(control: Rc<RefCell<StateController>>, path: String) -> bool {
+pub fn load_dungeon(path: String) -> Vec<StateCommand> {
     if let Ok(_) = File::open(path.clone()) {
+        let mut cmds = vec![];
         let lines: Vec<String> = read_to_string(path.clone())
             .unwrap() // panic on possible file-reading errors
             .lines() // split the string into an iterator of string slices
@@ -156,14 +157,13 @@ pub fn load_dungeon(control: Rc<RefCell<StateController>>, path: String) -> bool
             match line_to_command(&line) {
                 None => {
                     println!("Unable to interpret line as command: {}", line);
-                    return false;
                 }
-                Some(cmd) => control.borrow_mut().apply(cmd),
+                Some(cmd) => cmds.push(cmd),
             };
         }
-        true
+        cmds
     } else {
-        false
+        vec![]
     }
 }
 

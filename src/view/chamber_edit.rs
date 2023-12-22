@@ -97,6 +97,18 @@ impl ChamberEdit {
 
         re
     }
+
+    fn show_chamber(&mut self, state: &mut crate::state::State) {
+        if let Some(chamber) = state.active_chamber() {
+            let chamber = state.dungeon.chamber_mut(chamber.id).unwrap();
+            self.name_input.set_text(&chamber.name);
+            self.notes_input.buffer().set_text(&chamber.notes);
+            self.hidden_input.set_active(chamber.hidden);
+            self.widget.set_visible(true);
+        } else {
+            self.widget.set_visible(false)
+        }
+    }
 }
 
 impl StateEventSubscriber for ChamberEdit {
@@ -106,15 +118,10 @@ impl StateEventSubscriber for ChamberEdit {
         event: StateEvent,
     ) -> Vec<StateCommand> {
         match event {
-            StateEvent::ActiveChamberChanged(None) => self.widget.set_visible(false),
-            StateEvent::ActiveChamberChanged(Some(chamber_id)) => {
-                let chamber = state.dungeon.chamber_mut(chamber_id).unwrap();
-                self.name_input.set_text(&chamber.name);
-                self.notes_input.buffer().set_text(&chamber.notes);
-                self.hidden_input.set_active(chamber.hidden);
-                self.widget.set_visible(true);
-            }
-            StateEvent::Reset => self.widget.set_visible(false),
+            StateEvent::ActiveChamberChanged(None) => self.show_chamber(state),
+            StateEvent::ActiveChamberChanged(Some(_)) => self.show_chamber(state),
+            StateEvent::Reset => self.show_chamber(state),
+            StateEvent::Reload => self.show_chamber(state),
             _ => (),
         }
         vec![]

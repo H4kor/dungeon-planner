@@ -13,9 +13,9 @@ mod view;
 
 use gtk::gdk::Display;
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, Application, ApplicationWindow, CssProvider, Label, Notebook};
+use gtk::{glib, ApplicationWindow, CssProvider, Label, Notebook};
 use gtk::{prelude::*, PopoverMenuBar};
-use observers::{DebugObserver, HistoryObserver};
+use observers::HistoryObserver;
 use state::StateController;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -229,8 +229,7 @@ fn build_ui(app: &adw::Application) {
         .build();
     window.add_action_entries([action_close]);
 
-    DebugObserver::new(control.clone());
-    history.borrow_mut().activate();
+    // DebugObserver::new(control.clone());
 
     window.present();
 }

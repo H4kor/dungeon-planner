@@ -15,6 +15,7 @@ pub enum StateEvent {
     DoorModified(DoorId),
     DoorDeleted(DoorId),
     Reset,
+    Reload,
 }
 
 impl PartialEq for StateEvent {

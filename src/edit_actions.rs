@@ -44,11 +44,10 @@ pub fn edit_actions(
                     history.borrow_mut().get_stack()
                 };
 
-                history.borrow_mut().start_restore();
                 for cmd in cmds {
-                    control.borrow_mut().apply(cmd)
+                    control.borrow_mut().apply_silent(cmd)
                 }
-                history.borrow_mut().end_restore();
+                control.borrow_mut().reload();
             }),
         )
         .build();
