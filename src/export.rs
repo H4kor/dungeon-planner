@@ -19,6 +19,8 @@ const RIGHT_END: f64 = PAGE_W - EDGE_SPACING;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
 const HEADLINE_IMAGE_SPACING: f64 = 12.0;
 const IMAGE_NOTES_SPACEING: f64 = 12.0;
+const TITLE_SPACING: f64 = 16.0;
+const TEXT_SPACING: f64 = 12.0;
 const IMAGE_SIZE: f64 = 120.0;
 const HEADLINE_COLOR: Rgb = Rgb {
     r: 0.0,
@@ -30,6 +32,13 @@ const NOTES_COLOR: Rgb = Rgb {
     g: 0.0,
     b: 0.0,
 };
+
+fn title_font() -> pango::FontDescription {
+    let mut font = pango::FontDescription::default();
+    font.set_size(24 * PANGO_SCALE);
+    font.set_weight(pango::Weight::Bold);
+    font
+}
 
 fn text_font() -> pango::FontDescription {
     let mut font = pango::FontDescription::default();
@@ -49,6 +58,18 @@ fn secondary_headline_font() -> pango::FontDescription {
     font.set_size(10 * PANGO_SCALE);
     font.set_weight(pango::Weight::Bold);
     font
+}
+
+fn layout_title() -> (pango::Context, pango::Layout) {
+    let p_ctx = pango::Context::new();
+    p_ctx.set_font_map(Some(&pangocairo::FontMap::default()));
+    let layout = pango::Layout::new(&p_ctx);
+    layout.set_width(TEXT_WIDTH as i32 * PANGO_SCALE);
+    let font = title_font();
+    layout.set_font_description(Some(&font));
+    layout.set_alignment(pango::Alignment::Center);
+
+    (p_ctx, layout)
 }
 
 fn layout_text() -> (pango::Context, pango::Layout) {
@@ -158,13 +179,21 @@ fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
     let all_prims = dungeon_to_primitives(dungeon, include_hidden);
     let bbox = prims_to_bbox(&all_prims);
 
+    let mut cur_h = START_H;
+    let (_, tl) = layout_title();
+    tl.set_text(&dungeon.name);
+    ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
+    ctx.move_to(LEFT_SPACE, cur_h);
+    pangocairo::show_layout(&ctx, &tl);
+    cur_h += (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + TITLE_SPACING;
+
     let size = bbox.max - bbox.min;
     let max_scale_x = (RIGHT_END - LEFT_SPACE) / size.x;
-    let max_scale_y = (END_H - START_H) / size.y;
+    let max_scale_y = (END_H - cur_h) / size.y;
     let scale = f64::min(max_scale_x, max_scale_y);
     ctx.translate(
         -bbox.min.x * scale + LEFT_SPACE,
-        -bbox.min.y * scale + (((END_H - START_H) - (size.y * scale)) / 2.0),
+        -bbox.min.y * scale + (((END_H - cur_h) - (size.y * scale)) / 2.0),
     );
     ctx.scale(scale, scale);
 
@@ -388,6 +417,26 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 
     // Draw entire dungeon
     draw_full_dungeon(dungeon, &ctx, true);
+
+    let (_, hl) = layout_headline();
+    hl.set_text(&dungeon.name);
+    ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
+    ctx.move_to(LEFT_SPACE, cur_h);
+    pangocairo::show_layout(&ctx, &hl);
+    cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING;
+
+    let (_, tl) = layout_text();
+    tl.set_text(&dungeon.notes);
+    ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
+    ctx.move_to(LEFT_SPACE, cur_h);
+    pangocairo::show_layout(&ctx, &tl);
+    cur_h += tl.extents().0.height() as f64 / PANGO_SCALE as f64;
+    cur_h += 20.0;
+    ctx.move_to(LEFT_SPACE, cur_h);
+    ctx.set_line_width(2.0);
+    ctx.line_to(RIGHT_END, cur_h);
+    ctx.stroke().unwrap();
+    cur_h += 20.0;
 
     for chamber in dungeon.chambers() {
         // TODO: take care of large chambers and split over multiple pages.
