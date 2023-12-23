@@ -1,11 +1,11 @@
 use cairo::Context;
-use pango::ffi::PANGO_SCALE;
+use pango::{ffi::PANGO_SCALE, LayoutLine};
 
 use crate::{
     chamber::{Chamber, ChamberDrawOptions},
     common::{BBox, Rgb, Vec2},
     door::{Door, DoorDrawOptions},
-    dungeon::Dungeon,
+    dungeon::{self, Dungeon},
     view::{grid::Grid, primitives::Primitive},
 };
 
@@ -13,17 +13,21 @@ const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
 const EDGE_SPACING: f64 = 15.0;
 const SIZE_PAGE_NUMBER: f64 = 12.0;
-const HEIGHT_PAGE_NUMBER: f64 = PAGE_H - EDGE_SPACING;
-const START_H: f64 = EDGE_SPACING;
-const END_H: f64 = PAGE_H - EDGE_SPACING - SIZE_PAGE_NUMBER;
+const HEIGHT_PAGE_NUMBER: f64 = PAGE_H - EDGE_SPACING * 2.0;
+const START_H: f64 = EDGE_SPACING * 2.0;
+const END_H: f64 = PAGE_H - (EDGE_SPACING * 2.0) - SIZE_PAGE_NUMBER;
 const LEFT_SPACE: f64 = EDGE_SPACING;
 const RIGHT_END: f64 = PAGE_W - EDGE_SPACING;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
 const HEADLINE_IMAGE_SPACING: f64 = 12.0;
-const IMAGE_NOTES_SPACEING: f64 = 12.0;
+const IMAGE_NOTES_SPACEING: f64 = 24.0;
 const TITLE_SPACING: f64 = 16.0;
 const TEXT_SPACING: f64 = 12.0;
 const IMAGE_SIZE: f64 = 120.0;
+
+const TEXT_FONT_SIZE: i32 = 10;
+const TEXT_LINE_SPACING: f64 = 1.5;
+
 const HEADLINE_COLOR: Rgb = Rgb {
     r: 0.0,
     g: 0.0,
@@ -44,7 +48,7 @@ fn title_font() -> pango::FontDescription {
 
 fn text_font() -> pango::FontDescription {
     let mut font = pango::FontDescription::default();
-    font.set_size(10 * PANGO_SCALE);
+    font.set_size(TEXT_FONT_SIZE * PANGO_SCALE);
     font
 }
 
@@ -252,25 +256,30 @@ struct PdfElement {
     pub draw: Box<dyn Fn(&Context, f64, &Dungeon, &Chamber)>,
 }
 
+/**
+ * Combination of chamber headline and image
+ * This is combined to avoid a Headline add the end of the page without further info.
+ */
 fn chamber_headline(chamber: &Chamber) -> PdfElement {
     let (_, hl) = layout_headline();
     hl.set_text(&format!("{}: {}", chamber.id, &chamber.name));
+
+    let headline_height =
+        (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING;
+    let image_height = IMAGE_SIZE + IMAGE_NOTES_SPACEING;
+
     PdfElement {
-        height: (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING,
-        draw: Box::new(move |ctx, start_h, _, _| {
+        height: headline_height + image_height,
+        draw: Box::new(move |ctx, start_h, dungeon, chamber| {
+            let mut cur_h = start_h;
+            // Draw Headline
             ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, start_h);
             pangocairo::show_layout(&ctx, &hl);
-        }),
-    }
-}
 
-fn chamber_image(_chamber: &Chamber) -> PdfElement {
-    let h = IMAGE_SIZE + IMAGE_NOTES_SPACEING;
+            cur_h += headline_height;
 
-    PdfElement {
-        height: h,
-        draw: Box::new(move |ctx, cur_h, dungeon, chamber| {
+            // Draw Image
             let mut prims = chamber.draw(
                 None,
                 Some(ChamberDrawOptions {
@@ -350,17 +359,26 @@ fn chamber_image(_chamber: &Chamber) -> PdfElement {
     }
 }
 
-fn chamber_notes(chamber: &Chamber) -> PdfElement {
+fn str_to_pdf_elements(str: String) -> Vec<PdfElement> {
     let (_, tl) = layout_text();
-    tl.set_text(&chamber.notes);
-    PdfElement {
-        height: (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + TEXT_SPACING,
-        draw: Box::new(move |ctx, start_h, _, _| {
-            ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
-            ctx.move_to(LEFT_SPACE, start_h);
-            pangocairo::show_layout(&ctx, &tl);
-        }),
-    }
+    tl.set_text(&str);
+    let lines = tl.lines();
+    lines
+        .into_iter()
+        .map(move |l| PdfElement {
+            height: (l.extents().0.height() as f64 / PANGO_SCALE as f64).max(TEXT_FONT_SIZE as f64)
+                * TEXT_LINE_SPACING,
+            draw: Box::new(move |ctx, start_h, _, _| {
+                ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
+                ctx.move_to(LEFT_SPACE, start_h);
+                pangocairo::show_layout_line(&ctx, &l);
+            }),
+        })
+        .collect()
+}
+
+fn chamber_notes(chamber: &Chamber) -> Vec<PdfElement> {
+    str_to_pdf_elements(chamber.notes.clone())
 }
 
 fn chamber_door(door: &Door) -> PdfElement {
@@ -398,7 +416,7 @@ fn chamber_door(door: &Door) -> PdfElement {
     }
 }
 
-fn chamber_separator(_chamber: &Chamber) -> PdfElement {
+fn separator() -> PdfElement {
     PdfElement {
         height: 42.0,
         draw: Box::new(|ctx, start_h, _, _| {
@@ -413,11 +431,8 @@ fn chamber_separator(_chamber: &Chamber) -> PdfElement {
 }
 
 fn chamber_elems(dungeon: &Dungeon, chamber: &Chamber) -> Vec<PdfElement> {
-    let mut elems = vec![
-        chamber_headline(chamber),
-        chamber_image(chamber),
-        chamber_notes(chamber),
-    ];
+    let mut elems = vec![chamber_headline(chamber)];
+    elems.append(&mut chamber_notes(chamber));
     for e in dungeon
         .chamber_doors(chamber.id)
         .iter()
@@ -425,7 +440,7 @@ fn chamber_elems(dungeon: &Dungeon, chamber: &Chamber) -> Vec<PdfElement> {
     {
         elems.push(e)
     }
-    elems.push(chamber_separator(chamber));
+    elems.push(separator());
     elems
 }
 
@@ -455,22 +470,24 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
     pangocairo::show_layout(&ctx, &hl);
     cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + TEXT_SPACING;
 
-    let (_, tl) = layout_text();
-    tl.set_text(&dungeon.notes);
-    ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
-    ctx.move_to(LEFT_SPACE, cur_h);
-    pangocairo::show_layout(&ctx, &tl);
-    cur_h += tl.extents().0.height() as f64 / PANGO_SCALE as f64;
-    cur_h += 20.0;
-    ctx.move_to(LEFT_SPACE, cur_h);
-    ctx.set_line_width(2.0);
-    ctx.line_to(RIGHT_END, cur_h);
-    ctx.stroke().unwrap();
-    cur_h += 20.0;
+    let mut dungeon_elems = str_to_pdf_elements(dungeon.notes.clone());
+    dungeon_elems.push(separator());
+
+    for e in dungeon_elems {
+        let next_h = cur_h + (e.height);
+        if next_h > END_H {
+            finalize_page(&ctx, cur_page_number);
+            cur_page_number += 1;
+
+            // start new page
+            ctx.show_page().unwrap();
+            cur_h = START_H;
+        }
+        (e.draw)(&ctx, cur_h, dungeon, &Chamber::new()); // TODO this is hacky. Chamber not needed
+        cur_h = cur_h + (e.height);
+    }
 
     for chamber in dungeon.chambers() {
-        // TODO: take care of large chambers and split over multiple pages.
-
         // for each chamber
         // emit list of unseparable elements
         // each element has an associated height
