@@ -12,8 +12,10 @@ use crate::{
 const PAGE_W: f64 = 595.0;
 const PAGE_H: f64 = 842.0;
 const EDGE_SPACING: f64 = 15.0;
+const SIZE_PAGE_NUMBER: f64 = 12.0;
+const HEIGHT_PAGE_NUMBER: f64 = PAGE_H - EDGE_SPACING;
 const START_H: f64 = EDGE_SPACING;
-const END_H: f64 = PAGE_H - EDGE_SPACING;
+const END_H: f64 = PAGE_H - EDGE_SPACING - SIZE_PAGE_NUMBER;
 const LEFT_SPACE: f64 = EDGE_SPACING;
 const RIGHT_END: f64 = PAGE_W - EDGE_SPACING;
 const TEXT_WIDTH: f64 = RIGHT_END - LEFT_SPACE;
@@ -60,6 +62,12 @@ fn secondary_headline_font() -> pango::FontDescription {
     font
 }
 
+fn page_number_font() -> pango::FontDescription {
+    let mut font = pango::FontDescription::default();
+    font.set_size(8 * PANGO_SCALE);
+    font
+}
+
 fn layout_title() -> (pango::Context, pango::Layout) {
     let p_ctx = pango::Context::new();
     p_ctx.set_font_map(Some(&pangocairo::FontMap::default()));
@@ -101,6 +109,18 @@ fn layout_secondary_headline() -> (pango::Context, pango::Layout) {
     layout.set_width(TEXT_WIDTH as i32 * PANGO_SCALE);
     let font = secondary_headline_font();
     layout.set_font_description(Some(&font));
+
+    (p_ctx, layout)
+}
+
+fn layout_page_number() -> (pango::Context, pango::Layout) {
+    let p_ctx = pango::Context::new();
+    p_ctx.set_font_map(Some(&pangocairo::FontMap::default()));
+    let layout = pango::Layout::new(&p_ctx);
+    layout.set_width(TEXT_WIDTH as i32 * PANGO_SCALE);
+    let font = page_number_font();
+    layout.set_font_description(Some(&font));
+    layout.set_alignment(pango::Alignment::Right);
 
     (p_ctx, layout)
 }
@@ -334,7 +354,7 @@ fn chamber_notes(chamber: &Chamber) -> PdfElement {
     let (_, tl) = layout_text();
     tl.set_text(&chamber.notes);
     PdfElement {
-        height: (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING,
+        height: (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + TEXT_SPACING,
         draw: Box::new(move |ctx, start_h, _, _| {
             ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, start_h);
@@ -409,11 +429,21 @@ fn chamber_elems(dungeon: &Dungeon, chamber: &Chamber) -> Vec<PdfElement> {
     elems
 }
 
+fn finalize_page(ctx: &Context, cur_page_number: i32) {
+    // add page number to page
+    let (_, pl) = layout_page_number();
+    pl.set_text(&format!("{}", cur_page_number));
+    ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
+    ctx.move_to(LEFT_SPACE, HEIGHT_PAGE_NUMBER);
+    pangocairo::show_layout(&ctx, &pl);
+}
+
 pub fn to_pdf(dungeon: &Dungeon, path: String) {
     let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
     let ctx = Context::new(pdf).unwrap();
 
     let mut cur_h = START_H;
+    let mut cur_page_number = 1;
 
     // Draw entire dungeon
     draw_full_dungeon(dungeon, &ctx, true);
@@ -423,7 +453,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
     ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
     ctx.move_to(LEFT_SPACE, cur_h);
     pangocairo::show_layout(&ctx, &hl);
-    cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + HEADLINE_IMAGE_SPACING;
+    cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + TEXT_SPACING;
 
     let (_, tl) = layout_text();
     tl.set_text(&dungeon.notes);
@@ -449,12 +479,18 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
         for e in elems {
             let next_h = cur_h + (e.height);
             if next_h > END_H {
+                finalize_page(&ctx, cur_page_number);
+                cur_page_number += 1;
+
+                // start new page
                 ctx.show_page().unwrap();
                 cur_h = START_H;
             }
             (e.draw)(&ctx, cur_h, dungeon, chamber);
             cur_h = cur_h + (e.height);
         }
+        // add page number to last page
+        finalize_page(&ctx, cur_page_number);
     }
 }
 
