@@ -8,6 +8,7 @@ pub mod door_edit;
 pub mod door_list;
 pub mod door_list_entry;
 pub mod dungeon_edit;
+pub mod entity_tabs;
 pub mod grid;
 pub mod primitives;
 

@@ -50,8 +50,8 @@ impl StateCommand {
                 state.active_chamber_id = *chamber_id;
                 state.active_door_id = None;
                 vec![
-                    StateEvent::ActiveChamberChanged(*chamber_id),
                     StateEvent::ActiveDoorChanged(None),
+                    StateEvent::ActiveChamberChanged(*chamber_id),
                 ]
             }
             StateCommand::SelectDoor(door_id) => {

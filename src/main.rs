@@ -13,7 +13,7 @@ mod view;
 
 use gtk::gdk::Display;
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, ApplicationWindow, CssProvider, Label, Notebook};
+use gtk::{glib, ApplicationWindow, CssProvider};
 use gtk::{prelude::*, PopoverMenuBar};
 use observers::HistoryObserver;
 use state::StateController;
@@ -26,6 +26,7 @@ use view::chamber_list::ChamberList;
 use view::door_edit::DoorEdit;
 use view::door_list::DoorList;
 use view::dungeon_edit::DungeonEdit;
+use view::entity_tabs::EntityTabs;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -127,22 +128,15 @@ fn build_ui(app: &adw::Application) {
     tool_box.append(&add_door_button.borrow().widget);
     side_box.append(&tool_box);
 
-    let object_tabs = Notebook::builder().build();
-    side_box.append(&object_tabs);
-
     let dungeon_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
         .build();
-    let dungeon_tab_label = Label::new(Some("Dungeon"));
-    object_tabs.append_page(&dungeon_tab, Some(&dungeon_tab_label));
     let dungeon_edit = DungeonEdit::new(control.clone());
     dungeon_tab.append(&dungeon_edit.borrow().widget);
 
     let chamber_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
         .build();
-    let chamber_tab_label = Label::new(Some("Chambers"));
-    object_tabs.append_page(&chamber_tab, Some(&chamber_tab_label));
     let chamber_list = ChamberList::new(control.clone());
     let chamber_edit = ChamberEdit::new(control.clone());
     chamber_tab.append(&chamber_list.borrow().scrolled_window);
@@ -151,12 +145,13 @@ fn build_ui(app: &adw::Application) {
     let door_tab = gtk::Box::builder()
         .orientation(gtk::Orientation::Vertical)
         .build();
-    let door_tab_label = Label::new(Some("Doors"));
-    object_tabs.append_page(&door_tab, Some(&door_tab_label));
     let door_list = DoorList::new(control.clone());
     let door_edit = DoorEdit::new(control.clone());
     door_tab.append(&door_list.borrow().scrolled_window);
     door_tab.append(&door_edit.borrow().widget);
+
+    let object_tabs = EntityTabs::new(control.clone(), dungeon_tab, chamber_tab, door_tab);
+    side_box.append(&object_tabs.borrow().widget);
 
     let main_box = gtk::Paned::builder()
         .start_child(&side_box)
