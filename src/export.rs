@@ -1,11 +1,11 @@
 use cairo::Context;
-use pango::{ffi::PANGO_SCALE, LayoutLine};
+use pango::ffi::PANGO_SCALE;
 
 use crate::{
     chamber::{Chamber, ChamberDrawOptions},
     common::{BBox, Rgb, Vec2},
     door::{Door, DoorDrawOptions},
-    dungeon::{self, Dungeon},
+    dungeon::Dungeon,
     view::{grid::Grid, primitives::Primitive},
 };
 

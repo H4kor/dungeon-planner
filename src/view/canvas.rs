@@ -4,6 +4,7 @@ use crate::config::{
     BACKGROUND_COLOR, PRIMARY_CHAMBER_COLOR, SECONDARY_ACTIVE_COLOR, TERTIARY_ACTIVE_COLOR,
 };
 use crate::door::{Door, DoorDrawOptions};
+use crate::state::events::StateEvent;
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
 use cairo::glib::{clone, Propagation};
 use cairo::Context;
@@ -453,8 +454,16 @@ impl StateEventSubscriber for Canvas {
     fn on_state_event(
         &mut self,
         _state: &crate::state::State,
-        _event: crate::state::events::StateEvent,
+        event: crate::state::events::StateEvent,
     ) -> Vec<StateCommand> {
+        match event {
+            StateEvent::EditModeChanged(_) => {
+                // reset internal state when the edit mode changes
+                self.selected_wall = None;
+            }
+            _ => {}
+        }
+
         self.widget.queue_draw();
         vec![]
     }
