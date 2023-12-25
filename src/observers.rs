@@ -133,7 +133,6 @@ macro_rules! txt_cmd {
             // check if prev and prev_prev are same type as current
             if let ($x(prev_id, _), $x(prev_prev_id, prev_prev_s)) = (prev_cmd, prev_prev_cmd) {
                 if prev_id == prev_prev_id && prev_id == $i {
-                    // let dist = edit_distance::edit_distance(&$s, &prev_prev_s);
                     // simplified distance to keep computation cheap
                     let dist = ($s.len() as i64 - prev_prev_s.len() as i64).abs();
                     if dist < MAX_EDIT_DISTANCE {
@@ -162,7 +161,6 @@ macro_rules! txt_cmd_dungeon {
 
             // check if prev and prev_prev are same type as current
             if let ($x(_), $x(prev_prev_s)) = (prev_cmd, prev_prev_cmd) {
-                // let dist = edit_distance::edit_distance(&$s, &prev_prev_s);
                 // simplified distance to keep computation cheap
                 let dist = ($s.len() as i64 - prev_prev_s.len() as i64).abs();
                 if dist < MAX_EDIT_DISTANCE {
