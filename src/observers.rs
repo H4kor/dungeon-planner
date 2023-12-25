@@ -1,8 +1,11 @@
-use crate::state::{StateCommand, StateCommandSubscriber, StateController, StateEventSubscriber};
+use crate::state::{
+    State, StateCommand, StateCommandSubscriber, StateController, StateEventSubscriber,
+};
 use crate::storage;
 use std::{cell::RefCell, rc::Rc};
-
 pub struct DebugObserver {}
+
+const MAX_EDIT_DISTANCE: i64 = 12;
 
 impl DebugObserver {
     pub fn new(state: Rc<RefCell<StateController>>) -> Rc<RefCell<Self>> {
@@ -71,7 +74,9 @@ impl HistoryObserver {
     }
 
     pub fn set_history(&mut self, cmds: Vec<StateCommand>) {
-        self.cmds = cmds;
+        for cmd in cmds {
+            self.on_cmd_event(&mut State::new(), cmd)
+        }
     }
 
     pub fn save_to_file(&mut self) {
@@ -87,7 +92,88 @@ impl HistoryObserver {
 
 impl StateCommandSubscriber for HistoryObserver {
     fn on_cmd_event(&mut self, _state: &mut crate::state::State, cmd: StateCommand) {
-        self.cmds.push(cmd);
+        match cmd {
+            // compressing text changes into reasonable chunks
+            StateCommand::ChangeChamberNotes(id, s) => {
+                crate::txt_cmd!(StateCommand::ChangeChamberNotes, id, s, self.cmds);
+            }
+            StateCommand::ChangeChamberName(id, s) => {
+                crate::txt_cmd!(StateCommand::ChangeChamberName, id, s, self.cmds);
+            }
+            StateCommand::ChangeDoorNotes(id, s) => {
+                crate::txt_cmd!(StateCommand::ChangeDoorNotes, id, s, self.cmds);
+            }
+            StateCommand::ChangeDoorName(id, s) => {
+                crate::txt_cmd!(StateCommand::ChangeDoorName, id, s, self.cmds);
+            }
+            StateCommand::ChangeDungeonName(s) => {
+                crate::txt_cmd_dungeon!(StateCommand::ChangeDungeonName, s, self.cmds);
+            }
+            StateCommand::ChangeDungeonNotes(s) => {
+                crate::txt_cmd_dungeon!(StateCommand::ChangeDungeonNotes, s, self.cmds);
+            }
+            x => {
+                self.cmds.push(x);
+            }
+        }
         self.unsaved_state = true;
     }
+}
+
+#[macro_export]
+macro_rules! txt_cmd {
+    ( $x:path, $i:expr, $s:expr, $c:expr ) => {{
+        let mut append = true;
+
+        let cmd_len = $c.len();
+        if cmd_len > 2 {
+            let prev_cmd = $c[cmd_len - 1].clone();
+            let prev_prev_cmd = $c[cmd_len - 2].clone();
+
+            // check if prev and prev_prev are same type as current
+            if let ($x(prev_id, _), $x(prev_prev_id, prev_prev_s)) = (prev_cmd, prev_prev_cmd) {
+                if prev_id == prev_prev_id && prev_id == $i {
+                    // let dist = edit_distance::edit_distance(&$s, &prev_prev_s);
+                    // simplified distance to keep computation cheap
+                    let dist = ($s.len() as i64 - prev_prev_s.len() as i64).abs();
+                    if dist < MAX_EDIT_DISTANCE {
+                        let p = $c.len() - 1;
+                        $c[p] = $x($i, $s.clone());
+                        append = false;
+                    }
+                }
+            }
+        }
+        if append {
+            $c.push($x($i, $s))
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! txt_cmd_dungeon {
+    ( $x:path, $s:expr, $c:expr ) => {{
+        let mut append = true;
+
+        let cmd_len = $c.len();
+        if cmd_len > 2 {
+            let prev_cmd = $c[cmd_len - 1].clone();
+            let prev_prev_cmd = $c[cmd_len - 2].clone();
+
+            // check if prev and prev_prev are same type as current
+            if let ($x(_), $x(prev_prev_s)) = (prev_cmd, prev_prev_cmd) {
+                // let dist = edit_distance::edit_distance(&$s, &prev_prev_s);
+                // simplified distance to keep computation cheap
+                let dist = ($s.len() as i64 - prev_prev_s.len() as i64).abs();
+                if dist < MAX_EDIT_DISTANCE {
+                    let p = $c.len() - 1;
+                    $c[p] = $x($s.clone());
+                    append = false;
+                }
+            }
+        }
+        if append {
+            $c.push($x($s))
+        }
+    }};
 }
