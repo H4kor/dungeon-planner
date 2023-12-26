@@ -19,7 +19,11 @@ pub struct EditModeButton {
 
 impl AddChamberButton {
     pub fn new(control: Rc<RefCell<StateController>>) -> Self {
-        let button = Button::builder().icon_name("document-new").build();
+        let button = Button::builder()
+            .icon_name("document-new")
+            .tooltip_text("Create new Chamber")
+            .has_tooltip(true)
+            .build();
         button.set_size_request(48, 48);
 
         button.connect_clicked(move |_button| {
@@ -36,8 +40,13 @@ impl EditModeButton {
         control: Rc<RefCell<StateController>>,
         mode: EditMode,
         icon_name: &str,
+        tooltip: &str,
     ) -> Rc<RefCell<Self>> {
-        let button = ToggleButton::builder().icon_name(icon_name).build();
+        let button = ToggleButton::builder()
+            .icon_name(icon_name)
+            .tooltip_text(tooltip)
+            .has_tooltip(true)
+            .build();
         button.set_size_request(48, 48);
 
         button.connect_clicked(clone!( @weak control => move |_button| {

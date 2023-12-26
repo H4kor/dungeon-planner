@@ -102,23 +102,37 @@ fn build_ui(app: &adw::Application) {
 
     let canvas = Canvas::new(control.clone());
     let add_chamber_button = AddChamberButton::new(control.clone());
-    let select_chamber_button =
-        EditModeButton::new(control.clone(), state::EditMode::Select, "edit-find");
-    let split_edge_button =
-        EditModeButton::new(control.clone(), state::EditMode::SplitEdge, "edit-cut");
+    let select_chamber_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::Select,
+        "edit-find",
+        "Select Chamber/Door",
+    );
+    let split_edge_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::SplitEdge,
+        "edit-cut",
+        "Split Wall",
+    );
     let append_verts_button = EditModeButton::new(
         control.clone(),
         state::EditMode::AppendChamber,
         "document-edit",
+        "Draw Chamber",
     );
     let delete_corner_button = EditModeButton::new(
         control.clone(),
         state::EditMode::RemoveVertex,
         "list-remove",
+        "Remove Corner",
     );
 
-    let add_door_button =
-        EditModeButton::new(control.clone(), state::EditMode::AddDoor, "insert-link");
+    let add_door_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::AddDoor,
+        "insert-link",
+        "Insert Door",
+    );
 
     tool_box.append(&add_chamber_button.widget);
     tool_box.append(&select_chamber_button.borrow().widget);
