@@ -2,6 +2,7 @@ use crate::{
     chamber::{Chamber, ChamberId, Wall},
     common::Vec2,
     door::{Door, DoorId},
+    object::{Object, ObjectId},
 };
 
 /// A Dungeon is the main object we care about
@@ -9,6 +10,7 @@ use crate::{
 pub struct Dungeon {
     pub chambers: Vec<Chamber>,
     pub doors: Vec<Door>,
+    pub objects: Vec<Object>,
     pub name: String,
     pub notes: String,
 }
@@ -18,6 +20,7 @@ impl Dungeon {
         Dungeon {
             chambers: vec![],
             doors: vec![],
+            objects: vec![],
             name: "".to_owned(),
             notes: "".to_owned(),
         }
@@ -171,6 +174,17 @@ impl Dungeon {
                 println!("door Id not found for deletion")
             }
         };
+    }
+
+    pub fn add_object(&mut self, mut obj: Object) -> ObjectId {
+        let id = self.next_object_id();
+        obj.id = id;
+        self.objects.push(obj);
+        id
+    }
+
+    fn next_object_id(&self) -> ObjectId {
+        self.objects.iter().map(|r| r.id).max().unwrap_or(0) + 1
     }
 
     pub fn walls(&self) -> Vec<Wall> {

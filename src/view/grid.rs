@@ -1,4 +1,5 @@
 use crate::common::{Rgb, Vec2};
+use crate::config::GRID_SIZE;
 use crate::view::primitives::{Line, Primitive};
 
 #[derive(Clone, Copy)]
@@ -11,7 +12,10 @@ pub struct Grid {
 impl Grid {
     pub fn new() -> Self {
         Grid {
-            size: Vec2 { x: 50, y: 50 },
+            size: Vec2 {
+                x: GRID_SIZE,
+                y: GRID_SIZE,
+            },
             color: Rgb {
                 r: 1.0,
                 b: 1.0,

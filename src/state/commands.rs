@@ -2,6 +2,7 @@ use crate::{
     chamber::{Chamber, ChamberId, WallId},
     common::Vec2,
     door::{Door, DoorId},
+    object::Object,
 };
 
 use super::{events::StateEvent, EditMode, State};
@@ -27,6 +28,7 @@ pub enum StateCommand {
     DeleteDoor(DoorId),
     ChangeDungeonName(String),
     ChangeDungeonNotes(String),
+    AddObject(Vec2<i32>, Option<ChamberId>),
 }
 
 impl StateCommand {
@@ -185,6 +187,10 @@ impl StateCommand {
             StateCommand::ChangeDungeonNotes(notes) => {
                 state.dungeon.notes = notes.clone();
                 vec![StateEvent::DungeonModified]
+            }
+            StateCommand::AddObject(pos, part_of) => {
+                let obj_id = state.dungeon.add_object(Object::new(*pos, *part_of));
+                vec![StateEvent::ObjectAdded(obj_id)]
             }
         }
     }

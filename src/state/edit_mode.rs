@@ -4,6 +4,7 @@ pub enum EditMode {
     AppendChamber,
     SplitEdge,
     AddDoor,
+    AddObject,
     RemoveVertex,
 }
 
@@ -14,6 +15,7 @@ impl EditMode {
             EditMode::AppendChamber => "AppendChamber".to_owned(),
             EditMode::SplitEdge => "SplitEdge".to_owned(),
             EditMode::AddDoor => "AddDoor".to_owned(),
+            EditMode::AddObject => "AddObject".to_owned(),
             EditMode::RemoveVertex => "RemoveVertex".to_owned(),
         }
     }
@@ -24,6 +26,7 @@ impl EditMode {
             "AppendChamber" => EditMode::AppendChamber,
             "SplitEdge" => EditMode::SplitEdge,
             "AddDoor" => EditMode::AddDoor,
+            "AddObject" => EditMode::AddObject,
             "RemoveVertex" => EditMode::RemoveVertex,
             _ => todo!(),
         }
