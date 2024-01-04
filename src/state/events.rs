@@ -1,4 +1,4 @@
-use crate::{chamber::ChamberId, door::DoorId};
+use crate::{chamber::ChamberId, door::DoorId, object::ObjectId};
 use std::hash::Hash;
 
 use super::EditMode;
@@ -14,6 +14,7 @@ pub enum StateEvent {
     DoorAdded(DoorId),
     DoorModified(DoorId),
     DoorDeleted(DoorId),
+    ObjectAdded(ObjectId),
     DungeonModified,
     Reset,
     Reload,

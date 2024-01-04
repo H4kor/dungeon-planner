@@ -1,9 +1,11 @@
 use crate::chamber::{ChamberDrawOptions, NextVert, WallId};
 use crate::common::{Rgb, Vec2};
 use crate::config::{
-    BACKGROUND_COLOR, PRIMARY_CHAMBER_COLOR, SECONDARY_ACTIVE_COLOR, TERTIARY_ACTIVE_COLOR,
+    BACKGROUND_COLOR, GRID_SIZE, PRIMARY_CHAMBER_COLOR, SECONDARY_ACTIVE_COLOR,
+    TERTIARY_ACTIVE_COLOR,
 };
 use crate::door::{Door, DoorDrawOptions};
+use crate::object::ObjectDrawOptions;
 use crate::state::events::StateEvent;
 use crate::state::{EditMode, State, StateCommand, StateController, StateEventSubscriber};
 use cairo::glib::{clone, Propagation};
@@ -251,6 +253,14 @@ impl Canvas {
             }
         }
 
+        // draw objects
+        for obj in control.dungeon().objects.iter() {
+            let prims = obj.draw(ObjectDrawOptions::empty());
+            for prim in prims {
+                prim.draw(ctx)
+            }
+        }
+
         /*
          * Mode Specific Drawing
          */
@@ -319,6 +329,7 @@ impl Canvas {
                     }
                 }
             }
+            EditMode::AddObject => {}
         }
     }
 
@@ -419,6 +430,21 @@ impl Canvas {
         return vec![];
     }
 
+    fn click_add_object(&mut self, control: &mut StateController) -> Vec<StateCommand> {
+        let pos = control
+            .state
+            .grid
+            .snap((control.state.cursor_world_pos()).into());
+
+        return vec![StateCommand::AddObject(
+            pos,
+            control.state.dungeon.chamber_at(Vec2 {
+                x: pos.x as f64 + (GRID_SIZE as f64 / 2.0),
+                y: pos.y as f64 + (GRID_SIZE as f64 / 2.0),
+            }), // TODO: link to chamber
+        )];
+    }
+
     fn click(&mut self, control: Rc<RefCell<StateController>>) -> Vec<StateCommand> {
         let control = &mut *control.borrow_mut();
         let commands = match control.state.mode {
@@ -427,6 +453,7 @@ impl Canvas {
             EditMode::SplitEdge => self.click_split_edge(control),
             EditMode::AddDoor => self.click_add_door(control),
             EditMode::RemoveVertex => self.click_remove_vertex(control),
+            EditMode::AddObject => self.click_add_object(control),
         };
         self.update();
         commands

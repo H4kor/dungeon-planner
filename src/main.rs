@@ -6,6 +6,7 @@ mod dungeon;
 mod edit_actions;
 mod export;
 mod file_actions;
+mod object;
 pub mod observers;
 mod state;
 mod storage;
@@ -134,12 +135,20 @@ fn build_ui(app: &adw::Application) {
         "Insert Door",
     );
 
+    let add_object_button = EditModeButton::new(
+        control.clone(),
+        state::EditMode::AddObject,
+        "insert-object",
+        "Insert Object",
+    );
+
     tool_box.append(&add_chamber_button.widget);
     tool_box.append(&select_chamber_button.borrow().widget);
     tool_box.append(&append_verts_button.borrow().widget);
     tool_box.append(&split_edge_button.borrow().widget);
     tool_box.append(&delete_corner_button.borrow().widget);
     tool_box.append(&add_door_button.borrow().widget);
+    tool_box.append(&add_object_button.borrow().widget);
     side_box.append(&tool_box);
 
     let dungeon_tab = gtk::Box::builder()

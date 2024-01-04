@@ -29,3 +29,4 @@ pub const DEFAULT_CHAMBER_COLOR: Rgb = Rgb {
     b: 1.0,
 };
 pub const WALL_WIDTH: f64 = 5.0;
+pub const GRID_SIZE: i32 = 50;
