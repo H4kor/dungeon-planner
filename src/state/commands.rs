@@ -30,6 +30,7 @@ pub enum StateCommand {
     ChangeDungeonNotes(String),
     AddObject(Vec2<i32>, Option<ChamberId>),
     SelectObject(Option<ObjectId>),
+    DeleteObject(ObjectId),
 }
 
 impl StateCommand {
@@ -207,6 +208,15 @@ impl StateCommand {
             StateCommand::AddObject(pos, part_of) => {
                 let obj_id = state.dungeon.add_object(Object::new(*pos, *part_of));
                 vec![StateEvent::ObjectAdded(obj_id)]
+            }
+            StateCommand::DeleteObject(object_id) => {
+                state.dungeon.remove_object(*object_id);
+                let mut events = vec![StateEvent::ObjectDeleted(*object_id)];
+                if state.active_object_id == Some(*object_id) {
+                    state.active_object_id = None;
+                    events.push(StateEvent::ActiveObjectChanged(None));
+                }
+                events
             }
         }
     }

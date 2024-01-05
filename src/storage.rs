@@ -171,7 +171,12 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["notes"].as_str().unwrap().to_owned(),
                 ))
             }
-
+            "DeleteObject" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::DeleteObject(
+                    v["object_id"].as_u64().unwrap() as u32
+                ))
+            }
             _ => None,
         },
     }
@@ -233,6 +238,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeDungeonName(_) => "ChangeDungeonName".to_owned(),
             StateCommand::ChangeDungeonNotes(_) => "ChangeDungeonNotes".to_owned(),
             StateCommand::AddObject(_, _) => "AddObject".to_owned(),
+            StateCommand::DeleteObject(_) => "DeleteObject".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddChamber => serde_json::Value::Null,
@@ -304,6 +310,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "y": pos.y,
                 "part_of": part_of,
             }),
+            StateCommand::DeleteObject(object_id) => json!({ "object_id": object_id }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
     }

@@ -55,14 +55,18 @@ pub fn edit_actions(
     let edit_action_delete = ActionEntry::builder("delete_selected")
         .activate(
             clone!(@strong control => move |_window: &SimpleActionGroup, _, _| {
-                let active_chamber_id = control.borrow().state.active_chamber_id;
-                if let Some(chamber_id) = active_chamber_id {
-                    control.borrow_mut().apply(StateCommand::DeleteChamber(chamber_id))
-                } else {
-                    let active_door_id = control.borrow().state.active_door_id;
-                    if let Some(door_id) = active_door_id {
-                        control.borrow_mut().apply(StateCommand::DeleteDoor(door_id));
-                    }
+                let mut control = control.borrow_mut();
+                if let Some(door_id) = control.state.active_door_id {
+                    control
+                        .apply(StateCommand::DeleteDoor(door_id))
+                }
+                if let Some(chamber_id) = control.state.active_chamber_id {
+                    control
+                        .apply(StateCommand::DeleteChamber(chamber_id))
+                }
+                if let Some(object_id) = control.state.active_object_id {
+                    control
+                        .apply(StateCommand::DeleteObject(object_id))
                 }
             }),
         )

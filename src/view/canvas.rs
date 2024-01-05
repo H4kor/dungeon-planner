@@ -91,6 +91,10 @@ impl Canvas {
                         control
                             .apply(StateCommand::DeleteChamber(chamber_id))
                     }
+                    if let Some(object_id) = control.state.active_object_id {
+                        control
+                            .apply(StateCommand::DeleteObject(object_id))
+                    }
                 },
                 _ => (),
             }
