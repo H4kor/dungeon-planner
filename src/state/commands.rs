@@ -2,7 +2,7 @@ use crate::{
     chamber::{Chamber, ChamberId, WallId},
     common::Vec2,
     door::{Door, DoorId},
-    object::Object,
+    object::{Object, ObjectId},
 };
 
 use super::{events::StateEvent, EditMode, State};
@@ -29,6 +29,7 @@ pub enum StateCommand {
     ChangeDungeonName(String),
     ChangeDungeonNotes(String),
     AddObject(Vec2<i32>, Option<ChamberId>),
+    SelectObject(Option<ObjectId>),
 }
 
 impl StateCommand {
@@ -53,6 +54,7 @@ impl StateCommand {
                 state.active_door_id = None;
                 vec![
                     StateEvent::ActiveDoorChanged(None),
+                    StateEvent::ActiveObjectChanged(None),
                     StateEvent::ActiveChamberChanged(*chamber_id),
                 ]
             }
@@ -61,7 +63,19 @@ impl StateCommand {
                 state.active_door_id = *door_id;
                 vec![
                     StateEvent::ActiveChamberChanged(None),
+                    StateEvent::ActiveObjectChanged(None),
                     StateEvent::ActiveDoorChanged(*door_id),
+                ]
+            }
+            StateCommand::SelectObject(obj_id) => {
+                state.active_chamber_id = None;
+                state.active_door_id = None;
+                state.active_object_id = *obj_id;
+
+                vec![
+                    StateEvent::ActiveChamberChanged(None),
+                    StateEvent::ActiveDoorChanged(None),
+                    StateEvent::ActiveObjectChanged(*obj_id),
                 ]
             }
             StateCommand::AddVertexToChamber(chamber_id, pos) => {

@@ -105,4 +105,35 @@ impl Object {
             }),
         ]
     }
+
+    pub(crate) fn contains(&self, pos: Vec2<f64>) -> bool {
+        let s: f64 = GRID_SIZE as f64;
+        let obj_pos: Vec2<f64> = self.pos.into();
+        pos.x >= obj_pos.x
+            && pos.y >= obj_pos.y
+            && pos.x <= (obj_pos.x + s)
+            && pos.y <= (obj_pos.y + s)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::common::Vec2;
+
+    use super::Object;
+
+    #[test]
+    fn test_contains() {
+        let obj = Object::new(Vec2 { x: 0, y: 0 }, None);
+
+        assert_eq!(obj.contains(Vec2 { x: 0.0, y: 0.0 }), true);
+        assert_eq!(obj.contains(Vec2 { x: 20.0, y: 0.0 }), true);
+        assert_eq!(obj.contains(Vec2 { x: 0.0, y: 20.0 }), true);
+        assert_eq!(obj.contains(Vec2 { x: 20.0, y: 20.0 }), true);
+        assert_eq!(obj.contains(Vec2 { x: 50.0, y: 50.0 }), true);
+        assert_eq!(obj.contains(Vec2 { x: -20.0, y: 20.0 }), false);
+        assert_eq!(obj.contains(Vec2 { x: 20.0, y: -20.0 }), false);
+        assert_eq!(obj.contains(Vec2 { x: -20.0, y: -20.0 }), false);
+        assert_eq!(obj.contains(Vec2 { x: 51.0, y: 51.0 }), false);
+    }
 }

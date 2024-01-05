@@ -7,6 +7,7 @@ use crate::{
     common::Vec2,
     door::{Door, DoorId},
     dungeon::Dungeon,
+    object::Object,
     view::{grid::Grid, View},
 };
 pub use commands::StateCommand;
@@ -27,6 +28,7 @@ pub struct State {
     pub mode: EditMode,
     pub active_chamber_id: Option<ChamberId>,
     pub active_door_id: Option<DoorId>,
+    pub active_object_id: Option<DoorId>,
 }
 pub struct StateController {
     pub state: State,
@@ -48,6 +50,7 @@ impl State {
         State {
             active_chamber_id: None,
             active_door_id: None,
+            active_object_id: None,
             dungeon: Dungeon::new(),
             grid: Grid::new(),
             view: View::new(),
@@ -74,6 +77,13 @@ impl State {
 
     pub fn cursor_world_pos(&self) -> Vec2<f64> {
         self.cursor.pos + self.view.world_min().into()
+    }
+
+    pub(crate) fn active_object(&self) -> Option<&Object> {
+        match self.active_object_id {
+            Some(object_id) => self.dungeon.object(object_id),
+            None => None,
+        }
     }
 }
 
