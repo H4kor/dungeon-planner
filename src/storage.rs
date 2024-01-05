@@ -30,6 +30,13 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     None => None,
                 }))
             }
+            "SelectObject" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::SelectObject(match v["object_id"].as_u64() {
+                    Some(x) => Some(x as ChamberId),
+                    None => None,
+                }))
+            }
             "AddVertexToChamber" => {
                 println!("{}", data);
                 let v: Value = serde_json::from_str(data).unwrap();
@@ -208,6 +215,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::AddChamber => "AddChamber".to_owned(),
             StateCommand::SelectChamber(_) => "SelectChamber".to_owned(),
             StateCommand::SelectDoor(_) => "SelectDoor".to_owned(),
+            StateCommand::SelectObject(_) => "SelectObject".to_owned(),
             StateCommand::AddVertexToChamber(_, _) => "AddVertexToChamber".to_owned(),
             StateCommand::ChangeChamberName(_, _) => "ChangeChamberName".to_owned(),
             StateCommand::ChangeChamberNotes(_, _) => "ChangeChamberNotes".to_owned(),
@@ -230,6 +238,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::AddChamber => serde_json::Value::Null,
             StateCommand::SelectChamber(chamber_id) => json!({ "chamber_id": chamber_id }),
             StateCommand::SelectDoor(door_id) => json!({ "door_id": door_id }),
+            StateCommand::SelectObject(object_id) => json!({ "object_id": object_id }),
             StateCommand::AddVertexToChamber(chamber_id, pos) => json!({
                 "chamber_id": chamber_id,
                 "x": pos.x,

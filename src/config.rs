@@ -6,7 +6,7 @@ pub const BACKGROUND_COLOR: Rgb = Rgb {
     b: 194.0 / 255.0,
 };
 
-pub const PRIMARY_CHAMBER_COLOR: Rgb = Rgb {
+pub const PRIMARY_ACTIVE_COLOR: Rgb = Rgb {
     r: 255.0 / 255.0,
     g: 135.0 / 255.0,
     b: 57.0 / 255.0,

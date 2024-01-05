@@ -196,4 +196,17 @@ impl Dungeon {
         }
         all_walls
     }
+
+    pub(crate) fn object_at(&self, pos: Vec2<f64>) -> Option<ObjectId> {
+        for object in self.objects.iter() {
+            if object.contains(pos) {
+                return Some(object.id);
+            }
+        }
+        None
+    }
+
+    pub(crate) fn object(&self, id: ObjectId) -> Option<&Object> {
+        self.objects.iter().find(|o| o.id == id)
+    }
 }

@@ -10,6 +10,7 @@ pub enum StateEvent {
     ChamberDeleted(ChamberId),
     ActiveChamberChanged(Option<ChamberId>),
     ActiveDoorChanged(Option<DoorId>),
+    ActiveObjectChanged(Option<ObjectId>),
     EditModeChanged(EditMode),
     DoorAdded(DoorId),
     DoorModified(DoorId),

@@ -1,7 +1,7 @@
 use crate::chamber::{ChamberDrawOptions, NextVert, WallId};
 use crate::common::{Rgb, Vec2};
 use crate::config::{
-    BACKGROUND_COLOR, GRID_SIZE, PRIMARY_CHAMBER_COLOR, SECONDARY_ACTIVE_COLOR,
+    BACKGROUND_COLOR, GRID_SIZE, PRIMARY_ACTIVE_COLOR, SECONDARY_ACTIVE_COLOR,
     TERTIARY_ACTIVE_COLOR,
 };
 use crate::door::{Door, DoorDrawOptions};
@@ -216,12 +216,21 @@ impl Canvas {
                             } else {
                                 None
                             }
+                        } else if let Some(obj) = control.state.active_object() {
+                            if obj.part_of == Some(chamber.id) {
+                                Some(ChamberDrawOptions {
+                                    color: Some(SECONDARY_ACTIVE_COLOR),
+                                    fill: None,
+                                })
+                            } else {
+                                None
+                            }
                         } else {
                             None
                         }
                     }
                     true => Some(ChamberDrawOptions {
-                        color: Some(PRIMARY_CHAMBER_COLOR),
+                        color: Some(PRIMARY_ACTIVE_COLOR),
                         fill: None,
                     }),
                 },
@@ -235,7 +244,7 @@ impl Canvas {
         for door in control.dungeon().doors.iter() {
             let options = match control.state.active_door_id == Some(door.id) {
                 true => DoorDrawOptions {
-                    color: Some(PRIMARY_CHAMBER_COLOR),
+                    color: Some(PRIMARY_ACTIVE_COLOR),
                 },
                 false => DoorDrawOptions::empty(),
             };
@@ -255,7 +264,12 @@ impl Canvas {
 
         // draw objects
         for obj in control.dungeon().objects.iter() {
-            let prims = obj.draw(ObjectDrawOptions::empty());
+            let mut options = ObjectDrawOptions::empty();
+            if control.state.active_object_id == Some(obj.id) {
+                options.color = Some(PRIMARY_ACTIVE_COLOR)
+            }
+            let prims = obj.draw(options);
+
             for prim in prims {
                 prim.draw(ctx)
             }
@@ -340,18 +354,26 @@ impl Canvas {
     }
 
     fn click_select(&mut self, control: &mut StateController) -> Vec<StateCommand> {
-        let door_id = control
+        let object_id = control
             .state
             .dungeon
-            .door_at(control.state.cursor_world_pos());
-        if let Some(id) = door_id {
-            vec![StateCommand::SelectDoor(Some(id))]
+            .object_at(control.state.cursor_world_pos());
+        if let Some(id) = object_id {
+            vec![StateCommand::SelectObject(Some(id))]
         } else {
-            let chamber_id = control
+            let door_id = control
                 .state
                 .dungeon
-                .chamber_at(control.state.cursor_world_pos());
-            vec![StateCommand::SelectChamber(chamber_id)]
+                .door_at(control.state.cursor_world_pos());
+            if let Some(id) = door_id {
+                vec![StateCommand::SelectDoor(Some(id))]
+            } else {
+                let chamber_id = control
+                    .state
+                    .dungeon
+                    .chamber_at(control.state.cursor_world_pos());
+                vec![StateCommand::SelectChamber(chamber_id)]
+            }
         }
     }
 
