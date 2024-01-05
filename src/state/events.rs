@@ -16,6 +16,7 @@ pub enum StateEvent {
     DoorModified(DoorId),
     DoorDeleted(DoorId),
     ObjectAdded(ObjectId),
+    ObjectDeleted(ObjectId),
     DungeonModified,
     Reset,
     Reload,

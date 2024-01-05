@@ -80,7 +80,7 @@ impl Dungeon {
         }
     }
 
-    pub(crate) fn chamber_at(&self, pos: Vec2<f64>) -> Option<ChamberId> {
+    pub fn chamber_at(&self, pos: Vec2<f64>) -> Option<ChamberId> {
         for chamber in &self.chambers {
             if chamber.contains_point(pos.into()) {
                 return Some(chamber.id);
@@ -89,7 +89,7 @@ impl Dungeon {
         None
     }
 
-    pub(crate) fn chambers(&self) -> &Vec<Chamber> {
+    pub fn chambers(&self) -> &Vec<Chamber> {
         &self.chambers
     }
 
@@ -97,7 +97,7 @@ impl Dungeon {
      * Removes a chamber from the dungeon and all doors which are part of this chamber.
      * Returns a list of removed DoorIds
      */
-    pub(crate) fn remove_chamber(&mut self, chamber_id: u32) -> Vec<DoorId> {
+    pub fn remove_chamber(&mut self, chamber_id: u32) -> Vec<DoorId> {
         let idx = self.chambers.iter().position(|r| r.id == chamber_id);
         match idx {
             Some(i) => {
@@ -127,7 +127,7 @@ impl Dungeon {
         self.doors.iter_mut().find(|d| d.id == id)
     }
 
-    pub(crate) fn door_at(&self, pos: Vec2<f64>) -> Option<DoorId> {
+    pub fn door_at(&self, pos: Vec2<f64>) -> Option<DoorId> {
         for door in &self.doors {
             if door.contains_point(
                 self.chamber(door.part_of)
@@ -157,14 +157,14 @@ impl Dungeon {
         self.doors.iter().map(|r| r.id).max().unwrap_or(0) + 1
     }
 
-    pub(crate) fn chamber_doors(&self, chamber_id: ChamberId) -> Vec<&Door> {
+    pub fn chamber_doors(&self, chamber_id: ChamberId) -> Vec<&Door> {
         self.doors
             .iter()
             .filter(|d| d.part_of == chamber_id || d.leads_to == Some(chamber_id))
             .collect()
     }
 
-    pub(crate) fn remove_door(&mut self, door_id: DoorId) {
+    pub fn remove_door(&mut self, door_id: DoorId) {
         let idx = self.doors.iter().position(|r| r.id == door_id);
         match idx {
             Some(i) => {
@@ -197,7 +197,7 @@ impl Dungeon {
         all_walls
     }
 
-    pub(crate) fn object_at(&self, pos: Vec2<f64>) -> Option<ObjectId> {
+    pub fn object_at(&self, pos: Vec2<f64>) -> Option<ObjectId> {
         for object in self.objects.iter() {
             if object.contains(pos) {
                 return Some(object.id);
@@ -206,7 +206,19 @@ impl Dungeon {
         None
     }
 
-    pub(crate) fn object(&self, id: ObjectId) -> Option<&Object> {
+    pub fn object(&self, id: ObjectId) -> Option<&Object> {
         self.objects.iter().find(|o| o.id == id)
+    }
+
+    pub fn remove_object(&mut self, object_id: u32) {
+        let idx = self.objects.iter().position(|r| r.id == object_id);
+        match idx {
+            Some(i) => {
+                self.objects.remove(i);
+            }
+            None => {
+                println!("object Id not found for deletion")
+            }
+        };
     }
 }
