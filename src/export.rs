@@ -6,6 +6,7 @@ use crate::{
     common::{BBox, Rgb, Vec2},
     door::{Door, DoorDrawOptions},
     dungeon::Dungeon,
+    object::ObjectDrawOptions,
     view::{grid::Grid, primitives::Primitive},
 };
 
@@ -173,6 +174,22 @@ fn dungeon_to_primitives(dungeon: &Dungeon, include_hidden: bool) -> Vec<Box<dyn
         all_prims.append(&mut prims)
     }
 
+    // draw objects
+    for object in dungeon.objects.iter() {
+        if include_hidden == false && object.hidden {
+            continue;
+        }
+
+        let mut prims = object.draw(ObjectDrawOptions {
+            color: Some(Rgb {
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
+            }),
+        });
+        all_prims.append(&mut prims)
+    }
+
     all_prims
 }
 
@@ -308,6 +325,18 @@ fn chamber_headline(chamber: &Chamber) -> PdfElement {
                         }),
                     },
                 );
+                prims.append(&mut door_prims)
+            }
+
+            // draw objects
+            for door in dungeon.chamber_objects(chamber.id).iter() {
+                let mut door_prims = door.draw(ObjectDrawOptions {
+                    color: Some(Rgb {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                    }),
+                });
                 prims.append(&mut door_prims)
             }
 

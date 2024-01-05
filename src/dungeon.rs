@@ -221,4 +221,11 @@ impl Dungeon {
             }
         };
     }
+
+    pub(crate) fn chamber_objects(&self, chamber_id: u32) -> Vec<&Object> {
+        self.objects
+            .iter()
+            .filter(|d| d.part_of == Some(chamber_id))
+            .collect()
+    }
 }
