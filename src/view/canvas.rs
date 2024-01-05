@@ -460,7 +460,7 @@ impl Canvas {
         let pos = control
             .state
             .grid
-            .snap((control.state.cursor_world_pos()).into());
+            .cell((control.state.cursor_world_pos()).into());
 
         return vec![StateCommand::AddObject(
             pos,
