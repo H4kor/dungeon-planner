@@ -176,8 +176,15 @@ fn dungeon_to_primitives(dungeon: &Dungeon, include_hidden: bool) -> Vec<Box<dyn
 
     // draw objects
     for object in dungeon.objects.iter() {
+        // hide if object is hidden
         if include_hidden == false && object.hidden {
             continue;
+        }
+        // hide if chamber of object is hidden
+        if let Some(chamber_id) = object.part_of {
+            if dungeon.chamber(chamber_id).unwrap().hidden {
+                continue;
+            }
         }
 
         let mut prims = object.draw(ObjectDrawOptions {
