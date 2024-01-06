@@ -55,6 +55,7 @@ impl Grid {
                 },
                 color: self.color,
                 width: self.width,
+                dashed: false,
             });
             lines.push(line);
         }
@@ -70,6 +71,7 @@ impl Grid {
                 },
                 color: self.color,
                 width: self.width,
+                dashed: false,
             });
             lines.push(line);
         }

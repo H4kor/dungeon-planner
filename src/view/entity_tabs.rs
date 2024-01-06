@@ -41,8 +41,14 @@ impl StateEventSubscriber for EntityTabs {
             StateEvent::ActiveDoorChanged(Some(_)) => {
                 self.widget.set_current_page(Some(2));
             }
+            StateEvent::ActiveObjectChanged(Some(_)) => {
+                self.widget.set_current_page(Some(3));
+            }
             StateEvent::DoorAdded(_) => {
                 self.widget.set_current_page(Some(2));
+            }
+            StateEvent::ObjectAdded(_) => {
+                self.widget.set_current_page(Some(3));
             }
             _ => {}
         };
