@@ -2,7 +2,7 @@ use crate::{
     chamber::{Chamber, ChamberId, WallId},
     common::Vec2,
     door::{Door, DoorId},
-    object::{Object, ObjectId},
+    object::{Object, ObjectId, ObjectStyle},
 };
 
 use super::{events::StateEvent, EditMode, State};
@@ -34,6 +34,7 @@ pub enum StateCommand {
     ChangeObjectName(ObjectId, String),
     ChangeObjectNotes(ObjectId, String),
     ChangeObjectHidden(ObjectId, bool),
+    ChangeObjectStyle(ObjectId, ObjectStyle),
 }
 
 impl StateCommand {
@@ -231,6 +232,10 @@ impl StateCommand {
             }
             StateCommand::ChangeObjectHidden(object_id, hidden) => {
                 state.dungeon.object_mut(*object_id).unwrap().hidden = *hidden;
+                vec![StateEvent::ObjectModified(*object_id)]
+            }
+            StateCommand::ChangeObjectStyle(object_id, style) => {
+                state.dungeon.object_mut(*object_id).unwrap().style = *style;
                 vec![StateEvent::ObjectModified(*object_id)]
             }
         }

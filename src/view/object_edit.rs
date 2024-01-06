@@ -6,6 +6,7 @@ use gtk::{gio, CheckButton, ListItem, PolicyType, ScrolledWindow, SignalListItem
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
+use crate::object::ObjectStyle;
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
@@ -17,6 +18,9 @@ pub struct ObjectEdit {
     name_input: Entry,
     notes_input: TextView,
     hidden_input: CheckButton,
+    blocker_style: CheckButton,
+    stair_style: CheckButton,
+    round_style: CheckButton,
 }
 
 impl ObjectEdit {
@@ -30,6 +34,16 @@ impl ObjectEdit {
         let hidden_i = CheckButton::builder()
             .css_classes(vec!["form-input"])
             .label("Hidden")
+            .build();
+        let blocker_style = CheckButton::builder().label("Blocker").build();
+        let stair_style = CheckButton::builder()
+            .label("Stairs")
+            .group(&blocker_style)
+            .build();
+        let round_style = CheckButton::builder()
+            .css_classes(vec!["form-input"])
+            .label("Round")
+            .group(&blocker_style)
             .build();
 
         let chamber_vec: Vec<ChamberObject> =
@@ -105,6 +119,33 @@ impl ObjectEdit {
             }),
         );
 
+        blocker_style.connect_toggled(
+            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_object_id {
+                    None => (),
+                    Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Blocker)),
+                }
+            }),
+        );
+
+        stair_style.connect_toggled(
+            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_object_id {
+                    None => (),
+                    Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Stairs)),
+                }
+            }),
+        );
+
+        round_style.connect_toggled(
+            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+                match control.state.active_object_id {
+                    None => (),
+                    Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Round)),
+                }
+            }),
+        );
+
         let b = Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
@@ -117,6 +158,12 @@ impl ObjectEdit {
         b.append(&Label::new(Some("Name")));
         b.append(&name_i);
         b.append(&hidden_i);
+
+        b.append(&Label::new(Some("Style")));
+        b.append(&blocker_style);
+        b.append(&stair_style);
+        b.append(&round_style);
+
         b.append(&Label::new(Some("Notes")));
         b.append(
             &ScrolledWindow::builder()
@@ -136,6 +183,9 @@ impl ObjectEdit {
             name_input: name_i,
             notes_input: notes_i,
             hidden_input: hidden_i,
+            blocker_style: blocker_style,
+            stair_style: stair_style,
+            round_style: round_style,
         }));
 
         control.borrow_mut().subscribe_any(re.clone());
@@ -159,6 +209,11 @@ impl ObjectEdit {
             self.name_input.set_text(&object.name);
             self.notes_input.buffer().set_text(&object.notes);
             self.hidden_input.set_active(object.hidden);
+            match object.style {
+                ObjectStyle::Blocker => self.blocker_style.set_active(true),
+                ObjectStyle::Stairs => self.stair_style.set_active(true),
+                ObjectStyle::Round => self.round_style.set_active(true),
+            };
             self.widget.set_visible(true);
         } else {
             self.widget.set_visible(false);
