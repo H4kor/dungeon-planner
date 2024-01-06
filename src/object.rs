@@ -85,6 +85,7 @@ impl Object {
             // draw x in box
             Box::new(Line {
                 color: color,
+                dashed: self.hidden,
                 from: Vec2 {
                     x: self.pos.x as f64,
                     y: self.pos.y as f64,
@@ -97,6 +98,7 @@ impl Object {
             }),
             Box::new(Line {
                 color: color,
+                dashed: self.hidden,
                 from: Vec2 {
                     x: (self.pos.x + GRID_SIZE) as f64,
                     y: self.pos.y as f64,

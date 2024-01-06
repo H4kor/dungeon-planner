@@ -17,6 +17,7 @@ pub struct Line {
     pub to: Vec2<f64>,
     pub color: Rgb,
     pub width: f64,
+    pub dashed: bool,
 }
 
 pub struct Polygon {
@@ -58,6 +59,11 @@ impl Primitive for Point {
 
 impl Primitive for Line {
     fn draw(&self, ctx: &gtk::cairo::Context) {
+        if self.dashed {
+            ctx.set_dash(&vec![20.0, 10.0], 0.0);
+        } else {
+            ctx.set_dash(&vec![], 0.0);
+        }
         ctx.set_line_width(self.width);
         ctx.set_source_rgb(self.color.r, self.color.g, self.color.b);
         ctx.move_to(self.from.x, self.from.y);

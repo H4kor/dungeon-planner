@@ -97,6 +97,7 @@ impl Chamber {
                             to: v.pos.into(),
                             color: color,
                             width: WALL_WIDTH,
+                            dashed: false,
                         })];
                     } else if self.first_vert == None {
                         // special case: placement of first vertex

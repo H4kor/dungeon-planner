@@ -153,6 +153,7 @@ impl Canvas {
                             b: 0.0,
                         },
                         width: 3.0,
+                        dashed: false,
                     }
                     .draw(ctx),
                 }
@@ -324,6 +325,7 @@ impl Canvas {
                                 b: 0.0,
                             };
                             Line {
+                                dashed: false,
                                 from: w1.p1.into(),
                                 to: w1.p2.into(),
                                 color: color,
@@ -331,6 +333,7 @@ impl Canvas {
                             }
                             .draw(ctx);
                             Line {
+                                dashed: false,
                                 from: w2.p1.into(),
                                 to: w2.p2.into(),
                                 color: color,

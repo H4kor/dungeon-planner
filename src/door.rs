@@ -68,12 +68,14 @@ impl Door {
                     from: world_pos - (self.width / 2.0) * tangent,
                     to: world_pos + (self.width / 2.0) * tangent,
                     width: 10.0,
+                    dashed: false,
                 }),
                 Box::new(Line {
                     color: color,
                     from: world_pos - (self.width / 4.0) * tangent,
                     to: world_pos + (self.width / 4.0) * tangent,
                     width: 20.0,
+                    dashed: false,
                 }),
             ]
         } else {
@@ -82,6 +84,7 @@ impl Door {
                 from: world_pos - (self.width / 2.0) * tangent,
                 to: world_pos + (self.width / 2.0) * tangent,
                 width: 20.0,
+                dashed: false,
             })]
         }
     }

@@ -2,14 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gtk::glib::clone;
-use gtk::{
-    gio, glib, CheckButton, DropDown, Expression, ListItem, PolicyType, ScrolledWindow,
-    SignalListItemFactory,
-};
+use gtk::{gio, CheckButton, ListItem, PolicyType, ScrolledWindow, SignalListItemFactory};
 use gtk::{prelude::*, Label, TextView};
 use gtk::{Box, Entry};
 
-use crate::chamber::ChamberId;
 use crate::state::events::StateEvent;
 use crate::state::{StateCommand, StateController, StateEventSubscriber};
 
