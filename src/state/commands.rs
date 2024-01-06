@@ -31,6 +31,9 @@ pub enum StateCommand {
     AddObject(Vec2<i32>, Option<ChamberId>),
     SelectObject(Option<ObjectId>),
     DeleteObject(ObjectId),
+    ChangeObjectName(ObjectId, String),
+    ChangeObjectNotes(ObjectId, String),
+    ChangeObjectHidden(ObjectId, bool),
 }
 
 impl StateCommand {
@@ -217,6 +220,18 @@ impl StateCommand {
                     events.push(StateEvent::ActiveObjectChanged(None));
                 }
                 events
+            }
+            StateCommand::ChangeObjectName(object_id, name) => {
+                state.dungeon.object_mut(*object_id).unwrap().name = name.clone();
+                vec![StateEvent::ObjectModified(*object_id)]
+            }
+            StateCommand::ChangeObjectNotes(object_id, notes) => {
+                state.dungeon.object_mut(*object_id).unwrap().notes = notes.clone();
+                vec![StateEvent::ObjectModified(*object_id)]
+            }
+            StateCommand::ChangeObjectHidden(object_id, hidden) => {
+                state.dungeon.object_mut(*object_id).unwrap().hidden = *hidden;
+                vec![StateEvent::ObjectModified(*object_id)]
             }
         }
     }

@@ -228,4 +228,8 @@ impl Dungeon {
             .filter(|d| d.part_of == Some(chamber_id))
             .collect()
     }
+
+    pub fn object_mut(&mut self, id: ObjectId) -> Option<&mut Object> {
+        self.objects.iter_mut().find(|d| d.id == id)
+    }
 }

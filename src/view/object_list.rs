@@ -53,7 +53,7 @@ impl ObjectList {
                                 .object_id();
                             control
                                 .borrow_mut()
-                                .apply(StateCommand::DeleteDoor(object_id))
+                                .apply(StateCommand::DeleteObject(object_id))
                         }
                     },
                     _ => (),
@@ -93,13 +93,13 @@ impl StateEventSubscriber for ObjectList {
             StateEvent::ObjectAdded(_) => {
                 self.rebuild_list(state);
             }
-            // StateEvent::DoorModified(object_id) => {
-            //     let door = state.dungeon.door(object_id).unwrap();
-            //     self.rows
-            //         .iter_mut()
-            //         .filter(|r| r.object_id() == object_id)
-            //         .for_each(|w| w.update(door));
-            // }
+            StateEvent::ObjectModified(object_id) => {
+                let object = state.dungeon.object(object_id).unwrap();
+                self.rows
+                    .iter_mut()
+                    .filter(|r| r.object_id() == object_id)
+                    .for_each(|w| w.update(object));
+            }
             StateEvent::ActiveObjectChanged(object_id) => match object_id {
                 None => self.list_box.unselect_all(),
                 Some(object_id) => self
@@ -108,7 +108,7 @@ impl StateEventSubscriber for ObjectList {
             },
             StateEvent::Reset => self.rebuild_list(state),
             StateEvent::Reload => self.rebuild_list(state),
-            StateEvent::DoorDeleted(_) => self.rebuild_list(state),
+            StateEvent::ObjectDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
         vec![]

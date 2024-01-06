@@ -28,6 +28,8 @@ use view::door_edit::DoorEdit;
 use view::door_list::DoorList;
 use view::dungeon_edit::DungeonEdit;
 use view::entity_tabs::EntityTabs;
+use view::object_edit::ObjectEdit;
+use view::object_list::ObjectList;
 
 const APP_ID: &str = "org.rerere.DungeonPlanner";
 
@@ -173,7 +175,21 @@ fn build_ui(app: &adw::Application) {
     door_tab.append(&door_list.borrow().scrolled_window);
     door_tab.append(&door_edit.borrow().widget);
 
-    let object_tabs = EntityTabs::new(control.clone(), dungeon_tab, chamber_tab, door_tab);
+    let object_tab = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+    let object_list = ObjectList::new(control.clone());
+    let object_edit = ObjectEdit::new(control.clone());
+    object_tab.append(&object_list.borrow().scrolled_window);
+    object_tab.append(&object_edit.borrow().widget);
+
+    let object_tabs = EntityTabs::new(
+        control.clone(),
+        dungeon_tab,
+        chamber_tab,
+        door_tab,
+        object_tab,
+    );
     side_box.append(&object_tabs.borrow().widget);
 
     let main_box = gtk::Paned::builder()
