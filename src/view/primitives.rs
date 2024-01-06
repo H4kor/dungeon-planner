@@ -12,6 +12,13 @@ pub struct Point {
     pub color: Rgb,
 }
 
+pub struct Circle {
+    pub at: Vec2<f64>,
+    pub width: f64,
+    pub radius: f64,
+    pub color: Rgb,
+}
+
 pub struct Line {
     pub from: Vec2<f64>,
     pub to: Vec2<f64>,
@@ -173,6 +180,36 @@ impl Primitive for Text {
         BBox {
             min: self.at,
             max: self.at,
+        }
+    }
+}
+
+impl Primitive for Circle {
+    fn draw(&self, ctx: &gtk::cairo::Context) {
+        ctx.set_line_width(self.width);
+        ctx.set_source_rgb(self.color.r, self.color.g, self.color.b);
+        ctx.arc(
+            self.at.x,
+            self.at.y,
+            self.radius,
+            0.0,
+            2.0 * std::f64::consts::PI,
+        ); // full circle
+        ctx.stroke().unwrap();
+    }
+
+    fn bbox(&self) -> BBox {
+        BBox {
+            min: self.at
+                - Vec2 {
+                    x: self.radius,
+                    y: self.radius,
+                },
+            max: self.at
+                + Vec2 {
+                    x: self.radius,
+                    y: self.radius,
+                },
         }
     }
 }

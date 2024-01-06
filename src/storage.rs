@@ -1,7 +1,7 @@
 use crate::chamber::{ChamberId, WallId};
 use crate::common::Vec2;
 use crate::door::{Door, DoorId};
-use crate::object::ObjectId;
+use crate::object::{ObjectId, ObjectStyle};
 use crate::state::{EditMode, StateCommand};
 use serde_json::json;
 use serde_json::Value;
@@ -199,6 +199,13 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                     v["hidden"].as_bool().unwrap(),
                 ))
             }
+            "ChangeObjectStyle" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeObjectStyle(
+                    v["object_id"].as_u64().unwrap() as ObjectId,
+                    ObjectStyle::from_str(v["style"].as_str().unwrap()),
+                ))
+            }
 
             _ => None,
         },
@@ -265,6 +272,7 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeObjectName(_, _) => "ChangeObjectName".to_owned(),
             StateCommand::ChangeObjectNotes(_, _) => "ChangeObjectNotes".to_owned(),
             StateCommand::ChangeObjectHidden(_, _) => "ChangeObjectHidden".to_owned(),
+            StateCommand::ChangeObjectStyle(_, _) => "ChangeObjectStyle".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddChamber => serde_json::Value::Null,
@@ -348,6 +356,10 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeObjectHidden(object_id, hidden) => json!({
                 "object_id": object_id,
                 "hidden": hidden,
+            }),
+            StateCommand::ChangeObjectStyle(object_id, style) => json!({
+                "object_id": object_id,
+                "style": style.to_str(),
             }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
