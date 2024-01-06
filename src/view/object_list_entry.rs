@@ -48,12 +48,11 @@ glib::wrapper! {
 
 impl ObjectListEntry {
     fn object_to_label(object: &DungeonObject) -> String {
-        "Object".to_owned()
-        // if object.name.is_empty() {
-        //     format!("{}) {}", object.id, "Door")
-        // } else {
-        //     format!("{}) {}", object.id, &object.name)
-        // }
+        if object.name.is_empty() {
+            format!("{}) {}", object.id, "Object")
+        } else {
+            format!("{}) {}", object.id, &object.name)
+        }
     }
 
     pub fn new(object: &DungeonObject) -> Self {

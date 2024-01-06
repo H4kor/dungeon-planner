@@ -1,6 +1,7 @@
 use crate::chamber::{ChamberId, WallId};
 use crate::common::Vec2;
 use crate::door::{Door, DoorId};
+use crate::object::ObjectId;
 use crate::state::{EditMode, StateCommand};
 use serde_json::json;
 use serde_json::Value;
@@ -96,16 +97,16 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
             "DeleteChamber" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::DeleteChamber(
-                    v["chamber_id"].as_u64().unwrap() as u32,
+                    v["chamber_id"].as_u64().unwrap() as ChamberId,
                 ))
             }
             "AddDoor" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::AddDoor(Door::new(
-                    v["part_of"].as_u64().unwrap() as u32,
+                    v["part_of"].as_u64().unwrap() as ChamberId,
                     None,
                     v["width"].as_f64().unwrap(),
-                    v["on_wall"].as_u64().unwrap() as u32,
+                    v["on_wall"].as_u64().unwrap() as ChamberId,
                     v["position"].as_f64().unwrap(),
                 )))
             }
@@ -136,14 +137,14 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
             "ChangeDoorHidden" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::ChangeDoorHidden(
-                    v["door_id"].as_u64().unwrap() as ChamberId,
+                    v["door_id"].as_u64().unwrap() as DoorId,
                     v["hidden"].as_bool().unwrap(),
                 ))
             }
             "DeleteDoor" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::DeleteDoor(
-                    v["door_id"].as_u64().unwrap() as u32
+                    v["door_id"].as_u64().unwrap() as DoorId
                 ))
             }
             "AddObject" => {
@@ -174,9 +175,31 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
             "DeleteObject" => {
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::DeleteObject(
-                    v["object_id"].as_u64().unwrap() as u32
+                    v["object_id"].as_u64().unwrap() as ObjectId
                 ))
             }
+            "ChangeObjectName" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeObjectName(
+                    v["object_id"].as_u64().unwrap() as ObjectId,
+                    v["name"].as_str().unwrap().to_owned(),
+                ))
+            }
+            "ChangeObjectNotes" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeObjectNotes(
+                    v["object_id"].as_u64().unwrap() as ObjectId,
+                    v["notes"].as_str().unwrap().to_owned(),
+                ))
+            }
+            "ChangeObjectHidden" => {
+                let v: Value = serde_json::from_str(data).unwrap();
+                Some(StateCommand::ChangeObjectHidden(
+                    v["object_id"].as_u64().unwrap() as ObjectId,
+                    v["hidden"].as_bool().unwrap(),
+                ))
+            }
+
             _ => None,
         },
     }
@@ -239,6 +262,9 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
             StateCommand::ChangeDungeonNotes(_) => "ChangeDungeonNotes".to_owned(),
             StateCommand::AddObject(_, _) => "AddObject".to_owned(),
             StateCommand::DeleteObject(_) => "DeleteObject".to_owned(),
+            StateCommand::ChangeObjectName(_, _) => "ChangeObjectName".to_owned(),
+            StateCommand::ChangeObjectNotes(_, _) => "ChangeObjectNotes".to_owned(),
+            StateCommand::ChangeObjectHidden(_, _) => "ChangeObjectHidden".to_owned(),
         };
         let data = match cmd {
             StateCommand::AddChamber => serde_json::Value::Null,
@@ -311,6 +337,18 @@ pub fn save_to_file(save_file: String, cmds: &Vec<StateCommand>) {
                 "part_of": part_of,
             }),
             StateCommand::DeleteObject(object_id) => json!({ "object_id": object_id }),
+            StateCommand::ChangeObjectName(object_id, name) => json!({
+                "object_id": object_id,
+                "name": name,
+            }),
+            StateCommand::ChangeObjectNotes(object_id, notes) => json!({
+                "object_id": object_id,
+                "notes": notes,
+            }),
+            StateCommand::ChangeObjectHidden(object_id, hidden) => json!({
+                "object_id": object_id,
+                "hidden": hidden,
+            }),
         };
         data_str += format!("{} >> {}\n", name, data).as_str();
     }

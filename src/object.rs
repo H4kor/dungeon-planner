@@ -24,12 +24,14 @@ impl ObjectDrawOptions {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Object {
     pub id: ObjectId,
+    pub name: String,
+    pub notes: String,
+    pub hidden: bool,
     pub style: ObjectStyle,
     pub pos: Vec2<i32>,
-    pub hidden: bool,
     pub part_of: Option<ChamberId>,
 }
 
@@ -37,6 +39,8 @@ impl Object {
     pub fn new(pos: Vec2<i32>, part_of: Option<ObjectId>) -> Self {
         Self {
             id: 1,
+            name: "".to_owned(),
+            notes: "".to_owned(),
             style: ObjectStyle::Blocker,
             pos: pos,
             hidden: false,

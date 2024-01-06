@@ -16,12 +16,14 @@ impl EntityTabs {
         dungeon_tab: gtk::Box,
         chamber_tab: gtk::Box,
         door_tab: gtk::Box,
+        object_tab: gtk::Box,
     ) -> Rc<RefCell<Self>> {
         let notebook = Notebook::builder().build();
 
         notebook.append_page(&dungeon_tab, Some(&Label::new(Some("Dungeon"))));
         notebook.append_page(&chamber_tab, Some(&Label::new(Some("Chambers"))));
-        notebook.append_page(&door_tab, Some(&Label::new(Some("Door"))));
+        notebook.append_page(&door_tab, Some(&Label::new(Some("Doors"))));
+        notebook.append_page(&object_tab, Some(&Label::new(Some("Objects"))));
 
         let tabs = Rc::new(RefCell::new(EntityTabs { widget: notebook }));
         control.borrow_mut().subscribe_any(tabs.clone());

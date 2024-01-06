@@ -10,6 +10,7 @@ pub mod door_list_entry;
 pub mod dungeon_edit;
 pub mod entity_tabs;
 pub mod grid;
+pub mod object_edit;
 pub mod object_list;
 pub mod object_list_entry;
 pub mod primitives;
