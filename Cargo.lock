@@ -57,7 +57,7 @@ dependencies = [
 
 [[package]]
 name = "dungeon_planner"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "cairo-rs",
  "gtk4",
