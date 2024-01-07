@@ -6,7 +6,7 @@ use crate::{
     common::{BBox, Rgb, Vec2},
     door::{Door, DoorDrawOptions},
     dungeon::Dungeon,
-    object::ObjectDrawOptions,
+    object::{Object, ObjectDrawOptions},
     view::{grid::Grid, primitives::Primitive},
 };
 
@@ -452,6 +452,41 @@ fn chamber_door(door: &Door) -> PdfElement {
     }
 }
 
+fn chamber_object(object: &Object) -> PdfElement {
+    // pointless ot add empty objects to the pdf
+    if object.name.is_empty() && object.notes.is_empty() {
+        return PdfElement {
+            height: 0.0,
+            draw: Box::new(move |_, _, _, _| {}),
+        };
+    }
+
+    let (_, hl) = layout_secondary_headline();
+    match object.name.is_empty() {
+        true => hl.set_text(&format!("Object: {}", object.id)),
+        false => hl.set_text(&format!("Object: {}", object.name)),
+    };
+    let (_, tl) = layout_text();
+    tl.set_text(&object.notes);
+    PdfElement {
+        height: ((hl.extents().0.height() as f64 / PANGO_SCALE as f64) * 1.5)
+            + (tl.extents().0.height() as f64 / PANGO_SCALE as f64)
+            + HEADLINE_IMAGE_SPACING,
+        draw: Box::new(move |ctx, start_h, _, _| {
+            let mut cur_h = start_h;
+            ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
+            ctx.move_to(LEFT_SPACE, cur_h);
+            pangocairo::show_layout(&ctx, &hl);
+
+            cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) * 1.5;
+
+            ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
+            ctx.move_to(LEFT_SPACE, cur_h);
+            pangocairo::show_layout(&ctx, &tl);
+        }),
+    }
+}
+
 fn separator() -> PdfElement {
     PdfElement {
         height: 42.0,
@@ -476,6 +511,14 @@ fn chamber_elems(dungeon: &Dungeon, chamber: &Chamber) -> Vec<PdfElement> {
     {
         elems.push(e)
     }
+    for e in dungeon
+        .chamber_objects(chamber.id)
+        .iter()
+        .map(|o| chamber_object(o))
+    {
+        elems.push(e)
+    }
+
     elems.push(separator());
     elems
 }
