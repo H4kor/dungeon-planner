@@ -17,6 +17,7 @@ pub struct Circle {
     pub width: f64,
     pub radius: f64,
     pub color: Rgb,
+    pub dashed: bool,
 }
 
 pub struct Line {
@@ -188,6 +189,11 @@ impl Primitive for Circle {
     fn draw(&self, ctx: &gtk::cairo::Context) {
         ctx.set_line_width(self.width);
         ctx.set_source_rgb(self.color.r, self.color.g, self.color.b);
+        if self.dashed {
+            ctx.set_dash(&vec![20.0, 10.0], 0.0);
+        } else {
+            ctx.set_dash(&vec![], 0.0);
+        }
         ctx.arc(
             self.at.x,
             self.at.y,

@@ -181,7 +181,7 @@ impl Object {
             }),
             Box::new(Line {
                 color: color,
-                dashed: self.hidden,
+                dashed: false,
                 from: Vec2 {
                     x: self.pos.x as f64 + c - 0.8 * c,
                     y: self.pos.y as f64 + 0.2 * s,
@@ -194,7 +194,7 @@ impl Object {
             }),
             Box::new(Line {
                 color: color,
-                dashed: self.hidden,
+                dashed: false,
                 from: Vec2 {
                     x: self.pos.x as f64 + c - 0.6 * c,
                     y: self.pos.y as f64 + 0.4 * s,
@@ -207,7 +207,7 @@ impl Object {
             }),
             Box::new(Line {
                 color: color,
-                dashed: self.hidden,
+                dashed: false,
                 from: Vec2 {
                     x: self.pos.x as f64 + c - 0.4 * c,
                     y: self.pos.y as f64 + 0.6 * s,
@@ -220,7 +220,7 @@ impl Object {
             }),
             Box::new(Line {
                 color: color,
-                dashed: self.hidden,
+                dashed: false,
                 from: Vec2 {
                     x: self.pos.x as f64 + c - 0.2 * c,
                     y: self.pos.y as f64 + 0.8 * s,
@@ -246,6 +246,7 @@ impl Object {
                 radius: GRID_SIZE as f64 / 2.0,
                 width: WALL_WIDTH,
                 color: color,
+                dashed: self.hidden,
             }),
             Box::new(Circle {
                 at: pos
@@ -256,6 +257,7 @@ impl Object {
                 radius: GRID_SIZE as f64 / 4.0,
                 width: WALL_WIDTH,
                 color: color,
+                dashed: false,
             }),
         ]
     }
