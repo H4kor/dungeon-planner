@@ -162,7 +162,9 @@ impl StateController {
     }
 
     pub fn reset(&mut self) {
+        let view = self.state.view.clone();
         self.state = State::new();
+        self.state.view = view;
         self.notify(StateEvent::Reset);
     }
 

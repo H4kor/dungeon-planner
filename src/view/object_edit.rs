@@ -120,7 +120,7 @@ impl ObjectEdit {
         );
 
         blocker_style.connect_toggled(
-            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+            clone!(@strong control => move |_w| if let Ok(mut control) = control.try_borrow_mut() {
                 match control.state.active_object_id {
                     None => (),
                     Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Blocker)),
@@ -129,7 +129,7 @@ impl ObjectEdit {
         );
 
         stair_style.connect_toggled(
-            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+            clone!(@strong control => move |_w| if let Ok(mut control) = control.try_borrow_mut() {
                 match control.state.active_object_id {
                     None => (),
                     Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Stairs)),
@@ -138,7 +138,7 @@ impl ObjectEdit {
         );
 
         round_style.connect_toggled(
-            clone!(@strong control => move |w| if let Ok(mut control) = control.try_borrow_mut() {
+            clone!(@strong control => move |_w| if let Ok(mut control) = control.try_borrow_mut() {
                 match control.state.active_object_id {
                     None => (),
                     Some(object_id) => control.apply(StateCommand::ChangeObjectStyle(object_id, ObjectStyle::Round)),
