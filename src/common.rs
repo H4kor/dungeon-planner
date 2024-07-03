@@ -167,6 +167,15 @@ impl BitAndAssign<BBox> for BBox {
     }
 }
 
+impl BBox {
+    pub fn is_valid(&self) -> bool {
+        self.min.x.is_finite()
+            && self.min.y.is_finite()
+            && self.max.x.is_finite()
+            && self.max.y.is_finite()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{BBox, Vec2};
@@ -205,5 +214,29 @@ mod tests {
         assert_eq!(a.min.y, 1.0);
         assert_eq!(a.max.x, 6.0);
         assert_eq!(a.max.y, 7.0);
+    }
+
+    #[test]
+    fn test_invalid_bbox() {
+        let a = BBox {
+            min: Vec2 {
+                x: 1.0 / 0.0,
+                y: 1.0 / 0.0,
+            },
+            max: Vec2 {
+                x: 1.0 / 0.0,
+                y: 1.0 / 0.0,
+            },
+        };
+        assert_eq!(a.is_valid(), false)
+    }
+
+    #[test]
+    fn test_valid_bbox() {
+        let a = BBox {
+            min: Vec2 { x: 1.0, y: 1.0 },
+            max: Vec2 { x: 1.0, y: 1.0 },
+        };
+        assert_eq!(a.is_valid(), true)
     }
 }

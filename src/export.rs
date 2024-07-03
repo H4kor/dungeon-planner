@@ -226,6 +226,10 @@ fn prims_to_bbox(prims: &Vec<Box<dyn Primitive>>) -> BBox {
 fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
     let all_prims = dungeon_to_primitives(dungeon, include_hidden);
     let bbox = prims_to_bbox(&all_prims);
+    // early abort on empty dungeon
+    if !bbox.is_valid() {
+        return;
+    }
 
     let mut cur_h = START_H;
     let (_, tl) = layout_title();
@@ -355,41 +359,43 @@ fn chamber_headline(chamber: &Chamber) -> PdfElement {
                 bbox.min = bbox.min - Vec2 { x: 50.0, y: 50.0 };
                 bbox.max = bbox.max + Vec2 { x: 50.0, y: 50.0 };
 
-                let size = bbox.max - bbox.min;
-                let scale = IMAGE_SIZE / f64::max(size.x, size.y);
-                ctx.translate(
-                    -bbox.min.x * scale + LEFT_SPACE,
-                    -bbox.min.y * scale + cur_h,
-                );
-                ctx.scale(scale, scale);
+                if bbox.is_valid() {
+                    let size = bbox.max - bbox.min;
+                    let scale = IMAGE_SIZE / f64::max(size.x, size.y);
+                    ctx.translate(
+                        -bbox.min.x * scale + LEFT_SPACE,
+                        -bbox.min.y * scale + cur_h,
+                    );
+                    ctx.scale(scale, scale);
 
-                let mut grid = Grid::new();
-                grid.color = Rgb {
-                    r: 0.5,
-                    g: 0.5,
-                    b: 0.5,
-                };
-                grid.width = 1.0;
+                    let mut grid = Grid::new();
+                    grid.color = Rgb {
+                        r: 0.5,
+                        g: 0.5,
+                        b: 0.5,
+                    };
+                    grid.width = 1.0;
 
-                // set clipping
-                ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
-                ctx.clip();
-                ctx.new_path();
+                    // set clipping
+                    ctx.rectangle(bbox.min.x, bbox.min.y, size.x, size.y);
+                    ctx.clip();
+                    ctx.new_path();
 
-                // draw grid
-                ctx.set_dash(&vec![10.0, 10.0], 0.0);
-                for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
-                    prim.draw(&ctx)
+                    // draw grid
+                    ctx.set_dash(&vec![10.0, 10.0], 0.0);
+                    for prim in grid.draw(bbox.min.into(), bbox.max.into()) {
+                        prim.draw(&ctx)
+                    }
+                    ctx.set_dash(&vec![], 0.0);
+
+                    // draw chamber
+                    for prim in prims.iter() {
+                        prim.draw(&ctx)
+                    }
+
+                    ctx.reset_clip();
+                    ctx.identity_matrix();
                 }
-                ctx.set_dash(&vec![], 0.0);
-
-                // draw chamber
-                for prim in prims.iter() {
-                    prim.draw(&ctx)
-                }
-
-                ctx.reset_clip();
-                ctx.identity_matrix();
             }
         }),
     }
@@ -593,7 +599,14 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
     // Draw entire dungeon
     let all_prims = dungeon_to_primitives(dungeon, false);
+    // early abort of dungeon is empty (nothing to draw)
+    if all_prims.len() == 0 {
+        return;
+    }
     let bbox = prims_to_bbox(&all_prims);
+    if !bbox.is_valid() {
+        return;
+    }
 
     let size = bbox.max - bbox.min;
     // determine if page should be horizontal or vertical
@@ -656,4 +669,43 @@ pub fn to_full_player_map_pdf(dungeon: &Dungeon, path: String) {
     ctx.reset_clip();
     ctx.identity_matrix();
     ctx.show_page().unwrap();
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{chamber::Chamber, dungeon::Dungeon};
+
+    use super::{to_full_player_map_pdf, to_pdf};
+
+    #[test]
+    fn test_to_full_player_map_pdf_empty() {
+        let dungeon = &Dungeon::new();
+        to_full_player_map_pdf(
+            dungeon,
+            "/tmp/test_to_full_player_map_pdf_empty.pdf".to_string(),
+        )
+    }
+    #[test]
+    fn test_to_full_player_map_pdf_empty_chamber() {
+        let mut dungeon = Dungeon::new();
+        let chamber = Chamber::new();
+        dungeon.add_chamber(chamber);
+        to_full_player_map_pdf(
+            &dungeon,
+            "/tmp/test_to_full_player_map_pdf_empty_chamber.pdf".to_string(),
+        )
+    }
+
+    #[test]
+    fn test_to_pdf_empty() {
+        let dungeon = &Dungeon::new();
+        to_pdf(dungeon, "/tmp/test_to_pdf_empty.pdf".to_string())
+    }
+    #[test]
+    fn test_to_pdf_empty_chamber() {
+        let mut dungeon = Dungeon::new();
+        let chamber = Chamber::new();
+        dungeon.add_chamber(chamber);
+        to_pdf(&dungeon, "/tmp/test_to_pdf_empty_chamber.pdf".to_string())
+    }
 }
