@@ -1,5 +1,6 @@
 use cairo::Context;
 use pango::ffi::PANGO_SCALE;
+use pangocairo::functions::{show_layout, show_layout_line};
 
 use crate::{
     chamber::{Chamber, ChamberDrawOptions},
@@ -236,7 +237,7 @@ fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
     tl.set_text(&dungeon.name);
     ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
     ctx.move_to(LEFT_SPACE, cur_h);
-    pangocairo::show_layout(&ctx, &tl);
+    show_layout(&ctx, &tl);
     cur_h += (tl.extents().0.height() as f64 / PANGO_SCALE as f64) + TITLE_SPACING;
 
     let size = bbox.max - bbox.min;
@@ -303,7 +304,7 @@ fn chamber_headline(chamber: &Chamber) -> PdfElement {
             // Draw Headline
             ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, start_h);
-            pangocairo::show_layout(&ctx, &hl);
+            show_layout(&ctx, &hl);
 
             cur_h += headline_height;
 
@@ -413,7 +414,7 @@ fn str_to_pdf_elements(str: String) -> Vec<PdfElement> {
             draw: Box::new(move |ctx, start_h, _, _| {
                 ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
                 ctx.move_to(LEFT_SPACE, start_h);
-                pangocairo::show_layout_line(&ctx, &l);
+                show_layout_line(&ctx, &l);
             }),
         })
         .collect()
@@ -447,13 +448,13 @@ fn chamber_door(door: &Door) -> PdfElement {
             let mut cur_h = start_h;
             ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
-            pangocairo::show_layout(&ctx, &hl);
+            show_layout(&ctx, &hl);
 
             cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) * 1.5;
 
             ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
-            pangocairo::show_layout(&ctx, &tl);
+            show_layout(&ctx, &tl);
         }),
     }
 }
@@ -482,13 +483,13 @@ fn chamber_object(object: &Object) -> PdfElement {
             let mut cur_h = start_h;
             ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
-            pangocairo::show_layout(&ctx, &hl);
+            show_layout(&ctx, &hl);
 
             cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) * 1.5;
 
             ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
             ctx.move_to(LEFT_SPACE, cur_h);
-            pangocairo::show_layout(&ctx, &tl);
+            show_layout(&ctx, &tl);
         }),
     }
 }
@@ -535,7 +536,7 @@ fn finalize_page(ctx: &Context, cur_page_number: i32) {
     pl.set_text(&format!("{}", cur_page_number));
     ctx.set_source_rgba(NOTES_COLOR.r, NOTES_COLOR.g, NOTES_COLOR.b, 1.0);
     ctx.move_to(LEFT_SPACE, HEIGHT_PAGE_NUMBER);
-    pangocairo::show_layout(&ctx, &pl);
+    show_layout(&ctx, &pl);
 }
 
 pub fn to_pdf(dungeon: &Dungeon, path: String) {
@@ -552,7 +553,7 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
     hl.set_text(&dungeon.name);
     ctx.set_source_rgba(HEADLINE_COLOR.r, HEADLINE_COLOR.g, HEADLINE_COLOR.b, 1.0);
     ctx.move_to(LEFT_SPACE, cur_h);
-    pangocairo::show_layout(&ctx, &hl);
+    show_layout(&ctx, &hl);
     cur_h += (hl.extents().0.height() as f64 / PANGO_SCALE as f64) + TEXT_SPACING;
 
     let mut dungeon_elems = str_to_pdf_elements(dungeon.notes.clone());

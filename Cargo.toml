@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-adw = { version = "0.5.3", package = "libadwaita", features = ["v1_1", "gtk_v4_6"] }
-gtk = { version = "0.7.3", package = "gtk4", features = ["v4_6"] }
-pango = "0.18.0"
-pangocairo = "0.18.0"
+adw = { version = "0.6.0", package = "libadwaita", features = ["v1_1", "gtk_v4_6"] }
+gtk = { version = "0.8.2", package = "gtk4", features = ["v4_6"] }
+pango = "0.19.4"
+pangocairo = "0.19.4"
 serde_json = "1.0.108"
 
 [dependencies.cairo-rs]
-version = "0.18.0"
+version = "0.19.4"
 features = ["pdf"]
