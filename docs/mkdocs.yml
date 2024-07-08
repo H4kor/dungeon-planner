@@ -1,0 +1,9 @@
+site_name: DungeonPlanner
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+
+markdown_extensions:
+  - attr_list
+  - md_in_html

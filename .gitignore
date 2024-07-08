@@ -2,3 +2,4 @@
 *.dungeon
 *.pdf
 callgrind.*
+venv/
