@@ -3,3 +3,4 @@
 *.pdf
 callgrind.*
 venv/
+docs/site
