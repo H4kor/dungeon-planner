@@ -3,6 +3,8 @@ name: Build Documentation Page
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'docs/**'
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
