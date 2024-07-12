@@ -3,6 +3,9 @@ site_name: DungeonPlanner
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - User Guide:
+    - First Chamber: user-guide/first_chamber.md
+
 
 markdown_extensions:
   - attr_list
