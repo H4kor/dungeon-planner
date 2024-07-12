@@ -5,7 +5,7 @@ nav:
   - Quickstart: quickstart.md
   - User Guide:
     - First Chamber: user-guide/first_chamber.md
-
+    - Adding Doors: user-guide/add_doors.md
 
 markdown_extensions:
   - attr_list

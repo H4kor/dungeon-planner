@@ -57,8 +57,8 @@ This will remove the corner.
 
 A chamber is more than a shape.
 When you select the chamber (either in the list or by using the select tool) the details will be opened on the left side.
-Here you can change the name and description of the chamber.
-Name and description will be used in the PDF Export.
+Here you can change the name and notes of the chamber.
+Name and notes will be used in the PDF Export.
 
 You can also mark the chamber as "hidden".
 This will change the outline in the editor to a dashed line.
