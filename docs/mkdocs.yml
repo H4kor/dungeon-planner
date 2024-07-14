@@ -7,6 +7,7 @@ nav:
     - Installation: user-guide/installation.md
     - First Chamber: user-guide/first_chamber.md
     - Adding Doors: user-guide/add_doors.md
+    - Adding Objects: user-guide/add_objects.md
 
 markdown_extensions:
   - attr_list
