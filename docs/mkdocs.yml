@@ -4,6 +4,7 @@ nav:
   - Home: index.md
   - Quickstart: quickstart.md
   - User Guide:
+    - Installation: user-guide/installation.md
     - First Chamber: user-guide/first_chamber.md
     - Adding Doors: user-guide/add_doors.md
 
