@@ -18,10 +18,10 @@ Move the door to the desired location and click once again.
 ## Door Details
 
 In the "Doors" tab (below the tools on the left side) you can find all placed doors.
-When select a door it will be hightlighted in the editor and its details will be shown below the list.
+When you select a door it will be hightlighted in the editor and its details will be shown below the list.
 
 In the details you can change the name and notes.
-Doors are only added to the PDF export if name or notes is changed.
+Doors are only added to the PDF export if name or notes are changed.
 Otherwise the door will be drawn but not listed in the notes section of the PDF.
 
 Doors can also be marked as hidden, which will change the shape and editor and PDF Export.
