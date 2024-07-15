@@ -10,7 +10,6 @@ use std::fs::{read_to_string, OpenOptions};
 use std::io::prelude::*;
 
 fn line_to_command(l: &String) -> Option<StateCommand> {
-    println!("{}", l);
     match l.split_once(" >> ") {
         None => None,
         Some((name, data)) => match name {
@@ -39,7 +38,6 @@ fn line_to_command(l: &String) -> Option<StateCommand> {
                 }))
             }
             "AddVertexToChamber" => {
-                println!("{}", data);
                 let v: Value = serde_json::from_str(data).unwrap();
                 Some(StateCommand::AddVertexToChamber(
                     v["chamber_id"].as_u64().unwrap() as ChamberId,

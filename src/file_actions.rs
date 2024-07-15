@@ -80,7 +80,6 @@ fn open_dialog(
     file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
     file_dialog.connect_response(
         clone!(@weak control, @weak history, @weak window => move |dialog, r| {
-            println!("{}", r);
             match r {
                 gtk::ResponseType::Accept => {
                     let file = dialog.file().unwrap();
