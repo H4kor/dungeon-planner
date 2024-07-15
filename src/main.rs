@@ -272,7 +272,10 @@ fn build_ui(app: &adw::Application) {
         .build();
     window.add_action_entries([action_close]);
 
-    // DebugObserver::new(control.clone());
+    #[cfg(debug_assertions)]
+    {
+        observers::DebugObserver::new(control.clone());
+    }
 
     window.present();
 }
