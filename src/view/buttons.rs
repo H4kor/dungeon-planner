@@ -6,8 +6,13 @@ use crate::state::StateCommand;
 use crate::state::StateController;
 use crate::state::StateEventSubscriber;
 use cairo::glib::clone;
+use gtk::gdk::Texture;
+use gtk::gdk_pixbuf::Pixbuf;
+use gtk::gio::Cancellable;
+use gtk::gio::MemoryInputStream;
 use gtk::glib;
 use gtk::prelude::*;
+use gtk::Image;
 use gtk::{Button, ToggleButton};
 pub struct AddChamberButton {
     pub widget: Button,
@@ -19,12 +24,17 @@ pub struct EditModeButton {
 
 impl AddChamberButton {
     pub fn new(control: Rc<RefCell<StateController>>) -> Self {
-        let button = Button::builder()
-            .icon_name("document-new")
-            .tooltip_text("Create new Chamber")
-            .has_tooltip(true)
-            .build();
-        button.set_size_request(48, 48);
+        let button = Button::new();
+        let bytes = include_bytes!("../../assets/icons/add_chamber.png");
+        let bytes = glib::Bytes::from(&bytes.to_vec());
+        let stream = MemoryInputStream::from_bytes(&bytes);
+        let pixbuf = Pixbuf::from_stream(&stream, Cancellable::NONE).unwrap();
+        let texture = Texture::for_pixbuf(&pixbuf);
+        let image = Image::from_paintable(Some(&texture));
+        button.set_child(Some(&image));
+        button.set_tooltip_text(Some("Create new Chamber"));
+        button.set_has_tooltip(true);
+        button.set_size_request(64, 64);
 
         button.connect_clicked(move |_button| {
             let control = &mut *control.borrow_mut();
