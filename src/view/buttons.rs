@@ -49,15 +49,19 @@ impl EditModeButton {
     pub fn new(
         control: Rc<RefCell<StateController>>,
         mode: EditMode,
-        icon_name: &str,
+        icon_bytes: Vec<u8>,
         tooltip: &str,
     ) -> Rc<RefCell<Self>> {
-        let button = ToggleButton::builder()
-            .icon_name(icon_name)
-            .tooltip_text(tooltip)
-            .has_tooltip(true)
-            .build();
-        button.set_size_request(48, 48);
+        let button = ToggleButton::new();
+        let bytes = glib::Bytes::from(&icon_bytes);
+        let stream = MemoryInputStream::from_bytes(&bytes);
+        let pixbuf = Pixbuf::from_stream(&stream, Cancellable::NONE).unwrap();
+        let texture = Texture::for_pixbuf(&pixbuf);
+        let image = Image::from_paintable(Some(&texture));
+        button.set_child(Some(&image));
+        button.set_tooltip_text(Some(tooltip));
+        button.set_has_tooltip(true);
+        button.set_size_request(64, 64);
 
         button.connect_clicked(clone!( @weak control => move |_button| {
             let control = &mut *control.borrow_mut();
