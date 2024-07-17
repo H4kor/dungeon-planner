@@ -108,39 +108,39 @@ fn build_ui(app: &adw::Application) {
     let select_chamber_button = EditModeButton::new(
         control.clone(),
         state::EditMode::Select,
-        "edit-find",
-        "Select Chamber/Door",
+        include_bytes!("../assets/icons/select.png").to_vec(),
+        "Select",
     );
     let split_edge_button = EditModeButton::new(
         control.clone(),
         state::EditMode::SplitEdge,
-        "edit-cut",
+        include_bytes!("../assets/icons/split_wall.png").to_vec(),
         "Split Wall",
     );
     let append_verts_button = EditModeButton::new(
         control.clone(),
         state::EditMode::AppendChamber,
-        "document-edit",
+        include_bytes!("../assets/icons/append_chamber.png").to_vec(),
         "Draw Chamber",
     );
     let delete_corner_button = EditModeButton::new(
         control.clone(),
         state::EditMode::RemoveVertex,
-        "list-remove",
+        include_bytes!("../assets/icons/remove_corner.png").to_vec(),
         "Remove Corner",
     );
 
     let add_door_button = EditModeButton::new(
         control.clone(),
         state::EditMode::AddDoor,
-        "insert-link",
+        include_bytes!("../assets/icons/add_door.png").to_vec(),
         "Insert Door",
     );
 
     let add_object_button = EditModeButton::new(
         control.clone(),
         state::EditMode::AddObject,
-        "insert-object",
+        include_bytes!("../assets/icons/add_object.png").to_vec(),
         "Insert Object",
     );
 

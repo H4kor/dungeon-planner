@@ -4,7 +4,7 @@ Rooms, corridors and (any type other enclosed space) are called *chambers* in Du
 Chambers are the fundemental building blocks of any dungeon.
 A chamber might have doors and objected related to them, but these are added in later steps.
 
-## Creating a new chamber ![New Chamber](../assets/tools/new_chamber.png)
+## Creating a new chamber ![New Chamber](../assets/tools/add_chamber.png)
 
 To create a new chamber use the "New Chamber" tool. Alternatively you can use the shortcut `Alt+C`.
 This will add a new chamber to the chamber list in the navigation on the left side.
@@ -12,7 +12,7 @@ The editor will change to the "append" mode for the newly created chamber.
 
 
 
-## Drawing a chamber ![Append Chamber](../assets/tools/edit_chamber.png)
+## Drawing a chamber ![Append Chamber](../assets/tools/append_chamber.png)
 
 After creating a new chamber you can add corners to it by simply clicking in the edior.
 If you somehow exited the "append" mode, select the chamber in the list on the left and use the "Append Chamber" tool.

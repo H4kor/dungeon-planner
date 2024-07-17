@@ -38,7 +38,6 @@ jobs:
       - name: Build mkDocs
         run: | 
           pip install mkdocs
-          cd docs
           mkdocs build
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -46,7 +45,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: 'docs/site'
+          path: 'site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
