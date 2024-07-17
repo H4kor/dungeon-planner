@@ -10,18 +10,18 @@ The dungeon editor where you can edit and see the layout of your dungeon is on t
 
 The dungeon can be modified using these tools:
 
-### ![New Chamber](assets/tools/new_chamber.png) **New Chamber** (`Alt+C`)
+### ![New Chamber](assets/tools/add_chamber.png) **New Chamber** (`Alt+C`)
 
 Adds a new chamber (or room) to the dungeon.
 The editor mode is changed to "append".
 Clicking in the dungeon editor will add a new edge to the dungeon.
 
-### ![Selection](assets/tools/selection.png) **Selection** (`Alt+S`)
+### ![Selection](assets/tools/select.png) **Selection** (`Alt+S`)
 
 Allows you to select chambers, doors and objects using the dungeon editor.
 The navigation will jump to the selected entity.
 
-### ![Append Chamber](assets/tools/edit_chamber.png) **Append Chamber** (`Alt+A`)
+### ![Append Chamber](assets/tools/append_chamber.png) **Append Chamber** (`Alt+A`)
 
 *Requires a selected chamber.*
 
