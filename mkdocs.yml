@@ -1,4 +1,9 @@
 site_name: DungeonPlanner
+site_url: https://h4kor.github.io/dungeon-planner/
+site_author: Niko Abeler
+site_description: "Dungeon Planning tool for (tabletop) games "
+repo_url: "https://github.com/h4kor/dungeon-planner"
+edit_uri: "edit/main/docs/"
 
 nav:
   - Home: index.md
