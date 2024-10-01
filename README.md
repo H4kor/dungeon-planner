@@ -1,5 +1,3 @@
-***This project is still in an early stage. I've started to use it for my own games and will try not to break project files. However, if required, newer versions might be not be able to open older project files.***
-
 [![Run Tests](https://github.com/H4kor/dungeon-planner/actions/workflows/test.yml/badge.svg)](https://github.com/H4kor/dungeon-planner/actions/workflows/test.yml)
 
 # Dungeon Planner
@@ -35,10 +33,10 @@ The [User Documentation](https://h4kor.github.io/dungeon-planner/quickstart/) ca
 - [x] Assign doors/properties to edges
     - [x] hidden doors and chambers
 - [x] GM Notes on chambers
-- [ ] Prints
+- [x] Prints
     - [x] Full map with numbers assigned to chambers
         - [x] GM Notes
-    - [ ] Chambers seperated to cut out ( [#11](https://github.com/H4kor/dungeon-planner/issues/11) )
+    - [x] Chambers seperated to cut out 
     - [x] Player Map
 - [x] Placing object markers (stairs, chests)
 

@@ -1,7 +1,5 @@
 use core::f64;
 
-use std::cmp::Ordering;
-
 use crate::{
     common::{BBox, Line, Rgb, Vec2},
     config::{DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
