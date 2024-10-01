@@ -226,7 +226,14 @@ fn prims_to_bbox(prims: &Vec<Box<dyn Primitive>>) -> BBox {
     bbox
 }
 
-fn draw_chamber(dungeon: &Dungeon, chamber: &Chamber, cur_h: f64, max_size: Vec2<f64>, ctx: &Context, include_hidden: bool) -> f64 {
+fn draw_chamber(
+    dungeon: &Dungeon,
+    chamber: &Chamber,
+    cur_h: f64,
+    max_size: Vec2<f64>,
+    ctx: &Context,
+    include_hidden: bool,
+) -> f64 {
     if include_hidden == false && chamber.hidden {
         return 0.0;
     }
@@ -290,7 +297,7 @@ fn draw_chamber(dungeon: &Dungeon, chamber: &Chamber, cur_h: f64, max_size: Vec2
 
         if bbox.is_valid() {
             let size = bbox.max - bbox.min;
-            let scale = f64::min(max_size.x/size.x, max_size.y/size.y);
+            let scale = f64::min(max_size.x / size.x, max_size.y / size.y);
             ctx.translate(
                 -bbox.min.x * scale + LEFT_SPACE,
                 -bbox.min.y * scale + cur_h,
@@ -324,14 +331,13 @@ fn draw_chamber(dungeon: &Dungeon, chamber: &Chamber, cur_h: f64, max_size: Vec2
 
             ctx.reset_clip();
             ctx.identity_matrix();
-            return bbox.size().y * scale
+            return bbox.size().y * scale;
         } else {
             return 0.0;
         }
     }
     return 0.0;
 }
-
 
 fn draw_full_dungeon(dungeon: &Dungeon, ctx: &Context, include_hidden: bool) {
     let all_prims = dungeon_to_primitives(dungeon, include_hidden);
@@ -416,7 +422,17 @@ fn chamber_headline(chamber: &Chamber) -> PdfElement {
             show_layout(&ctx, &hl);
 
             cur_h += headline_height;
-            draw_chamber(dungeon, chamber, cur_h, Vec2{x: IMAGE_SIZE, y: IMAGE_SIZE}, ctx, true);
+            draw_chamber(
+                dungeon,
+                chamber,
+                cur_h,
+                Vec2 {
+                    x: IMAGE_SIZE,
+                    y: IMAGE_SIZE,
+                },
+                ctx,
+                true,
+            );
         }),
     }
 }
@@ -618,16 +634,19 @@ pub fn to_pdf(dungeon: &Dungeon, path: String) {
 
 pub fn to_player_cutout_pdf(dungeon: &Dungeon, path: String) {
     // find max bbox size
-    let max_size = dungeon.chambers().iter().fold(Vec2{
-        x: f64::MIN,
-        y: f64::MIN,
-    }, |prev, chamber| {
-        let bbox = chamber.bbox();
-        Vec2{
-            x: prev.x.max(bbox.max.x-bbox.min.x),
-            y: prev.y.max(bbox.max.y-bbox.min.y),
-        }
-    });
+    let max_size = dungeon.chambers().iter().fold(
+        Vec2 {
+            x: f64::MIN,
+            y: f64::MIN,
+        },
+        |prev, chamber| {
+            let bbox = chamber.bbox();
+            Vec2 {
+                x: prev.x.max(bbox.max.x - bbox.min.x),
+                y: prev.y.max(bbox.max.y - bbox.min.y),
+            }
+        },
+    );
     let pdf = gtk::cairo::PdfSurface::new(PAGE_W, PAGE_H, path).unwrap();
     let scale = (PAGE_W - (2. * EDGE_SPACING)) / max_size.x;
     let ctx = Context::new(pdf).unwrap();
@@ -643,7 +662,14 @@ pub fn to_player_cutout_pdf(dungeon: &Dungeon, path: String) {
             ctx.show_page().unwrap();
             cur_h = START_H;
         }
-        cur_h += draw_chamber(dungeon, chamber, cur_h, scale * chamber.bbox().size(), &ctx, false) + 12.0;
+        cur_h += draw_chamber(
+            dungeon,
+            chamber,
+            cur_h,
+            scale * chamber.bbox().size(),
+            &ctx,
+            false,
+        ) + 12.0;
     }
     // add page number to last page
     finalize_page(&ctx, cur_page_number);
@@ -761,17 +787,23 @@ mod test {
         dungeon.add_chamber(chamber);
         to_pdf(&dungeon, "/tmp/test_to_pdf_empty_chamber.pdf".to_string())
     }
-    
+
     #[test]
     fn test_to_player_cutout_pdf_empty() {
         let dungeon = &Dungeon::new();
-        to_player_cutout_pdf(dungeon, "/tmp/test_to_player_cutout_pdf_empty.pdf".to_string())
+        to_player_cutout_pdf(
+            dungeon,
+            "/tmp/test_to_player_cutout_pdf_empty.pdf".to_string(),
+        )
     }
     #[test]
     fn test_to_player_cutout_pdf_empty_chamber() {
         let mut dungeon = Dungeon::new();
         let chamber = Chamber::new();
         dungeon.add_chamber(chamber);
-        to_player_cutout_pdf(&dungeon, "/tmp/test_to_player_cutout_pdf_empty_chamber.pdf".to_string())
+        to_player_cutout_pdf(
+            &dungeon,
+            "/tmp/test_to_player_cutout_pdf_empty_chamber.pdf".to_string(),
+        )
     }
 }

@@ -180,9 +180,17 @@ impl BitAndAssign<BBox> for BBox {
 }
 
 impl BBox {
-
     pub fn new() -> Self {
-        BBox { min: Vec2 { x: f64::INFINITY, y: f64::INFINITY }, max: Vec2 { x: f64::NEG_INFINITY, y: f64::NEG_INFINITY } }
+        BBox {
+            min: Vec2 {
+                x: f64::INFINITY,
+                y: f64::INFINITY,
+            },
+            max: Vec2 {
+                x: f64::NEG_INFINITY,
+                y: f64::NEG_INFINITY,
+            },
+        }
     }
 
     pub fn is_valid(&self) -> bool {
