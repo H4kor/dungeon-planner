@@ -1,4 +1,4 @@
-use crate::export::{to_pdf, to_full_player_map_pdf};
+use crate::export::{to_full_player_map_pdf, to_pdf, to_player_cutout_pdf};
 use crate::observers::HistoryObserver;
 use crate::state::StateController;
 use crate::storage;
@@ -304,6 +304,39 @@ pub fn file_actions(
         }))
         .build();    
 
+
+    let action_file_export_cutout_pdf = ActionEntry::builder("cutout_pdf")
+        .activate(clone!( @weak control, @weak history => move |_group: &SimpleActionGroup, _, _| {
+            let file_dialog = FileChooserDialog::builder()
+                .title("Export Cutout Map ...")
+                .action(gtk::FileChooserAction::Save)
+                .select_multiple(false)
+                .create_folders(true)
+                .modal(true)
+                .filter(&pdf_filter())
+                .build();
+            file_dialog.add_button("Export", gtk::ResponseType::Accept);
+            file_dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+            file_dialog.connect_response(clone!(@weak control, @weak history => move |dialog, r| {
+                match r {
+                    gtk::ResponseType::Accept => {
+                        let file = dialog.file().unwrap();
+                        let mut path = file.parse_name().to_string();
+                        if !path.ends_with(".pdf") {
+                            path += ".pdf";
+                        }
+                        to_player_cutout_pdf(&control.borrow().state.dungeon, path);
+                        dialog.close();
+                    }
+                    gtk::ResponseType::Cancel => dialog.close(),
+                    gtk::ResponseType::DeleteEvent => (),
+                    _ => todo!(),
+                }
+            }));
+            file_dialog.show();
+        }))
+        .build();    
+
     file_actions.add_action_entries([
         action_file_new,
         action_file_open,
@@ -311,6 +344,7 @@ pub fn file_actions(
         action_file_save_as,
         action_file_export_pdf,
         action_file_export_player_map_pdf,
+        action_file_export_cutout_pdf,
     ]);
 
     file_actions

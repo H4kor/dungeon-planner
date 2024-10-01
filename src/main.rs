@@ -210,8 +210,12 @@ fn build_ui(app: &adw::Application) {
         &MenuItem::new(Some("Export PDF ..."), Some("file.export_pdf")),
     );
     file_menu.insert_item(
-        20,
+        21,
         &MenuItem::new(Some("Export Player Map ..."), Some("file.player_map_pdf")),
+    );
+    file_menu.insert_item(
+        22,
+        &MenuItem::new(Some("Export Cutout Map ..."), Some("file.cutout_pdf")),
     );
 
     let edit_menu = Menu::new();

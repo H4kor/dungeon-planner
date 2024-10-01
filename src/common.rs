@@ -136,6 +136,18 @@ impl Line {
 /**
  * BBox
  */
+impl AddAssign<Vec2<f64>> for BBox {
+    fn add_assign(&mut self, rhs: Vec2<f64>) {
+        self.min = Vec2 {
+            x: f64::min(self.min.x, rhs.x),
+            y: f64::min(self.min.y, rhs.y),
+        };
+        self.max = Vec2 {
+            x: f64::max(self.max.x, rhs.x),
+            y: f64::max(self.max.y, rhs.y),
+        };
+    }
+}
 
 impl BitAnd<BBox> for BBox {
     type Output = BBox;
@@ -168,11 +180,20 @@ impl BitAndAssign<BBox> for BBox {
 }
 
 impl BBox {
+
+    pub fn new() -> Self {
+        BBox { min: Vec2 { x: f64::INFINITY, y: f64::INFINITY }, max: Vec2 { x: f64::NEG_INFINITY, y: f64::NEG_INFINITY } }
+    }
+
     pub fn is_valid(&self) -> bool {
         self.min.x.is_finite()
             && self.min.y.is_finite()
             && self.max.x.is_finite()
             && self.max.y.is_finite()
+    }
+
+    pub fn size(&self) -> Vec2<f64> {
+        self.max - self.min
     }
 }
 

@@ -1,5 +1,9 @@
+use core::f64;
+
+use std::cmp::Ordering;
+
 use crate::{
-    common::{Line, Rgb, Vec2},
+    common::{BBox, Line, Rgb, Vec2},
     config::{DEFAULT_CHAMBER_COLOR, WALL_WIDTH},
     view::primitives::{self, Polygon, Primitive, Text},
 };
@@ -285,6 +289,14 @@ impl Chamber {
             }
             None => None,
         }
+    }
+
+    pub fn bbox(&self) -> BBox {
+        let mut bbox = BBox::new();
+        for wall in &self.walls {
+            bbox += wall.p1.into();
+        }
+        bbox
     }
 
     pub(crate) fn split(&mut self, wall_id: WallId, pos: Vec2<i32>) {
