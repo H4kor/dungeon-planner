@@ -2,9 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use gtk::{Label, Notebook};
 
-use crate::state::{
-    events::StateEvent, State, StateCommand, StateController, StateEventSubscriber,
-};
+use crate::state::{events::StateEvent, State, StateController, StateEventSubscriber};
 
 pub struct EntityTabs {
     pub widget: Notebook,
@@ -33,7 +31,7 @@ impl EntityTabs {
 }
 
 impl StateEventSubscriber for EntityTabs {
-    fn on_state_event(&mut self, _state: &State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, _state: &State, event: StateEvent) {
         match event {
             StateEvent::ActiveChamberChanged(Some(_)) => {
                 self.widget.set_current_page(Some(1));
@@ -52,6 +50,5 @@ impl StateEventSubscriber for EntityTabs {
             }
             _ => {}
         };
-        vec![]
     }
 }

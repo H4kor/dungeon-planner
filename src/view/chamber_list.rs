@@ -90,7 +90,7 @@ impl ChamberList {
 }
 
 impl StateEventSubscriber for ChamberList {
-    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &State, event: StateEvent) {
         match event {
             StateEvent::ChamberAdded(_) => {
                 self.rebuild_list(state);
@@ -113,6 +113,5 @@ impl StateEventSubscriber for ChamberList {
             StateEvent::ChamberDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
-        vec![]
     }
 }

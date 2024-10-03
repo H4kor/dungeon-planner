@@ -88,7 +88,7 @@ impl ObjectList {
 }
 
 impl StateEventSubscriber for ObjectList {
-    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &State, event: StateEvent) {
         match event {
             StateEvent::ObjectAdded(_) => {
                 self.rebuild_list(state);
@@ -111,6 +111,5 @@ impl StateEventSubscriber for ObjectList {
             StateEvent::ObjectDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
-        vec![]
     }
 }

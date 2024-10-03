@@ -88,7 +88,7 @@ impl DoorList {
 }
 
 impl StateEventSubscriber for DoorList {
-    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &State, event: StateEvent) {
         match event {
             StateEvent::DoorAdded(_) => {
                 self.rebuild_list(state);
@@ -111,6 +111,5 @@ impl StateEventSubscriber for DoorList {
             StateEvent::DoorDeleted(_) => self.rebuild_list(state),
             _ => (),
         }
-        vec![]
     }
 }

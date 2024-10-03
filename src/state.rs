@@ -38,7 +38,7 @@ pub struct StateController {
 }
 
 pub trait StateEventSubscriber {
-    fn on_state_event(&mut self, state: &State, event: StateEvent) -> Vec<StateCommand>;
+    fn on_state_event(&mut self, state: &State, event: StateEvent);
 }
 
 pub trait StateCommandSubscriber {
@@ -136,28 +136,20 @@ impl StateController {
     }
 
     pub fn notify(&mut self, event: StateEvent) {
-        let mut all_cmds: Vec<StateCommand> = vec![];
         match self.subscribers.get(&event) {
             None => (),
             Some(listeners) => {
                 for listener in listeners {
-                    all_cmds.append(
-                        &mut listener
-                            .borrow_mut()
-                            .on_state_event(&mut self.state, event.clone()),
-                    );
+                    listener
+                        .borrow_mut()
+                        .on_state_event(&mut self.state, event.clone());
                 }
             }
         }
         for listener in self.any_subscribers.iter() {
-            all_cmds.append(
-                &mut listener
-                    .borrow_mut()
-                    .on_state_event(&mut self.state, event.clone()),
-            );
-        }
-        for cmd in all_cmds {
-            self.apply(cmd);
+            listener
+                .borrow_mut()
+                .on_state_event(&mut self.state, event.clone());
         }
     }
 

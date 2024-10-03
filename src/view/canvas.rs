@@ -511,7 +511,7 @@ impl StateEventSubscriber for Canvas {
         &mut self,
         _state: &crate::state::State,
         event: crate::state::events::StateEvent,
-    ) -> Vec<StateCommand> {
+    ) {
         match event {
             StateEvent::EditModeChanged(_) => {
                 // reset internal state when the edit mode changes
@@ -521,6 +521,5 @@ impl StateEventSubscriber for Canvas {
         }
 
         self.widget.queue_draw();
-        vec![]
     }
 }

@@ -76,17 +76,12 @@ impl DungeonEdit {
 }
 
 impl StateEventSubscriber for DungeonEdit {
-    fn on_state_event(
-        &mut self,
-        state: &crate::state::State,
-        event: StateEvent,
-    ) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &crate::state::State, event: StateEvent) {
         match event {
             StateEvent::DungeonModified => self.sync(state),
             StateEvent::Reset => self.sync(state),
             StateEvent::Reload => self.sync(state),
             _ => (),
         }
-        vec![]
     }
 }

@@ -112,11 +112,7 @@ impl ChamberEdit {
 }
 
 impl StateEventSubscriber for ChamberEdit {
-    fn on_state_event(
-        &mut self,
-        state: &crate::state::State,
-        event: StateEvent,
-    ) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &crate::state::State, event: StateEvent) {
         match event {
             StateEvent::ActiveChamberChanged(None) => self.show_chamber(state),
             StateEvent::ActiveChamberChanged(Some(_)) => self.show_chamber(state),
@@ -124,6 +120,5 @@ impl StateEventSubscriber for ChamberEdit {
             StateEvent::Reload => self.show_chamber(state),
             _ => (),
         }
-        vec![]
     }
 }

@@ -21,9 +21,8 @@ impl StateEventSubscriber for DebugObserver {
         &mut self,
         _state: &crate::state::State,
         event: crate::state::events::StateEvent,
-    ) -> Vec<StateCommand> {
+    ) {
         println!("{:#?}", event);
-        vec![]
     }
 }
 

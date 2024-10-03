@@ -222,11 +222,7 @@ impl ObjectEdit {
 }
 
 impl StateEventSubscriber for ObjectEdit {
-    fn on_state_event(
-        &mut self,
-        state: &crate::state::State,
-        event: StateEvent,
-    ) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &crate::state::State, event: StateEvent) {
         match event {
             StateEvent::ActiveObjectChanged(None) => self.show_object(state),
             StateEvent::ActiveObjectChanged(Some(_)) => self.show_object(state),
@@ -234,6 +230,5 @@ impl StateEventSubscriber for ObjectEdit {
             StateEvent::Reload => self.show_object(state),
             _ => (),
         }
-        vec![]
     }
 }

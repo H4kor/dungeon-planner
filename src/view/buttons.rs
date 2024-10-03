@@ -84,16 +84,11 @@ impl EditModeButton {
 }
 
 impl StateEventSubscriber for EditModeButton {
-    fn on_state_event(
-        &mut self,
-        state: &crate::state::State,
-        event: StateEvent,
-    ) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &crate::state::State, event: StateEvent) {
         match event {
             StateEvent::EditModeChanged(mode) => self.widget.set_active(mode == self.mode),
             StateEvent::Reload => self.widget.set_active(state.mode == self.mode),
             _ => (),
         }
-        vec![]
     }
 }

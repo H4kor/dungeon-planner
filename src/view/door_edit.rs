@@ -228,11 +228,7 @@ impl DoorEdit {
 }
 
 impl StateEventSubscriber for DoorEdit {
-    fn on_state_event(
-        &mut self,
-        state: &crate::state::State,
-        event: StateEvent,
-    ) -> Vec<StateCommand> {
+    fn on_state_event(&mut self, state: &crate::state::State, event: StateEvent) {
         match event {
             StateEvent::ActiveDoorChanged(None) => self.show_door(state),
             StateEvent::ActiveDoorChanged(Some(_)) => self.show_door(state),
@@ -258,6 +254,5 @@ impl StateEventSubscriber for DoorEdit {
             }
             _ => (),
         }
-        vec![]
     }
 }
