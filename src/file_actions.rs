@@ -21,7 +21,7 @@ pub fn pdf_filter() -> FileFilter {
     ff
 }
 
-fn save_as_dialog<F: Fn() + 'static>(
+pub fn save_as_dialog<F: Fn() + 'static>(
     title: String,
     control: Rc<RefCell<StateController>>,
     history: Rc<RefCell<HistoryObserver>>,

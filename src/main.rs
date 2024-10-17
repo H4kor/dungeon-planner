@@ -12,9 +12,11 @@ mod state;
 mod storage;
 mod view;
 
+use cairo::glib::{clone, Propagation};
+use file_actions::save_as_dialog;
 use gtk::gdk::Display;
 use gtk::gio::{ActionEntry, Menu, MenuItem, MenuModel};
-use gtk::{glib, ApplicationWindow, CssProvider};
+use gtk::{glib, ApplicationWindow, CssProvider, MessageDialog};
 use gtk::{prelude::*, PopoverMenuBar};
 use observers::HistoryObserver;
 use state::StateController;
@@ -275,6 +277,48 @@ fn build_ui(app: &adw::Application) {
         })
         .build();
     window.add_action_entries([action_close]);
+    let force_close = Rc::new(RefCell::new(false));
+    window.connect_close_request(clone!(@strong control, @strong history, @strong force_close => move |window| {
+        if history.borrow().unsaved_state() {
+            if *force_close.borrow() == true {
+                return Propagation::Proceed
+            }
+            let unsaved_dialog = MessageDialog::builder()
+                .message_type(gtk::MessageType::Warning)
+                .buttons(gtk::ButtonsType::YesNo)
+                .text("You have unsaved changes. Do you want to save these?")
+                .modal(true)
+                .build();
+            unsaved_dialog.connect_response(
+                clone!( @weak control, @weak history, @weak window, @strong force_close => move |dialog, r| {
+                    println!("unsaved_dialog.connect_response: {:?}", r);
+                    match r {
+                        gtk::ResponseType::Yes => {
+                            match history.clone().borrow().save_file() {
+                                Some(_) => history.borrow_mut().save_to_file(),
+                                None => save_as_dialog(
+                                    "Save Dungeon ...".to_owned(),
+                                    control.clone(), history.clone(), window.clone(),
+                                    Box::new(clone!( @weak control, @weak history, @weak window => move || {
+                                    }))
+                                ),
+                            }
+                        }
+                        gtk::ResponseType::No => {
+                            *force_close.borrow_mut() = true;
+                            window.close()
+                        },
+                        _ => (),
+                    }
+                    dialog.close();
+                }),
+            );
+            unsaved_dialog.show();
+            Propagation::Stop
+        } else {
+            Propagation::Proceed
+        }
+    }));
 
     #[cfg(debug_assertions)]
     {
